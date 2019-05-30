@@ -39,173 +39,123 @@ BEGIN_HIPCUB_NAMESPACE
 class DeviceReduce
 {
 public:
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT,
-        typename ReduceOpT,
-        typename T
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Reduce(void *d_temp_storage,
-                      size_t &temp_storage_bytes,
-                      InputIteratorT d_in,
-                      OutputIteratorT d_out,
-                      int num_items,
-                      ReduceOpT reduction_op,
-                      T init,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT, typename ReduceOpT, typename T>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Reduce(void*           d_temp_storage,
+                                                     size_t&         temp_storage_bytes,
+                                                     InputIteratorT  d_in,
+                                                     OutputIteratorT d_out,
+                                                     int             num_items,
+                                                     ReduceOpT       reduction_op,
+                                                     T               init,
+                                                     hipStream_t     stream            = 0,
+                                                     bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::Reduce(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                reduction_op, init,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::Reduce(d_temp_storage,
+                                                                  temp_storage_bytes,
+                                                                  d_in,
+                                                                  d_out,
+                                                                  num_items,
+                                                                  reduction_op,
+                                                                  init,
+                                                                  stream,
+                                                                  debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Sum(void *d_temp_storage,
-                   size_t &temp_storage_bytes,
-                   InputIteratorT d_in,
-                   OutputIteratorT d_out,
-                   int num_items,
-                   hipStream_t stream = 0,
-                   bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Sum(void*           d_temp_storage,
+                                                  size_t&         temp_storage_bytes,
+                                                  InputIteratorT  d_in,
+                                                  OutputIteratorT d_out,
+                                                  int             num_items,
+                                                  hipStream_t     stream            = 0,
+                                                  bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::Sum(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::Sum(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Min(void *d_temp_storage,
-                   size_t &temp_storage_bytes,
-                   InputIteratorT d_in,
-                   OutputIteratorT d_out,
-                   int num_items,
-                   hipStream_t stream = 0,
-                   bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Min(void*           d_temp_storage,
+                                                  size_t&         temp_storage_bytes,
+                                                  InputIteratorT  d_in,
+                                                  OutputIteratorT d_out,
+                                                  int             num_items,
+                                                  hipStream_t     stream            = 0,
+                                                  bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::Min(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::Min(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ArgMin(void *d_temp_storage,
-                      size_t &temp_storage_bytes,
-                      InputIteratorT d_in,
-                      OutputIteratorT d_out,
-                      int num_items,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t ArgMin(void*           d_temp_storage,
+                                                     size_t&         temp_storage_bytes,
+                                                     InputIteratorT  d_in,
+                                                     OutputIteratorT d_out,
+                                                     int             num_items,
+                                                     hipStream_t     stream            = 0,
+                                                     bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::ArgMin(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::ArgMin(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Max(void *d_temp_storage,
-                   size_t &temp_storage_bytes,
-                   InputIteratorT d_in,
-                   OutputIteratorT d_out,
-                   int num_items,
-                   hipStream_t stream = 0,
-                   bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Max(void*           d_temp_storage,
+                                                  size_t&         temp_storage_bytes,
+                                                  InputIteratorT  d_in,
+                                                  OutputIteratorT d_out,
+                                                  int             num_items,
+                                                  hipStream_t     stream            = 0,
+                                                  bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::Max(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::Max(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ArgMax(void *d_temp_storage,
-                      size_t &temp_storage_bytes,
-                      InputIteratorT d_in,
-                      OutputIteratorT d_out,
-                      int num_items,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t ArgMax(void*           d_temp_storage,
+                                                     size_t&         temp_storage_bytes,
+                                                     InputIteratorT  d_in,
+                                                     OutputIteratorT d_out,
+                                                     int             num_items,
+                                                     hipStream_t     stream            = 0,
+                                                     bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::ArgMax(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::ArgMax(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template<
-        typename KeysInputIteratorT,
-        typename UniqueOutputIteratorT,
-        typename ValuesInputIteratorT,
-        typename AggregatesOutputIteratorT,
-        typename NumRunsOutputIteratorT,
-        typename ReductionOpT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ReduceByKey(void * d_temp_storage,
-                           size_t& temp_storage_bytes,
-                           KeysInputIteratorT d_keys_in,
-                           UniqueOutputIteratorT d_unique_out,
-                           ValuesInputIteratorT d_values_in,
-                           AggregatesOutputIteratorT d_aggregates_out,
-                           NumRunsOutputIteratorT d_num_runs_out,
-                           ReductionOpT reduction_op,
-                           int num_items,
-                           hipStream_t stream = 0,
-                           bool debug_synchronous = false)
+    template <typename KeysInputIteratorT,
+              typename UniqueOutputIteratorT,
+              typename ValuesInputIteratorT,
+              typename AggregatesOutputIteratorT,
+              typename NumRunsOutputIteratorT,
+              typename ReductionOpT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t
+        ReduceByKey(void*                     d_temp_storage,
+                    size_t&                   temp_storage_bytes,
+                    KeysInputIteratorT        d_keys_in,
+                    UniqueOutputIteratorT     d_unique_out,
+                    ValuesInputIteratorT      d_values_in,
+                    AggregatesOutputIteratorT d_aggregates_out,
+                    NumRunsOutputIteratorT    d_num_runs_out,
+                    ReductionOpT              reduction_op,
+                    int                       num_items,
+                    hipStream_t               stream            = 0,
+                    bool                      debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceReduce::ReduceByKey(
-                d_temp_storage, temp_storage_bytes,
-                d_keys_in, d_unique_out,
-                d_values_in, d_aggregates_out,
-                d_num_runs_out, reduction_op, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceReduce::ReduceByKey(d_temp_storage,
+                                                                       temp_storage_bytes,
+                                                                       d_keys_in,
+                                                                       d_unique_out,
+                                                                       d_values_in,
+                                                                       d_aggregates_out,
+                                                                       d_num_runs_out,
+                                                                       reduction_op,
+                                                                       num_items,
+                                                                       stream,
+                                                                       debug_synchronous));
     }
 };
 

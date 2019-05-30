@@ -34,13 +34,13 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
-template<
-    typename ValueType,
-    typename ConversionOp,
-    typename InputIteratorT,
-    typename OffsetT = std::ptrdiff_t // ignored
->
-using TransformInputIterator = ::rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>;
+template <typename ValueType,
+          typename ConversionOp,
+          typename InputIteratorT,
+          typename OffsetT = std::ptrdiff_t // ignored
+          >
+using TransformInputIterator
+    = ::rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>;
 
 END_HIPCUB_NAMESPACE
 

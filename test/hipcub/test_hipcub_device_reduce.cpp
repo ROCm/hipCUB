@@ -20,9 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
 // Google Test
 #include <gtest/gtest.h>
@@ -37,13 +37,10 @@
 #define HIP_CHECK(error) ASSERT_EQ(error, hipSuccess)
 
 // Params for tests
-template<
-    class InputType,
-    class OutputType = InputType
->
+template <class InputType, class OutputType = InputType>
 struct DeviceReduceParams
 {
-    using input_type = InputType;
+    using input_type  = InputType;
     using output_type = OutputType;
 };
 
@@ -51,12 +48,12 @@ struct DeviceReduceParams
 // Test for reduction ops taking single input value
 // ---------------------------------------------------------
 
-template<class Params>
+template <class Params>
 class HipcubDeviceReduceTests : public ::testing::Test
 {
 public:
-    using input_type = typename Params::input_type;
-    using output_type = typename Params::output_type;
+    using input_type             = typename Params::input_type;
+    using output_type            = typename Params::output_type;
     const bool debug_synchronous = false;
 };
 
@@ -66,21 +63,18 @@ typedef ::testing::Types<
     DeviceReduceParams<short>,
     DeviceReduceParams<short, float>,
     DeviceReduceParams<int, double>
-    #ifdef HIPCUB_ROCPRIM_API
+#ifdef HIPCUB_ROCPRIM_API
     ,
     DeviceReduceParams<test_utils::custom_test_type<float>, test_utils::custom_test_type<float>>,
     DeviceReduceParams<test_utils::custom_test_type<int>, test_utils::custom_test_type<float>>
-    #endif
+#endif
 
-> HipcubDeviceReduceTestsParams;
+    >
+    HipcubDeviceReduceTestsParams;
 
 std::vector<size_t> get_sizes()
 {
-    std::vector<size_t> sizes = {
-        1, 10, 53, 211,
-        1024, 2048, 5096,
-        34567, (1 << 17) - 1220
-    };
+    std::vector<size_t>       sizes = {1, 10, 53, 211, 1024, 2048, 5096, 34567, (1 << 17) - 1220};
     const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(2, 1, 16384);
     sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
     std::sort(sizes.begin(), sizes.end());
@@ -91,8 +85,8 @@ TYPED_TEST_CASE(HipcubDeviceReduceTests, HipcubDeviceReduceTestsParams);
 
 TYPED_TEST(HipcubDeviceReduceTests, Reduce)
 {
-    using T = typename TestFixture::input_type;
-    using U = typename TestFixture::output_type;
+    using T                      = typename TestFixture::input_type;
+    using U                      = typename TestFixture::output_type;
     const bool debug_synchronous = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
@@ -106,17 +100,12 @@ TYPED_TEST(HipcubDeviceReduceTests, Reduce)
         std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100);
         std::vector<U> output(1, 0);
 
-        T * d_input;
-        U * d_output;
+        T* d_input;
+        U* d_output;
         HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(T)));
         HIP_CHECK(hipMalloc(&d_output, output.size() * sizeof(U)));
         HIP_CHECK(
-            hipMemcpy(
-                d_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
+            hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Calculate expected results on host
@@ -128,15 +117,15 @@ TYPED_TEST(HipcubDeviceReduceTests, Reduce)
 
         // temp storage
         size_t temp_storage_size_bytes;
-        void * d_temp_storage = nullptr;
+        void*  d_temp_storage = nullptr;
         // Get size of d_temp_storage
-        HIP_CHECK(
-            hipcub::DeviceReduce::Sum(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage,
+                                            temp_storage_size_bytes,
+                                            d_input,
+                                            d_output,
+                                            input.size(),
+                                            stream,
+                                            debug_synchronous));
 
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -146,24 +135,19 @@ TYPED_TEST(HipcubDeviceReduceTests, Reduce)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Run
-        HIP_CHECK(
-            hipcub::DeviceReduce::Sum(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage,
+                                            temp_storage_size_bytes,
+                                            d_input,
+                                            d_output,
+                                            input.size(),
+                                            stream,
+                                            debug_synchronous));
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
         HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(U),
-                hipMemcpyDeviceToHost
-            )
-        );
+            hipMemcpy(output.data(), d_output, output.size() * sizeof(U), hipMemcpyDeviceToHost));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if output values are as expected
@@ -177,8 +161,8 @@ TYPED_TEST(HipcubDeviceReduceTests, Reduce)
 
 TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 {
-    using T = typename TestFixture::input_type;
-    using U = typename TestFixture::output_type;
+    using T                      = typename TestFixture::input_type;
+    using U                      = typename TestFixture::output_type;
     const bool debug_synchronous = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
@@ -192,17 +176,12 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
         std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100);
         std::vector<U> output(1, 0);
 
-        T * d_input;
-        U * d_output;
+        T* d_input;
+        U* d_output;
         HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(T)));
         HIP_CHECK(hipMalloc(&d_output, output.size() * sizeof(U)));
         HIP_CHECK(
-            hipMemcpy(
-                d_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
+            hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
         HIP_CHECK(hipDeviceSynchronize());
 
         hipcub::Min min_op;
@@ -215,15 +194,15 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 
         // temp storage
         size_t temp_storage_size_bytes;
-        void * d_temp_storage = nullptr;
+        void*  d_temp_storage = nullptr;
         // Get size of d_temp_storage
-        HIP_CHECK(
-            hipcub::DeviceReduce::Min(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::Min(d_temp_storage,
+                                            temp_storage_size_bytes,
+                                            d_input,
+                                            d_output,
+                                            input.size(),
+                                            stream,
+                                            debug_synchronous));
 
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -233,24 +212,19 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Run
-        HIP_CHECK(
-            hipcub::DeviceReduce::Min(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::Min(d_temp_storage,
+                                            temp_storage_size_bytes,
+                                            d_input,
+                                            d_output,
+                                            input.size(),
+                                            stream,
+                                            debug_synchronous));
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
         HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(U),
-                hipMemcpyDeviceToHost
-            )
-        );
+            hipMemcpy(output.data(), d_output, output.size() * sizeof(U), hipMemcpyDeviceToHost));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if output values are as expected
@@ -264,9 +238,9 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 
 TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMinimum)
 {
-    using T = typename TestFixture::input_type;
-    using Iterator = typename hipcub::ArgIndexInputIterator<T*, int>;
-    using key_value = typename Iterator::value_type;
+    using T                      = typename TestFixture::input_type;
+    using Iterator               = typename hipcub::ArgIndexInputIterator<T*, int>;
+    using key_value              = typename Iterator::value_type;
     const bool debug_synchronous = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
@@ -277,38 +251,33 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMinimum)
         SCOPED_TRACE(testing::Message() << "with size = " << size);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, 1, 200);
+        std::vector<T>         input = test_utils::get_random_data<T>(size, 1, 200);
         std::vector<key_value> output(1);
 
-        T * d_input;
-        key_value * d_output;
+        T*         d_input;
+        key_value* d_output;
         HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(T)));
         HIP_CHECK(hipMalloc(&d_output, output.size() * sizeof(key_value)));
         HIP_CHECK(
-            hipMemcpy(
-                d_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
+            hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Calculate expected results on host
-        Iterator x(input.data());
+        Iterator        x(input.data());
         const key_value max(1, std::numeric_limits<T>::max());
-        key_value expected = std::accumulate(x, x + size, max, hipcub::ArgMin());
+        key_value       expected = std::accumulate(x, x + size, max, hipcub::ArgMin());
 
         // temp storage
         size_t temp_storage_size_bytes;
-        void * d_temp_storage = nullptr;
+        void*  d_temp_storage = nullptr;
         // Get size of d_temp_storage
-        HIP_CHECK(
-            hipcub::DeviceReduce::ArgMin(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::ArgMin(d_temp_storage,
+                                               temp_storage_size_bytes,
+                                               d_input,
+                                               d_output,
+                                               input.size(),
+                                               stream,
+                                               debug_synchronous));
 
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -318,24 +287,19 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMinimum)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Run
-        HIP_CHECK(
-            hipcub::DeviceReduce::ArgMin(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::ArgMin(d_temp_storage,
+                                               temp_storage_size_bytes,
+                                               d_input,
+                                               d_output,
+                                               input.size(),
+                                               stream,
+                                               debug_synchronous));
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(key_value),
-                hipMemcpyDeviceToHost
-            )
-        );
+        HIP_CHECK(hipMemcpy(
+            output.data(), d_output, output.size() * sizeof(key_value), hipMemcpyDeviceToHost));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if output values are as expected
@@ -350,9 +314,9 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMinimum)
 
 TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMaximum)
 {
-    using T = typename TestFixture::input_type;
-    using Iterator = typename hipcub::ArgIndexInputIterator<T*, int>;
-    using key_value = typename Iterator::value_type;
+    using T                      = typename TestFixture::input_type;
+    using Iterator               = typename hipcub::ArgIndexInputIterator<T*, int>;
+    using key_value              = typename Iterator::value_type;
     const bool debug_synchronous = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
@@ -363,38 +327,33 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMaximum)
         SCOPED_TRACE(testing::Message() << "with size = " << size);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, 0, 100);
+        std::vector<T>         input = test_utils::get_random_data<T>(size, 0, 100);
         std::vector<key_value> output(1);
 
-        T * d_input;
-        key_value * d_output;
+        T*         d_input;
+        key_value* d_output;
         HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(T)));
         HIP_CHECK(hipMalloc(&d_output, output.size() * sizeof(key_value)));
         HIP_CHECK(
-            hipMemcpy(
-                d_input, input.data(),
-                input.size() * sizeof(T),
-                hipMemcpyHostToDevice
-            )
-        );
+            hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Calculate expected results on host
-        Iterator x(input.data());
+        Iterator        x(input.data());
         const key_value min(1, std::numeric_limits<T>::lowest());
-        key_value expected = std::accumulate(x, x + size, min, hipcub::ArgMax());
+        key_value       expected = std::accumulate(x, x + size, min, hipcub::ArgMax());
 
         // temp storage
         size_t temp_storage_size_bytes;
-        void * d_temp_storage = nullptr;
+        void*  d_temp_storage = nullptr;
         // Get size of d_temp_storage
-        HIP_CHECK(
-            hipcub::DeviceReduce::ArgMax(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::ArgMax(d_temp_storage,
+                                               temp_storage_size_bytes,
+                                               d_input,
+                                               d_output,
+                                               input.size(),
+                                               stream,
+                                               debug_synchronous));
 
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -404,24 +363,19 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMaximum)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Run
-        HIP_CHECK(
-            hipcub::DeviceReduce::ArgMax(
-                d_temp_storage, temp_storage_size_bytes,
-                d_input, d_output, input.size(),
-                stream, debug_synchronous
-            )
-        );
+        HIP_CHECK(hipcub::DeviceReduce::ArgMax(d_temp_storage,
+                                               temp_storage_size_bytes,
+                                               d_input,
+                                               d_output,
+                                               input.size(),
+                                               stream,
+                                               debug_synchronous));
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
         // Copy output to host
-        HIP_CHECK(
-            hipMemcpy(
-                output.data(), d_output,
-                output.size() * sizeof(key_value),
-                hipMemcpyDeviceToHost
-            )
-        );
+        HIP_CHECK(hipMemcpy(
+            output.data(), d_output, output.size() * sizeof(key_value), hipMemcpyDeviceToHost));
         HIP_CHECK(hipDeviceSynchronize());
 
         // Check if output values are as expected

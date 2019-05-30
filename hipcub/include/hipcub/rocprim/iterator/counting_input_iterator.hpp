@@ -34,10 +34,7 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
-template<
-    typename ValueType,
-    typename OffsetT = std::ptrdiff_t
->
+template <typename ValueType, typename OffsetT = std::ptrdiff_t>
 using CountingInputIterator = ::rocprim::counting_iterator<ValueType, OffsetT>;
 
 END_HIPCUB_NAMESPACE

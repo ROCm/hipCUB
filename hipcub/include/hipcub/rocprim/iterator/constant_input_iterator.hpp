@@ -26,7 +26,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  ******************************************************************************/
- 
+
 #ifndef HIPCUB_ROCPRIM_ITERATOR_CONSTANT_INPUT_ITERATOR_HPP_
 #define HIPCUB_ROCPRIM_ITERATOR_CONSTANT_INPUT_ITERATOR_HPP_
 
@@ -34,10 +34,7 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
-template<
-    typename ValueType,
-    typename OffsetT = std::ptrdiff_t
->
+template <typename ValueType, typename OffsetT = std::ptrdiff_t>
 using ConstantInputIterator = ::rocprim::constant_iterator<ValueType, OffsetT>;
 
 END_HIPCUB_NAMESPACE

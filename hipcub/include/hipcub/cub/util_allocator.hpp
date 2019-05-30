@@ -31,7 +31,7 @@
 #define HIPCUB_CUB_UTIL_ALLOCATOR_HPP_
 
 #if defined(HIPCUB_STDERR) && !defined(CUB_STDERR)
-    #define CUB_STDERR
+#define CUB_STDERR
 #endif
 
 #include "../config.hpp"
@@ -42,57 +42,37 @@ BEGIN_HIPCUB_NAMESPACE
 
 struct CachingDeviceAllocator : public ::cub::CachingDeviceAllocator
 {
-    hipError_t SetMaxCachedBytes(
-        size_t max_cached_bytes)
+    hipError_t SetMaxCachedBytes(size_t max_cached_bytes)
     {
         return hipCUDAErrorTohipError(
-            ::cub::CachingDeviceAllocator::SetMaxCachedBytes(max_cached_bytes)
-        );
+            ::cub::CachingDeviceAllocator::SetMaxCachedBytes(max_cached_bytes));
     }
 
-    hipError_t DeviceAllocate(
-        int             device,
-        void            **d_ptr,
-        size_t          bytes,
-        hipStream_t     active_stream = 0)
+    hipError_t DeviceAllocate(int device, void** d_ptr, size_t bytes, hipStream_t active_stream = 0)
     {
         return hipCUDAErrorTohipError(
-            ::cub::CachingDeviceAllocator::DeviceAllocate(device, d_ptr, bytes, active_stream)
-        );
+            ::cub::CachingDeviceAllocator::DeviceAllocate(device, d_ptr, bytes, active_stream));
     }
 
-    hipError_t DeviceAllocate(
-        void            **d_ptr,
-        size_t          bytes,
-        hipStream_t     active_stream = 0)
+    hipError_t DeviceAllocate(void** d_ptr, size_t bytes, hipStream_t active_stream = 0)
     {
         return hipCUDAErrorTohipError(
-            ::cub::CachingDeviceAllocator::DeviceAllocate(d_ptr, bytes, active_stream)
-        );
+            ::cub::CachingDeviceAllocator::DeviceAllocate(d_ptr, bytes, active_stream));
     }
 
-    hipError_t DeviceFree(
-        int             device,
-        void*           d_ptr)
+    hipError_t DeviceFree(int device, void* d_ptr)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::CachingDeviceAllocator::DeviceFree(device, d_ptr)
-        );
+        return hipCUDAErrorTohipError(::cub::CachingDeviceAllocator::DeviceFree(device, d_ptr));
     }
 
-    hipError_t DeviceFree(
-        void*           d_ptr)
+    hipError_t DeviceFree(void* d_ptr)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::CachingDeviceAllocator::DeviceFree(d_ptr)
-        );
+        return hipCUDAErrorTohipError(::cub::CachingDeviceAllocator::DeviceFree(d_ptr));
     }
 
     hipError_t FreeAllCached()
     {
-        return hipCUDAErrorTohipError(
-            ::cub::CachingDeviceAllocator::FreeAllCached()
-        );
+        return hipCUDAErrorTohipError(::cub::CachingDeviceAllocator::FreeAllCached());
     }
 };
 

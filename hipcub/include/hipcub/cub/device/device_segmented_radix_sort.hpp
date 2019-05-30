@@ -38,224 +38,238 @@ BEGIN_HIPCUB_NAMESPACE
 
 struct DeviceSegmentedRadixSort
 {
-    template<typename KeyT, typename ValueT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortPairs(void * d_temp_storage,
-                         size_t& temp_storage_bytes,
-                         const KeyT * d_keys_in,
-                         KeyT * d_keys_out,
-                         const ValueT * d_values_in,
-                         ValueT * d_values_out,
-                         int num_items,
-                         int num_segments,
-                         OffsetIteratorT d_begin_offsets,
-                         OffsetIteratorT d_end_offsets,
-                         int begin_bit = 0,
-                         int end_bit = sizeof(KeyT) * 8,
-                         hipStream_t stream = 0,
-                         bool debug_synchronous = false)
+    template <typename KeyT, typename ValueT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortPairs(void*           d_temp_storage,
+                                                        size_t&         temp_storage_bytes,
+                                                        const KeyT*     d_keys_in,
+                                                        KeyT*           d_keys_out,
+                                                        const ValueT*   d_values_in,
+                                                        ValueT*         d_values_out,
+                                                        int             num_items,
+                                                        int             num_segments,
+                                                        OffsetIteratorT d_begin_offsets,
+                                                        OffsetIteratorT d_end_offsets,
+                                                        int             begin_bit = 0,
+                                                        int             end_bit = sizeof(KeyT) * 8,
+                                                        hipStream_t     stream  = 0,
+                                                        bool            debug_synchronous = false)
     {
         return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortPairs(
-                d_temp_storage, temp_storage_bytes,
-                d_keys_in, d_keys_out,
-                d_values_in, d_values_out,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+            ::cub::DeviceSegmentedRadixSort::SortPairs(d_temp_storage,
+                                                       temp_storage_bytes,
+                                                       d_keys_in,
+                                                       d_keys_out,
+                                                       d_values_in,
+                                                       d_values_out,
+                                                       num_items,
+                                                       num_segments,
+                                                       d_begin_offsets,
+                                                       d_end_offsets,
+                                                       begin_bit,
+                                                       end_bit,
+                                                       stream,
+                                                       debug_synchronous));
     }
 
-    template<typename KeyT, typename ValueT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortPairs(void * d_temp_storage,
-                         size_t& temp_storage_bytes,
-                         DoubleBuffer<KeyT>& d_keys,
-                         DoubleBuffer<ValueT>& d_values,
-                         int num_items,
-                         int num_segments,
-                         OffsetIteratorT d_begin_offsets,
-                         OffsetIteratorT d_end_offsets,
-                         int begin_bit = 0,
-                         int end_bit = sizeof(KeyT) * 8,
-                         hipStream_t stream = 0,
-                         bool debug_synchronous = false)
+    template <typename KeyT, typename ValueT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortPairs(void*                 d_temp_storage,
+                                                        size_t&               temp_storage_bytes,
+                                                        DoubleBuffer<KeyT>&   d_keys,
+                                                        DoubleBuffer<ValueT>& d_values,
+                                                        int                   num_items,
+                                                        int                   num_segments,
+                                                        OffsetIteratorT       d_begin_offsets,
+                                                        OffsetIteratorT       d_end_offsets,
+                                                        int                   begin_bit = 0,
+                                                        int         end_bit = sizeof(KeyT) * 8,
+                                                        hipStream_t stream  = 0,
+                                                        bool        debug_synchronous = false)
     {
         return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortPairs(
-                d_temp_storage, temp_storage_bytes,
-                d_keys, d_values,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+            ::cub::DeviceSegmentedRadixSort::SortPairs(d_temp_storage,
+                                                       temp_storage_bytes,
+                                                       d_keys,
+                                                       d_values,
+                                                       num_items,
+                                                       num_segments,
+                                                       d_begin_offsets,
+                                                       d_end_offsets,
+                                                       begin_bit,
+                                                       end_bit,
+                                                       stream,
+                                                       debug_synchronous));
     }
 
-    template<typename KeyT, typename ValueT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortPairsDescending(void * d_temp_storage,
-                                   size_t& temp_storage_bytes,
-                                   const KeyT * d_keys_in,
-                                   KeyT * d_keys_out,
-                                   const ValueT * d_values_in,
-                                   ValueT * d_values_out,
-                                   int num_items,
-                                   int num_segments,
-                                   OffsetIteratorT d_begin_offsets,
-                                   OffsetIteratorT d_end_offsets,
-                                   int begin_bit = 0,
-                                   int end_bit = sizeof(KeyT) * 8,
-                                   hipStream_t stream = 0,
-                                   bool debug_synchronous = false)
+    template <typename KeyT, typename ValueT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortPairsDescending(void*         d_temp_storage,
+                                                                  size_t&       temp_storage_bytes,
+                                                                  const KeyT*   d_keys_in,
+                                                                  KeyT*         d_keys_out,
+                                                                  const ValueT* d_values_in,
+                                                                  ValueT*       d_values_out,
+                                                                  int           num_items,
+                                                                  int           num_segments,
+                                                                  OffsetIteratorT d_begin_offsets,
+                                                                  OffsetIteratorT d_end_offsets,
+                                                                  int             begin_bit = 0,
+                                                                  int end_bit = sizeof(KeyT) * 8,
+                                                                  hipStream_t stream     = 0,
+                                                                  bool debug_synchronous = false)
     {
         return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortPairsDescending(
-                d_temp_storage, temp_storage_bytes,
-                d_keys_in, d_keys_out,
-                d_values_in, d_values_out,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+            ::cub::DeviceSegmentedRadixSort::SortPairsDescending(d_temp_storage,
+                                                                 temp_storage_bytes,
+                                                                 d_keys_in,
+                                                                 d_keys_out,
+                                                                 d_values_in,
+                                                                 d_values_out,
+                                                                 num_items,
+                                                                 num_segments,
+                                                                 d_begin_offsets,
+                                                                 d_end_offsets,
+                                                                 begin_bit,
+                                                                 end_bit,
+                                                                 stream,
+                                                                 debug_synchronous));
     }
 
-    template<typename KeyT, typename ValueT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortPairsDescending(void * d_temp_storage,
-                                   size_t& temp_storage_bytes,
-                                   DoubleBuffer<KeyT>& d_keys,
-                                   DoubleBuffer<ValueT>& d_values,
-                                   int num_items,
-                                   int num_segments,
-                                   OffsetIteratorT d_begin_offsets,
-                                   OffsetIteratorT d_end_offsets,
-                                   int begin_bit = 0,
-                                   int end_bit = sizeof(KeyT) * 8,
-                                   hipStream_t stream = 0,
-                                   bool debug_synchronous = false)
+    template <typename KeyT, typename ValueT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortPairsDescending(void*   d_temp_storage,
+                                                                  size_t& temp_storage_bytes,
+                                                                  DoubleBuffer<KeyT>&   d_keys,
+                                                                  DoubleBuffer<ValueT>& d_values,
+                                                                  int                   num_items,
+                                                                  int             num_segments,
+                                                                  OffsetIteratorT d_begin_offsets,
+                                                                  OffsetIteratorT d_end_offsets,
+                                                                  int             begin_bit = 0,
+                                                                  int end_bit = sizeof(KeyT) * 8,
+                                                                  hipStream_t stream     = 0,
+                                                                  bool debug_synchronous = false)
     {
         return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortPairsDescending(
-                d_temp_storage, temp_storage_bytes,
-                d_keys, d_values,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+            ::cub::DeviceSegmentedRadixSort::SortPairsDescending(d_temp_storage,
+                                                                 temp_storage_bytes,
+                                                                 d_keys,
+                                                                 d_values,
+                                                                 num_items,
+                                                                 num_segments,
+                                                                 d_begin_offsets,
+                                                                 d_end_offsets,
+                                                                 begin_bit,
+                                                                 end_bit,
+                                                                 stream,
+                                                                 debug_synchronous));
     }
 
-    template<typename KeyT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortKeys(void * d_temp_storage,
-                        size_t& temp_storage_bytes,
-                        const KeyT * d_keys_in,
-                        KeyT * d_keys_out,
-                        int num_items,
-                        int num_segments,
-                        OffsetIteratorT d_begin_offsets,
-                        OffsetIteratorT d_end_offsets,
-                        int begin_bit = 0,
-                        int end_bit = sizeof(KeyT) * 8,
-                        hipStream_t stream = 0,
-                        bool debug_synchronous = false)
+    template <typename KeyT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeys(void*           d_temp_storage,
+                                                       size_t&         temp_storage_bytes,
+                                                       const KeyT*     d_keys_in,
+                                                       KeyT*           d_keys_out,
+                                                       int             num_items,
+                                                       int             num_segments,
+                                                       OffsetIteratorT d_begin_offsets,
+                                                       OffsetIteratorT d_end_offsets,
+                                                       int             begin_bit = 0,
+                                                       int             end_bit   = sizeof(KeyT) * 8,
+                                                       hipStream_t     stream    = 0,
+                                                       bool            debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortKeys(
-                d_temp_storage, temp_storage_bytes,
-                d_keys_in, d_keys_out,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage,
+                                                                                temp_storage_bytes,
+                                                                                d_keys_in,
+                                                                                d_keys_out,
+                                                                                num_items,
+                                                                                num_segments,
+                                                                                d_begin_offsets,
+                                                                                d_end_offsets,
+                                                                                begin_bit,
+                                                                                end_bit,
+                                                                                stream,
+                                                                                debug_synchronous));
     }
 
-    template<typename KeyT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortKeys(void * d_temp_storage,
-                        size_t& temp_storage_bytes,
-                        DoubleBuffer<KeyT>& d_keys,
-                        int num_items,
-                        int num_segments,
-                        OffsetIteratorT d_begin_offsets,
-                        OffsetIteratorT d_end_offsets,
-                        int begin_bit = 0,
-                        int end_bit = sizeof(KeyT) * 8,
-                        hipStream_t stream = 0,
-                        bool debug_synchronous = false)
+    template <typename KeyT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeys(void*               d_temp_storage,
+                                                       size_t&             temp_storage_bytes,
+                                                       DoubleBuffer<KeyT>& d_keys,
+                                                       int                 num_items,
+                                                       int                 num_segments,
+                                                       OffsetIteratorT     d_begin_offsets,
+                                                       OffsetIteratorT     d_end_offsets,
+                                                       int                 begin_bit = 0,
+                                                       int         end_bit = sizeof(KeyT) * 8,
+                                                       hipStream_t stream  = 0,
+                                                       bool        debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortKeys(
-                d_temp_storage, temp_storage_bytes,
-                d_keys,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceSegmentedRadixSort::SortKeys(d_temp_storage,
+                                                                                temp_storage_bytes,
+                                                                                d_keys,
+                                                                                num_items,
+                                                                                num_segments,
+                                                                                d_begin_offsets,
+                                                                                d_end_offsets,
+                                                                                begin_bit,
+                                                                                end_bit,
+                                                                                stream,
+                                                                                debug_synchronous));
     }
 
-    template<typename KeyT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortKeysDescending(void * d_temp_storage,
-                                  size_t& temp_storage_bytes,
-                                  const KeyT * d_keys_in,
-                                  KeyT * d_keys_out,
-                                  int num_items,
-                                  int num_segments,
-                                  OffsetIteratorT d_begin_offsets,
-                                  OffsetIteratorT d_end_offsets,
-                                  int begin_bit = 0,
-                                  int end_bit = sizeof(KeyT) * 8,
-                                  hipStream_t stream = 0,
-                                  bool debug_synchronous = false)
+    template <typename KeyT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeysDescending(void*           d_temp_storage,
+                                                                 size_t&         temp_storage_bytes,
+                                                                 const KeyT*     d_keys_in,
+                                                                 KeyT*           d_keys_out,
+                                                                 int             num_items,
+                                                                 int             num_segments,
+                                                                 OffsetIteratorT d_begin_offsets,
+                                                                 OffsetIteratorT d_end_offsets,
+                                                                 int             begin_bit = 0,
+                                                                 int end_bit = sizeof(KeyT) * 8,
+                                                                 hipStream_t stream     = 0,
+                                                                 bool debug_synchronous = false)
     {
         return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortKeysDescending(
-                d_temp_storage, temp_storage_bytes,
-                d_keys_in, d_keys_out,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+            ::cub::DeviceSegmentedRadixSort::SortKeysDescending(d_temp_storage,
+                                                                temp_storage_bytes,
+                                                                d_keys_in,
+                                                                d_keys_out,
+                                                                num_items,
+                                                                num_segments,
+                                                                d_begin_offsets,
+                                                                d_end_offsets,
+                                                                begin_bit,
+                                                                end_bit,
+                                                                stream,
+                                                                debug_synchronous));
     }
 
-    template<typename KeyT, typename OffsetIteratorT>
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t SortKeysDescending(void * d_temp_storage,
-                                  size_t& temp_storage_bytes,
-                                  DoubleBuffer<KeyT>& d_keys,
-                                  int num_items,
-                                  int num_segments,
-                                  OffsetIteratorT d_begin_offsets,
-                                  OffsetIteratorT d_end_offsets,
-                                  int begin_bit = 0,
-                                  int end_bit = sizeof(KeyT) * 8,
-                                  hipStream_t stream = 0,
-                                  bool debug_synchronous = false)
+    template <typename KeyT, typename OffsetIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeysDescending(void*   d_temp_storage,
+                                                                 size_t& temp_storage_bytes,
+                                                                 DoubleBuffer<KeyT>& d_keys,
+                                                                 int                 num_items,
+                                                                 int                 num_segments,
+                                                                 OffsetIteratorT d_begin_offsets,
+                                                                 OffsetIteratorT d_end_offsets,
+                                                                 int             begin_bit = 0,
+                                                                 int end_bit = sizeof(KeyT) * 8,
+                                                                 hipStream_t stream     = 0,
+                                                                 bool debug_synchronous = false)
     {
         return hipCUDAErrorTohipError(
-            ::cub::DeviceSegmentedRadixSort::SortKeysDescending(
-                d_temp_storage, temp_storage_bytes,
-                d_keys,
-                num_items, num_segments,
-                d_begin_offsets, d_end_offsets,
-                begin_bit, end_bit,
-                stream, debug_synchronous
-            )
-        );
+            ::cub::DeviceSegmentedRadixSort::SortKeysDescending(d_temp_storage,
+                                                                temp_storage_bytes,
+                                                                d_keys,
+                                                                num_items,
+                                                                num_segments,
+                                                                d_begin_offsets,
+                                                                d_end_offsets,
+                                                                begin_bit,
+                                                                end_bit,
+                                                                stream,
+                                                                debug_synchronous));
     }
 };
 

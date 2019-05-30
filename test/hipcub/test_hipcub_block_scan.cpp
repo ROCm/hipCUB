@@ -33,31 +33,29 @@
 #define HIP_CHECK(error) ASSERT_EQ(error, hipSuccess)
 
 // Params for tests
-template<
-    class T,
-    unsigned int BlockSize = 256U,
-    unsigned int ItemsPerThread = 1U,
-    hipcub::BlockScanAlgorithm Algorithm = hipcub::BLOCK_SCAN_WARP_SCANS
->
+template <class T,
+          unsigned int               BlockSize      = 256U,
+          unsigned int               ItemsPerThread = 1U,
+          hipcub::BlockScanAlgorithm Algorithm      = hipcub::BLOCK_SCAN_WARP_SCANS>
 struct params
 {
-    using type = T;
-    static constexpr hipcub::BlockScanAlgorithm algorithm = Algorithm;
-    static constexpr unsigned int block_size = BlockSize;
-    static constexpr unsigned int items_per_thread = ItemsPerThread;
+    using type                                                   = T;
+    static constexpr hipcub::BlockScanAlgorithm algorithm        = Algorithm;
+    static constexpr unsigned int               block_size       = BlockSize;
+    static constexpr unsigned int               items_per_thread = ItemsPerThread;
 };
 
 // ---------------------------------------------------------
 // Test for scan ops taking single input value
 // ---------------------------------------------------------
 
-template<class Params>
+template <class Params>
 class HipcubBlockScanSingleValueTests : public ::testing::Test
 {
 public:
-    using type = typename Params::type;
-    static constexpr hipcub::BlockScanAlgorithm algorithm = Params::algorithm;
-    static constexpr unsigned int block_size = Params::block_size;
+    using type                                             = typename Params::type;
+    static constexpr hipcub::BlockScanAlgorithm algorithm  = Params::algorithm;
+    static constexpr unsigned int               block_size = Params::block_size;
 };
 
 typedef ::testing::Types<
@@ -92,21 +90,16 @@ typedef ::testing::Types<
     params<short, 162U, 1, hipcub::BLOCK_SCAN_RAKING>,
     params<unsigned int, 255U, 1, hipcub::BLOCK_SCAN_RAKING>,
     params<int, 377U, 1, hipcub::BLOCK_SCAN_RAKING>,
-    params<unsigned char, 377U, 1, hipcub::BLOCK_SCAN_RAKING>
-> SingleValueTestParams;
+    params<unsigned char, 377U, 1, hipcub::BLOCK_SCAN_RAKING>>
+    SingleValueTestParams;
 
 TYPED_TEST_CASE(HipcubBlockScanSingleValueTests, SingleValueTestParams);
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void inclusive_scan_kernel(T* device_output)
+template <unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
+__global__ void inclusive_scan_kernel(T* device_output)
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T value = device_output[index];
+    T                  value = device_output[index];
 
     using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
     __shared__ typename bscan_t::TempStorage temp_storage;
@@ -117,8 +110,8 @@ void inclusive_scan_kernel(T* device_output)
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -127,7 +120,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
@@ -138,41 +131,33 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
     {
         for(size_t j = 0; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(inclusive_scan_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(inclusive_scan_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -183,17 +168,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
     HIP_CHECK(hipFree(device_output));
 }
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void inclusive_scan_reduce_kernel(T* device_output, T* device_output_reductions)
+template <unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
+__global__ void inclusive_scan_reduce_kernel(T* device_output, T* device_output_reductions)
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T value = device_output[index];
-    T reduction;
+    T                  value = device_output[index];
+    T                  reduction;
     using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
     __shared__ typename bscan_t::TempStorage temp_storage;
     bscan_t(temp_storage).InclusiveScan(value, value, hipcub::Sum(), reduction);
@@ -206,8 +186,8 @@ void inclusive_scan_reduce_kernel(T* device_output, T* device_output_reductions)
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -216,7 +196,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
@@ -229,57 +209,44 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
     {
         for(size_t j = 0; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
-        expected_reductions[i] = expected[(i+1) * block_size - 1];
+        expected_reductions[i] = expected[(i + 1) * block_size - 1];
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-    T* device_output_reductions;
     HIP_CHECK(
-        hipMalloc(
-              &device_output_reductions,
-              output_reductions.size() * sizeof(typename decltype(output_reductions)::value_type)
-        )
-    );
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    T* device_output_reductions;
+    HIP_CHECK(hipMalloc(&device_output_reductions,
+                        output_reductions.size()
+                            * sizeof(typename decltype(output_reductions)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(inclusive_scan_reduce_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(inclusive_scan_reduce_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       device_output_reductions);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -296,18 +263,13 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
     HIP_CHECK(hipFree(device_output_reductions));
 }
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void inclusive_scan_prefix_callback_kernel(T* device_output, T* device_output_bp, T block_prefix)
+template <unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
+__global__ void
+    inclusive_scan_prefix_callback_kernel(T* device_output, T* device_output_bp, T block_prefix)
 {
-    const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T prefix_value = block_prefix;
-    auto prefix_callback = [&prefix_value](T reduction)
-    {
+    const unsigned int index           = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
+    T                  prefix_value    = block_prefix;
+    auto               prefix_callback = [&prefix_value](T reduction) {
         T prefix = prefix_value;
         prefix_value += reduction;
         return prefix;
@@ -328,8 +290,8 @@ void inclusive_scan_prefix_callback_kernel(T* device_output, T* device_output_bp
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -338,12 +300,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
     std::vector<T> output_block_prefixes(size / block_size);
-    T block_prefix = test_utils::get_random_value<T>(0, 100);
+    T              block_prefix = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -353,57 +315,46 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
         expected[i * block_size] = block_prefix;
         for(size_t j = 0; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
-        expected_block_prefixes[i] = expected[(i+1) * block_size - 1];
+        expected_block_prefixes[i] = expected[(i + 1) * block_size - 1];
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-    T* device_output_bp;
     HIP_CHECK(
-        hipMalloc(
-              &device_output_bp,
-              output_block_prefixes.size() * sizeof(typename decltype(output_block_prefixes)::value_type)
-        )
-    );
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    T* device_output_bp;
+    HIP_CHECK(hipMalloc(&device_output_bp,
+                        output_block_prefixes.size()
+                            * sizeof(typename decltype(output_block_prefixes)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(inclusive_scan_prefix_callback_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_bp, block_prefix
-    );
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output,
+        device_output_bp,
+        block_prefix);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_block_prefixes.data(), device_output_bp,
-            output_block_prefixes.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_block_prefixes.data(),
+                        device_output_bp,
+                        output_block_prefixes.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -420,17 +371,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
     HIP_CHECK(hipFree(device_output_bp));
 }
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void exclusive_scan_kernel(T* device_output, T init)
+template <unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
+__global__ void exclusive_scan_kernel(T* device_output, T init)
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T value = device_output[index];
-    using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
+    T                  value = device_output[index];
+    using bscan_t            = hipcub::BlockScan<T, BlockSize, Algorithm>;
     __shared__ typename bscan_t::TempStorage temp_storage;
     bscan_t(temp_storage).ExclusiveScan(value, value, init, hipcub::Sum());
     device_output[index] = value;
@@ -438,8 +384,8 @@ void exclusive_scan_kernel(T* device_output, T init)
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -448,11 +394,11 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 241);
-    const T init = test_utils::get_random_value<T>(0, 100);
+    const T        init   = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -461,41 +407,34 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
         expected[i * block_size] = init;
         for(size_t j = 1; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx-1] + expected[idx-1];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx - 1] + expected[idx - 1];
         }
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(exclusive_scan_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, init
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(exclusive_scan_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       init);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -506,17 +445,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
     HIP_CHECK(hipFree(device_output));
 }
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void exclusive_scan_reduce_kernel(T* device_output, T* device_output_reductions, T init)
+template <unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
+__global__ void exclusive_scan_reduce_kernel(T* device_output, T* device_output_reductions, T init)
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T value = device_output[index];
-    T reduction;
+    T                  value = device_output[index];
+    T                  reduction;
     using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
     __shared__ typename bscan_t::TempStorage temp_storage;
     bscan_t(temp_storage).ExclusiveScan(value, value, init, hipcub::Sum(), reduction);
@@ -529,8 +463,8 @@ void exclusive_scan_reduce_kernel(T* device_output, T* device_output_reductions,
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     if(block_size > test_utils::get_max_block_size())
@@ -538,11 +472,11 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
-    const T init = test_utils::get_random_value<T>(0, 100);
+    const T        init   = test_utils::get_random_value<T>(0, 100);
 
     // Output reduce results
     std::vector<T> output_reductions(size / block_size);
@@ -555,8 +489,8 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
         expected[i * block_size] = init;
         for(size_t j = 1; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx-1] + expected[idx-1];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx - 1] + expected[idx - 1];
         }
 
         expected_reductions[i] = 0;
@@ -569,49 +503,37 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-    T* device_output_reductions;
     HIP_CHECK(
-        hipMalloc(
-              &device_output_reductions,
-              output_reductions.size() * sizeof(typename decltype(output_reductions)::value_type)
-        )
-    );
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    T* device_output_reductions;
+    HIP_CHECK(hipMalloc(&device_output_reductions,
+                        output_reductions.size()
+                            * sizeof(typename decltype(output_reductions)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(exclusive_scan_reduce_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions, init
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(exclusive_scan_reduce_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       device_output_reductions,
+                       init);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -628,18 +550,13 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
     HIP_CHECK(hipFree(device_output_reductions));
 }
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void exclusive_scan_prefix_callback_kernel(T* device_output, T* device_output_bp, T block_prefix)
+template <unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
+__global__ void
+    exclusive_scan_prefix_callback_kernel(T* device_output, T* device_output_bp, T block_prefix)
 {
-    const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T prefix_value = block_prefix;
-    auto prefix_callback = [&prefix_value](T reduction)
-    {
+    const unsigned int index           = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
+    T                  prefix_value    = block_prefix;
+    auto               prefix_callback = [&prefix_value](T reduction) {
         T prefix = prefix_value;
         prefix_value += reduction;
         return prefix;
@@ -660,8 +577,8 @@ void exclusive_scan_prefix_callback_kernel(T* device_output, T* device_output_bp
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -670,12 +587,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
     std::vector<T> output_block_prefixes(size / block_size);
-    T block_prefix = test_utils::get_random_value<T>(0, 100);
+    T              block_prefix = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -685,8 +602,8 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
         expected[i * block_size] = block_prefix;
         for(size_t j = 1; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx-1] + expected[idx-1];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx - 1] + expected[idx - 1];
         }
 
         expected_block_prefixes[i] = block_prefix;
@@ -699,49 +616,38 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-    T* device_output_bp;
     HIP_CHECK(
-        hipMalloc(
-              &device_output_bp,
-              output_block_prefixes.size() * sizeof(typename decltype(output_block_prefixes)::value_type)
-        )
-    );
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    T* device_output_bp;
+    HIP_CHECK(hipMalloc(&device_output_bp,
+                        output_block_prefixes.size()
+                            * sizeof(typename decltype(output_block_prefixes)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(exclusive_scan_prefix_callback_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_bp, block_prefix
-    );
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output,
+        device_output_bp,
+        block_prefix);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_block_prefixes.data(), device_output_bp,
-            output_block_prefixes.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_block_prefixes.data(),
+                        device_output_bp,
+                        output_block_prefixes.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -760,9 +666,9 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
 
 TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
 {
-    using base_type = typename TestFixture::type;
-    using T = test_utils::custom_test_type<base_type>;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using base_type             = typename TestFixture::type;
+    using T                     = test_utils::custom_test_type<base_type>;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -771,17 +677,16 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output(size);
     {
-        std::vector<base_type> random_values =
-            test_utils::get_random_data<base_type>(2 * output.size(), 2, 200);
+        std::vector<base_type> random_values
+            = test_utils::get_random_data<base_type>(2 * output.size(), 2, 200);
         for(size_t i = 0; i < output.size(); i++)
         {
-            output[i].x = random_values[i],
-            output[i].y = random_values[i + output.size()];
+            output[i].x = random_values[i], output[i].y = random_values[i + output.size()];
         }
     }
 
@@ -791,41 +696,33 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
     {
         for(size_t j = 0; j < block_size; j++)
         {
-            auto idx = i * block_size + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * block_size + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(inclusive_scan_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(inclusive_scan_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
@@ -840,53 +737,50 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
 // // Test for scan ops taking array of values as input
 // // ---------------------------------------------------------
 
-template<class Params>
+template <class Params>
 class HipcubBlockScanInputArrayTests : public ::testing::Test
 {
 public:
-    using type = typename Params::type;
-    static constexpr unsigned int block_size = Params::block_size;
-    static constexpr hipcub::BlockScanAlgorithm algorithm = Params::algorithm;
-    static constexpr unsigned int items_per_thread = Params::items_per_thread;
+    using type                                                   = typename Params::type;
+    static constexpr unsigned int               block_size       = Params::block_size;
+    static constexpr hipcub::BlockScanAlgorithm algorithm        = Params::algorithm;
+    static constexpr unsigned int               items_per_thread = Params::items_per_thread;
 };
 
 typedef ::testing::Types<
     // -----------------------------------------------------------------------
     // hipcub::BlockScanAlgorithm::using_warp_scan
     // -----------------------------------------------------------------------
-    params<float, 6U,   32>,
-    params<float, 32,   2>,
-    params<unsigned int, 256,  3>,
-    params<int, 512,  4>,
-    params<float, 37,   2>,
-    params<float, 65,   5>,
-    params<float, 162,  7>,
-    params<float, 255,  15>,
+    params<float, 6U, 32>,
+    params<float, 32, 2>,
+    params<unsigned int, 256, 3>,
+    params<int, 512, 4>,
+    params<float, 37, 2>,
+    params<float, 65, 5>,
+    params<float, 162, 7>,
+    params<float, 255, 15>,
     // -----------------------------------------------------------------------
     // hipcub::BLOCK_SCAN_RAKING
     // -----------------------------------------------------------------------
-    params<float, 6U,   32, hipcub::BLOCK_SCAN_RAKING>,
-    params<float, 32,   2,  hipcub::BLOCK_SCAN_RAKING>,
-    params<int, 256,  3,  hipcub::BLOCK_SCAN_RAKING>,
-    params<unsigned int, 512,  4,  hipcub::BLOCK_SCAN_RAKING>,
-    params<float, 37,   2,  hipcub::BLOCK_SCAN_RAKING>,
-    params<float, 65,   5,  hipcub::BLOCK_SCAN_RAKING>,
-    params<float, 162,  7,  hipcub::BLOCK_SCAN_RAKING>,
-    params<float, 255,  15, hipcub::BLOCK_SCAN_RAKING>
-> InputArrayTestParams;
+    params<float, 6U, 32, hipcub::BLOCK_SCAN_RAKING>,
+    params<float, 32, 2, hipcub::BLOCK_SCAN_RAKING>,
+    params<int, 256, 3, hipcub::BLOCK_SCAN_RAKING>,
+    params<unsigned int, 512, 4, hipcub::BLOCK_SCAN_RAKING>,
+    params<float, 37, 2, hipcub::BLOCK_SCAN_RAKING>,
+    params<float, 65, 5, hipcub::BLOCK_SCAN_RAKING>,
+    params<float, 162, 7, hipcub::BLOCK_SCAN_RAKING>,
+    params<float, 255, 15, hipcub::BLOCK_SCAN_RAKING>>
+    InputArrayTestParams;
 
 TYPED_TEST_CASE(HipcubBlockScanInputArrayTests, InputArrayTestParams);
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void inclusive_scan_array_kernel(T* device_output)
+template <unsigned int               BlockSize,
+          unsigned int               ItemsPerThread,
+          hipcub::BlockScanAlgorithm Algorithm,
+          class T>
+__global__ void inclusive_scan_array_kernel(T* device_output)
 {
-    const unsigned int index = ((hipBlockIdx_x * BlockSize ) + hipThreadIdx_x) * ItemsPerThread;
+    const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
 
     // load
     T in_out[ItemsPerThread];
@@ -904,14 +798,13 @@ void inclusive_scan_array_kernel(T* device_output)
     {
         device_output[index + j] = in_out[j];
     }
-
 }
 
 TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -921,8 +814,8 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
 
@@ -932,64 +825,51 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
     {
         for(size_t j = 0; j < items_per_block; j++)
         {
-            auto idx = i * items_per_block + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * items_per_block + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(inclusive_scan_array_kernel<block_size, items_per_thread, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output
-    );
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
     {
-        ASSERT_NEAR(
-            output[i], expected[i],
-            static_cast<T>(0.05) * expected[i]
-        );
+        ASSERT_NEAR(output[i], expected[i], static_cast<T>(0.05) * expected[i]);
     }
 
     HIP_CHECK(hipFree(device_output));
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void inclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reductions)
+template <unsigned int               BlockSize,
+          unsigned int               ItemsPerThread,
+          hipcub::BlockScanAlgorithm Algorithm,
+          class T>
+__global__ void inclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reductions)
 {
-    const unsigned int index = ((hipBlockIdx_x * BlockSize ) + hipThreadIdx_x) * ItemsPerThread;
+    const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
 
     // load
     T in_out[ItemsPerThread];
@@ -1000,7 +880,7 @@ void inclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reduc
 
     using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
     __shared__ typename bscan_t::TempStorage temp_storage;
-    T reduction;
+    T                                        reduction;
     bscan_t(temp_storage).InclusiveScan(in_out, in_out, hipcub::Sum(), reduction);
 
     // store
@@ -1017,9 +897,9 @@ void inclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reduc
 
 TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -1029,8 +909,8 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
 
@@ -1044,100 +924,80 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
     {
         for(size_t j = 0; j < items_per_block; j++)
         {
-            auto idx = i * items_per_block + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * items_per_block + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
-        expected_reductions[i] = expected[(i+1) * items_per_block - 1];
+        expected_reductions[i] = expected[(i + 1) * items_per_block - 1];
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
     T* device_output_reductions;
-    HIP_CHECK(
-        hipMalloc(
-              &device_output_reductions,
-              output_reductions.size() * sizeof(typename decltype(output_reductions)::value_type)
-        )
-    );
+    HIP_CHECK(hipMalloc(&device_output_reductions,
+                        output_reductions.size()
+                            * sizeof(typename decltype(output_reductions)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
-    HIP_CHECK(
-        hipMemcpy(
-            device_output_reductions, output_reductions.data(),
-            output_reductions.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(device_output_reductions,
+                        output_reductions.data(),
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyHostToDevice));
 
     // Launching kernel
     hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(inclusive_scan_reduce_array_kernel<block_size, items_per_thread, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions
-    );
+        HIP_KERNEL_NAME(
+            inclusive_scan_reduce_array_kernel<block_size, items_per_thread, algorithm, T>),
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output,
+        device_output_reductions);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
     {
-        ASSERT_NEAR(
-            output[i], expected[i],
-            static_cast<T>(0.05) * expected[i]
-        );
+        ASSERT_NEAR(output[i], expected[i], static_cast<T>(0.05) * expected[i]);
     }
 
     for(size_t i = 0; i < output_reductions.size(); i++)
     {
-        ASSERT_NEAR(
-            output_reductions[i], expected_reductions[i],
-            static_cast<T>(0.05) * expected_reductions[i]
-        );
+        ASSERT_NEAR(output_reductions[i],
+                    expected_reductions[i],
+                    static_cast<T>(0.05) * expected_reductions[i]);
     }
 
     HIP_CHECK(hipFree(device_output));
     HIP_CHECK(hipFree(device_output_reductions));
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void inclusive_scan_array_prefix_callback_kernel(T* device_output, T* device_output_bp, T block_prefix)
+template <unsigned int               BlockSize,
+          unsigned int               ItemsPerThread,
+          hipcub::BlockScanAlgorithm Algorithm,
+          class T>
+__global__ void inclusive_scan_array_prefix_callback_kernel(T* device_output,
+                                                            T* device_output_bp,
+                                                            T  block_prefix)
 {
     const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
-    T prefix_value = block_prefix;
-    auto prefix_callback = [&prefix_value](T reduction)
-    {
+    T                  prefix_value    = block_prefix;
+    auto               prefix_callback = [&prefix_value](T reduction) {
         T prefix = prefix_value;
         prefix_value += reduction;
         return prefix;
@@ -1168,9 +1028,9 @@ void inclusive_scan_array_prefix_callback_kernel(T* device_output, T* device_out
 
 TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -1180,12 +1040,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
     std::vector<T> output_block_prefixes(size / items_per_block, 0);
-    T block_prefix = test_utils::get_random_value<T>(0, 100);
+    T              block_prefix = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -1195,97 +1055,76 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
         expected[i * items_per_block] = block_prefix;
         for(size_t j = 0; j < items_per_block; j++)
         {
-            auto idx = i * items_per_block + j;
-            expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+            auto idx      = i * items_per_block + j;
+            expected[idx] = output[idx] + expected[j > 0 ? idx - 1 : idx];
         }
-        expected_block_prefixes[i] = expected[(i+1) * items_per_block - 1];
+        expected_block_prefixes[i] = expected[(i + 1) * items_per_block - 1];
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
     T* device_output_bp;
-    HIP_CHECK(
-        hipMalloc(
-              &device_output_bp,
-              output_block_prefixes.size() * sizeof(typename decltype(output_block_prefixes)::value_type)
-        )
-    );
+    HIP_CHECK(hipMalloc(&device_output_bp,
+                        output_block_prefixes.size()
+                            * sizeof(typename decltype(output_block_prefixes)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
-    HIP_CHECK(
-        hipMemcpy(
-            device_output_bp, output_block_prefixes.data(),
-            output_block_prefixes.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(device_output_bp,
+                        output_block_prefixes.data(),
+                        output_block_prefixes.size() * sizeof(T),
+                        hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(
-            inclusive_scan_array_prefix_callback_kernel<block_size, items_per_thread, algorithm, T>
-        ),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_bp, block_prefix
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(inclusive_scan_array_prefix_callback_kernel<block_size,
+                                                                                   items_per_thread,
+                                                                                   algorithm,
+                                                                                   T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       device_output_bp,
+                       block_prefix);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_block_prefixes.data(), device_output_bp,
-            output_block_prefixes.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_block_prefixes.data(),
+                        device_output_bp,
+                        output_block_prefixes.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
     {
-        ASSERT_NEAR(
-            output[i], expected[i],
-            static_cast<T>(0.05) * expected[i]
-        );
+        ASSERT_NEAR(output[i], expected[i], static_cast<T>(0.05) * expected[i]);
     }
 
     for(size_t i = 0; i < output_block_prefixes.size(); i++)
     {
-        ASSERT_NEAR(
-            output_block_prefixes[i], expected_block_prefixes[i],
-            static_cast<T>(0.05) * expected_block_prefixes[i]
-        );
+        ASSERT_NEAR(output_block_prefixes[i],
+                    expected_block_prefixes[i],
+                    static_cast<T>(0.05) * expected_block_prefixes[i]);
     }
 
     HIP_CHECK(hipFree(device_output));
     HIP_CHECK(hipFree(device_output_bp));
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void exclusive_scan_array_kernel(T* device_output, T init)
+template <unsigned int               BlockSize,
+          unsigned int               ItemsPerThread,
+          hipcub::BlockScanAlgorithm Algorithm,
+          class T>
+__global__ void exclusive_scan_array_kernel(T* device_output, T init)
 {
     const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
     // load
@@ -1308,9 +1147,9 @@ void exclusive_scan_array_kernel(T* device_output, T init)
 
 TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -1320,11 +1159,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
-    const T init = test_utils::get_random_value<T>(0, 100);
+    const T        init   = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -1333,62 +1172,51 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
         expected[i * items_per_block] = init;
         for(size_t j = 1; j < items_per_block; j++)
         {
-            auto idx = i * items_per_block + j;
-            expected[idx] = output[idx-1] + expected[idx-1];
+            auto idx      = i * items_per_block + j;
+            expected[idx] = output[idx - 1] + expected[idx - 1];
         }
     }
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    HIP_CHECK(
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(exclusive_scan_array_kernel<block_size, items_per_thread, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, init
-    );
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output,
+        init);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
     {
-        ASSERT_NEAR(
-            output[i], expected[i],
-            static_cast<T>(0.05) * expected[i]
-        );
+        ASSERT_NEAR(output[i], expected[i], static_cast<T>(0.05) * expected[i]);
     }
 
     HIP_CHECK(hipFree(device_output));
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void exclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reductions, T init)
+template <unsigned int               BlockSize,
+          unsigned int               ItemsPerThread,
+          hipcub::BlockScanAlgorithm Algorithm,
+          class T>
+__global__ void
+    exclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reductions, T init)
 {
     const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
     // load
@@ -1400,7 +1228,7 @@ void exclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reduc
 
     using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
     __shared__ typename bscan_t::TempStorage temp_storage;
-    T reduction;
+    T                                        reduction;
     bscan_t(temp_storage).ExclusiveScan(in_out, in_out, init, hipcub::Sum(), reduction);
 
     // store
@@ -1417,9 +1245,9 @@ void exclusive_scan_reduce_array_kernel(T* device_output, T* device_output_reduc
 
 TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -1429,14 +1257,14 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
 
     // Output reduce results
     std::vector<T> output_reductions(size / block_size);
-    const T init = test_utils::get_random_value<T>(0, 100);
+    const T        init = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -1446,8 +1274,8 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
         expected[i * items_per_block] = init;
         for(size_t j = 1; j < items_per_block; j++)
         {
-            auto idx = i * items_per_block + j;
-            expected[idx] = output[idx-1] + expected[idx-1];
+            auto idx      = i * items_per_block + j;
+            expected[idx] = output[idx - 1] + expected[idx - 1];
         }
         for(size_t j = 0; j < items_per_block; j++)
         {
@@ -1457,87 +1285,65 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-    T* device_output_reductions;
     HIP_CHECK(
-        hipMalloc(
-              &device_output_reductions,
-              output_reductions.size() * sizeof(typename decltype(output_reductions)::value_type)
-        )
-    );
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    T* device_output_reductions;
+    HIP_CHECK(hipMalloc(&device_output_reductions,
+                        output_reductions.size()
+                            * sizeof(typename decltype(output_reductions)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
-            exclusive_scan_reduce_array_kernel<block_size, items_per_thread, algorithm, T>
-        ),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions, init
-    );
+            exclusive_scan_reduce_array_kernel<block_size, items_per_thread, algorithm, T>),
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output,
+        device_output_reductions,
+        init);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
     {
-        ASSERT_NEAR(
-            output[i], expected[i],
-            static_cast<T>(0.05) * expected[i]
-        );
+        ASSERT_NEAR(output[i], expected[i], static_cast<T>(0.05) * expected[i]);
     }
 
     for(size_t i = 0; i < output_reductions.size(); i++)
     {
-        ASSERT_NEAR(
-            output_reductions[i], expected_reductions[i],
-            static_cast<T>(0.05) * expected_reductions[i]
-        );
+        ASSERT_NEAR(output_reductions[i],
+                    expected_reductions[i],
+                    static_cast<T>(0.05) * expected_reductions[i]);
     }
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockScanAlgorithm Algorithm,
-    class T
->
-__global__
-void exclusive_scan_prefix_callback_array_kernel(
-    T* device_output,
-    T* device_output_bp,
-    T block_prefix
-)
+template <unsigned int               BlockSize,
+          unsigned int               ItemsPerThread,
+          hipcub::BlockScanAlgorithm Algorithm,
+          class T>
+__global__ void exclusive_scan_prefix_callback_array_kernel(T* device_output,
+                                                            T* device_output_bp,
+                                                            T  block_prefix)
 {
     const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
-    T prefix_value = block_prefix;
-    auto prefix_callback = [&prefix_value](T reduction)
-    {
+    T                  prefix_value    = block_prefix;
+    auto               prefix_callback = [&prefix_value](T reduction) {
         T prefix = prefix_value;
         prefix_value += reduction;
         return prefix;
@@ -1547,7 +1353,7 @@ void exclusive_scan_prefix_callback_array_kernel(
     T in_out[ItemsPerThread];
     for(unsigned int j = 0; j < ItemsPerThread; j++)
     {
-        in_out[j] = device_output[index+ j];
+        in_out[j] = device_output[index + j];
     }
 
     using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
@@ -1568,9 +1374,9 @@ void exclusive_scan_prefix_callback_array_kernel(
 
 TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -1580,12 +1386,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
     std::vector<T> output_block_prefixes(size / items_per_block);
-    T block_prefix = test_utils::get_random_value<T>(0, 100);
+    T              block_prefix = test_utils::get_random_value<T>(0, 100);
 
     // Calculate expected results on host
     std::vector<T> expected(output.size(), 0);
@@ -1595,8 +1401,8 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
         expected[i * items_per_block] = block_prefix;
         for(size_t j = 1; j < items_per_block; j++)
         {
-            auto idx = i * items_per_block + j;
-            expected[idx] = output[idx-1] + expected[idx-1];
+            auto idx      = i * items_per_block + j;
+            expected[idx] = output[idx - 1] + expected[idx - 1];
         }
         expected_block_prefixes[i] = block_prefix;
         for(size_t j = 0; j < items_per_block; j++)
@@ -1608,70 +1414,54 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
 
     // Writing to device memory
     T* device_output;
-    HIP_CHECK(hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
-    T* device_output_bp;
     HIP_CHECK(
-        hipMalloc(
-              &device_output_bp,
-              output_block_prefixes.size() * sizeof(typename decltype(output_block_prefixes)::value_type)
-        )
-    );
+        hipMalloc(&device_output, output.size() * sizeof(typename decltype(output)::value_type)));
+    T* device_output_bp;
+    HIP_CHECK(hipMalloc(&device_output_bp,
+                        output_block_prefixes.size()
+                            * sizeof(typename decltype(output_block_prefixes)::value_type)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Launching kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(
-            exclusive_scan_prefix_callback_array_kernel<block_size, items_per_thread, algorithm, T>
-        ),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_bp, block_prefix
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(exclusive_scan_prefix_callback_array_kernel<block_size,
+                                                                                   items_per_thread,
+                                                                                   algorithm,
+                                                                                   T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       device_output_bp,
+                       block_prefix);
 
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
     // Read from device memory
     HIP_CHECK(
-        hipMemcpy(
-            output.data(), device_output,
-            output.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+        hipMemcpy(output.data(), device_output, output.size() * sizeof(T), hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            output_block_prefixes.data(), device_output_bp,
-            output_block_prefixes.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_block_prefixes.data(),
+                        device_output_bp,
+                        output_block_prefixes.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Validating results
     for(size_t i = 0; i < output.size(); i++)
     {
-        ASSERT_NEAR(
-            output[i], expected[i],
-            static_cast<T>(0.05) * expected[i]
-        );
+        ASSERT_NEAR(output[i], expected[i], static_cast<T>(0.05) * expected[i]);
     }
 
     for(size_t i = 0; i < output_block_prefixes.size(); i++)
     {
-        ASSERT_NEAR(
-            output_block_prefixes[i], expected_block_prefixes[i],
-            static_cast<T>(0.05) * expected_block_prefixes[i]
-        );
+        ASSERT_NEAR(output_block_prefixes[i],
+                    expected_block_prefixes[i],
+                    static_cast<T>(0.05) * expected_block_prefixes[i]);
     }
 
     HIP_CHECK(hipFree(device_output));
     HIP_CHECK(hipFree(device_output_bp));
 }
-

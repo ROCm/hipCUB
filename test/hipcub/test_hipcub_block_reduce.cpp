@@ -33,31 +33,30 @@
 #define HIP_CHECK(error) ASSERT_EQ(error, hipSuccess)
 
 // Params for tests
-template<
-    class T,
-    unsigned int BlockSize = 256U,
-    unsigned int ItemsPerThread = 1U,
-    hipcub::BlockReduceAlgorithm Algorithm = hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_WARP_REDUCTIONS
->
+template <class T,
+          unsigned int                 BlockSize      = 256U,
+          unsigned int                 ItemsPerThread = 1U,
+          hipcub::BlockReduceAlgorithm Algorithm
+          = hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_WARP_REDUCTIONS>
 struct params
 {
-    using type = T;
-    static constexpr hipcub::BlockReduceAlgorithm algorithm = Algorithm;
-    static constexpr unsigned int block_size = BlockSize;
-    static constexpr unsigned int items_per_thread = ItemsPerThread;
+    using type                                                     = T;
+    static constexpr hipcub::BlockReduceAlgorithm algorithm        = Algorithm;
+    static constexpr unsigned int                 block_size       = BlockSize;
+    static constexpr unsigned int                 items_per_thread = ItemsPerThread;
 };
 
 // ---------------------------------------------------------
 // Test for reduce ops taking single input value
 // ---------------------------------------------------------
 
-template<class Params>
+template <class Params>
 class HipcubBlockReduceSingleValueTests : public ::testing::Test
 {
 public:
-    using type = typename Params::type;
-    static constexpr hipcub::BlockReduceAlgorithm algorithm = Params::algorithm;
-    static constexpr unsigned int block_size = Params::block_size;
+    using type                                               = typename Params::type;
+    static constexpr hipcub::BlockReduceAlgorithm algorithm  = Params::algorithm;
+    static constexpr unsigned int                 block_size = Params::block_size;
 };
 
 typedef ::testing::Types<
@@ -97,22 +96,17 @@ typedef ::testing::Types<
     params<short, 162U, 1, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
     params<unsigned int, 255U, 1, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
     params<int, 377U, 1, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<unsigned char, 377U, 1, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>
-> SingleValueTestParams;
+    params<unsigned char, 377U, 1, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>>
+    SingleValueTestParams;
 
 TYPED_TEST_CASE(HipcubBlockReduceSingleValueTests, SingleValueTestParams);
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockReduceAlgorithm Algorithm,
-    class T
->
-__global__
-void reduce_kernel(T* device_output, T* device_output_reductions)
+template <unsigned int BlockSize, hipcub::BlockReduceAlgorithm Algorithm, class T>
+__global__ void reduce_kernel(T* device_output, T* device_output_reductions)
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T value = device_output[index];
-    using breduce_t = hipcub::BlockReduce<T, BlockSize, Algorithm>;
+    T                  value = device_output[index];
+    using breduce_t          = hipcub::BlockReduce<T, BlockSize, Algorithm>;
     __shared__ typename breduce_t::TempStorage temp_storage;
     value = breduce_t(temp_storage).Reduce(value, hipcub::Sum());
     if(hipThreadIdx_x == 0)
@@ -123,8 +117,8 @@ void reduce_kernel(T* device_output, T* device_output_reductions)
 
 TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    using T                     = typename TestFixture::type;
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -133,7 +127,7 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
@@ -159,28 +153,22 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
     HIP_CHECK(hipMalloc(&device_output_reductions, output_reductions.size() * sizeof(T)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Running kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(reduce_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(reduce_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       device_output_reductions);
 
     // Reading results back
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Verifying results
     for(size_t i = 0; i < output_reductions.size(); i++)
@@ -194,17 +182,14 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
 
 TYPED_TEST_CASE(HipcubBlockReduceSingleValueTests, SingleValueTestParams);
 
-template<
-    unsigned int BlockSize,
-    hipcub::BlockReduceAlgorithm Algorithm,
-    class T
->
-__global__
-void reduce_valid_kernel(T* device_output, T* device_output_reductions, const unsigned int valid_items)
+template <unsigned int BlockSize, hipcub::BlockReduceAlgorithm Algorithm, class T>
+__global__ void reduce_valid_kernel(T*                 device_output,
+                                    T*                 device_output_reductions,
+                                    const unsigned int valid_items)
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
-    T value = device_output[index];
-    using breduce_t = hipcub::BlockReduce<T, BlockSize, Algorithm>;
+    T                  value = device_output[index];
+    using breduce_t          = hipcub::BlockReduce<T, BlockSize, Algorithm>;
     __shared__ typename breduce_t::TempStorage temp_storage;
     value = breduce_t(temp_storage).Reduce(value, hipcub::Sum(), valid_items);
     if(hipThreadIdx_x == 0)
@@ -215,9 +200,9 @@ void reduce_valid_kernel(T* device_output, T* device_output_reductions, const un
 
 TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                        = typename TestFixture::type;
+    constexpr auto     algorithm   = TestFixture::algorithm;
+    constexpr size_t   block_size  = TestFixture::block_size;
     const unsigned int valid_items = test_utils::get_random_value(block_size - 10, block_size);
 
     // Given block size not supported
@@ -226,7 +211,7 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
         return;
     }
 
-    const size_t size = block_size * 113;
+    const size_t size      = block_size * 113;
     const size_t grid_size = size / block_size;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
@@ -252,28 +237,23 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
     HIP_CHECK(hipMalloc(&device_output_reductions, output_reductions.size() * sizeof(T)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
     // Running kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(reduce_valid_kernel<block_size, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions, valid_items
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(reduce_valid_kernel<block_size, algorithm, T>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_output,
+                       device_output_reductions,
+                       valid_items);
 
     // Reading results back
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Verifying results
     for(size_t i = 0; i < output_reductions.size(); i++)
@@ -285,54 +265,50 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
     HIP_CHECK(hipFree(device_output_reductions));
 }
 
-
-template<class Params>
+template <class Params>
 class HipcubBlockReduceInputArrayTests : public ::testing::Test
 {
 public:
-    using type = typename Params::type;
-    static constexpr unsigned int block_size = Params::block_size;
-    static constexpr hipcub::BlockReduceAlgorithm algorithm = Params::algorithm;
-    static constexpr unsigned int items_per_thread = Params::items_per_thread;
+    using type                                                     = typename Params::type;
+    static constexpr unsigned int                 block_size       = Params::block_size;
+    static constexpr hipcub::BlockReduceAlgorithm algorithm        = Params::algorithm;
+    static constexpr unsigned int                 items_per_thread = Params::items_per_thread;
 };
 
 typedef ::testing::Types<
     // -----------------------------------------------------------------------
     // hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_WARP_REDUCTIONS
     // -----------------------------------------------------------------------
-    params<float, 6U,   32>,
-    params<float, 32,   2>,
-    params<unsigned int, 256,  3>,
-    params<int, 512,  4>,
+    params<float, 6U, 32>,
+    params<float, 32, 2>,
+    params<unsigned int, 256, 3>,
+    params<int, 512, 4>,
     params<float, 1024, 1>,
-    params<float, 37,   2>,
-    params<float, 65,   5>,
-    params<float, 162,  7>,
-    params<float, 255,  15>,
+    params<float, 37, 2>,
+    params<float, 65, 5>,
+    params<float, 162, 7>,
+    params<float, 255, 15>,
     // -----------------------------------------------------------------------
     // hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING
     // -----------------------------------------------------------------------
-    params<float, 6U,   32, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<float, 32,   2,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<int, 256,  3,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<unsigned int, 512,  4,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<float, 1024, 1,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<float, 37,   2,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<float, 65,   5,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<float, 162,  7,  hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
-    params<float, 255,  15, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>
-> InputArrayTestParams;
+    params<float, 6U, 32, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<float, 32, 2, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<int, 256, 3, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<unsigned int, 512, 4, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<float, 1024, 1, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<float, 37, 2, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<float, 65, 5, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<float, 162, 7, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>,
+    params<float, 255, 15, hipcub::BlockReduceAlgorithm::BLOCK_REDUCE_RAKING>>
+    InputArrayTestParams;
 
 TYPED_TEST_CASE(HipcubBlockReduceInputArrayTests, InputArrayTestParams);
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    hipcub::BlockReduceAlgorithm Algorithm,
-    class T
->
-__global__
-void reduce_array_kernel(T* device_output, T* device_output_reductions)
+template <unsigned int                 BlockSize,
+          unsigned int                 ItemsPerThread,
+          hipcub::BlockReduceAlgorithm Algorithm,
+          class T>
+__global__ void reduce_array_kernel(T* device_output, T* device_output_reductions)
 {
     const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
     // load
@@ -353,12 +329,11 @@ void reduce_array_kernel(T* device_output, T* device_output_reductions)
     }
 }
 
-
 TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
 {
-    using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
-    constexpr size_t block_size = TestFixture::block_size;
+    using T                           = typename TestFixture::type;
+    constexpr auto   algorithm        = TestFixture::algorithm;
+    constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
 
     // Given block size not supported
@@ -368,8 +343,8 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
     }
 
     const size_t items_per_block = block_size * items_per_thread;
-    const size_t size = items_per_block * 37;
-    const size_t grid_size = size / items_per_block;
+    const size_t size            = items_per_block * 37;
+    const size_t grid_size       = size / items_per_block;
     // Generate data
     std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200);
 
@@ -396,47 +371,37 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
     HIP_CHECK(hipMalloc(&device_output_reductions, output_reductions.size() * sizeof(T)));
 
     HIP_CHECK(
-        hipMemcpy(
-            device_output, output.data(),
-            output.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+        hipMemcpy(device_output, output.data(), output.size() * sizeof(T), hipMemcpyHostToDevice));
 
-    HIP_CHECK(
-        hipMemcpy(
-            device_output_reductions, output_reductions.data(),
-            output_reductions.size() * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(device_output_reductions,
+                        output_reductions.data(),
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyHostToDevice));
 
     // Running kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(reduce_array_kernel<block_size, items_per_thread, algorithm, T>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_output, device_output_reductions
-    );
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_output,
+        device_output_reductions);
 
     // Reading results back
-    HIP_CHECK(
-        hipMemcpy(
-            output_reductions.data(), device_output_reductions,
-            output_reductions.size() * sizeof(T),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(output_reductions.data(),
+                        device_output_reductions,
+                        output_reductions.size() * sizeof(T),
+                        hipMemcpyDeviceToHost));
 
     // Verifying results
     for(size_t i = 0; i < output_reductions.size(); i++)
     {
-        ASSERT_NEAR(
-            output_reductions[i], expected_reductions[i],
-            static_cast<T>(0.05) * expected_reductions[i]
-        );
+        ASSERT_NEAR(output_reductions[i],
+                    expected_reductions[i],
+                    static_cast<T>(0.05) * expected_reductions[i]);
     }
 
     HIP_CHECK(hipFree(device_output));
     HIP_CHECK(hipFree(device_output_reductions));
 }
-

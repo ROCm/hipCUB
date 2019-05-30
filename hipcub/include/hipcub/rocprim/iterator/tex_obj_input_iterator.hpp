@@ -34,10 +34,7 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
-template<
-    typename T,
-    typename OffsetT = std::ptrdiff_t
->
+template <typename T, typename OffsetT = std::ptrdiff_t>
 using TexObjInputIterator = ::rocprim::texture_cache_iterator<T, OffsetT>;
 
 END_HIPCUB_NAMESPACE

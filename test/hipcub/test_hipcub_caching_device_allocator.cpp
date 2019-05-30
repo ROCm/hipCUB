@@ -41,7 +41,7 @@
 
 #define HIP_CHECK(error) ASSERT_EQ(error, hipSuccess)
 
-__global__ void EmptyKernel() { }
+__global__ void EmptyKernel() {}
 
 // Hipified test/test_allocator.cu
 
@@ -67,21 +67,18 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     HIP_CHECK(hipStreamCreate(&other_stream));
 
     // Allocate 999 bytes on the current gpu in stream0
-    char *d_999B_stream0_a;
-    char *d_999B_stream0_b;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
+    char* d_999B_stream0_a;
+    char* d_999B_stream0_b;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream0_a, 999, 0));
 
     // Run some big kernel in stream 0
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(EmptyKernel),
-        dim3(32000), dim3(256), 1024 * 8, 0
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(EmptyKernel), dim3(32000), dim3(256), 1024 * 8, 0);
 
     // Free d_999B_stream0_a
     HIP_CHECK(allocator.DeviceFree(d_999B_stream0_a));
 
     // Allocate another 999 bytes in stream 0
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream0_b, 999, 0));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream0_b, 999, 0));
 
     // Check that that we have 1 live block on the initial GPU
     ASSERT_EQ(allocator.live_blocks.size(), 1u);
@@ -90,18 +87,15 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     ASSERT_EQ(allocator.cached_blocks.size(), 0u);
 
     // Run some big kernel in stream 0
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(EmptyKernel),
-        dim3(32000), dim3(256), 1024 * 8, 0
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(EmptyKernel), dim3(32000), dim3(256), 1024 * 8, 0);
 
     // Free d_999B_stream0_b
     HIP_CHECK(allocator.DeviceFree(d_999B_stream0_b));
 
     // Allocate 999 bytes on the current gpu in other_stream
-    char *d_999B_stream_other_a;
-    char *d_999B_stream_other_b;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream_other_a, 999, other_stream));
+    char* d_999B_stream_other_a;
+    char* d_999B_stream_other_b;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream_other_a, 999, other_stream));
 
     // Check that that we have 1 live blocks on the initial GPU (that we allocated a new one because d_999B_stream0_b is only available for stream 0 until it becomes idle)
     ASSERT_EQ(allocator.live_blocks.size(), 1u);
@@ -111,17 +105,15 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
 
     // Run some big kernel in other_stream
     hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(EmptyKernel),
-        dim3(32000), dim3(256), 1024 * 8, other_stream
-    );
+        HIP_KERNEL_NAME(EmptyKernel), dim3(32000), dim3(256), 1024 * 8, other_stream);
 
     // Free d_999B_stream_other
     HIP_CHECK(allocator.DeviceFree(d_999B_stream_other_a));
 
     // Check that we can now use both allocations in stream 0 after synchronizing the device
     HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream0_b, 999, 0));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream0_a, 999, 0));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream0_b, 999, 0));
 
     // Check that that we have 2 live blocks on the initial GPU
     ASSERT_EQ(allocator.live_blocks.size(), 2u);
@@ -135,8 +127,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
 
     // Check that we can now use both allocations in other_stream
     HIP_CHECK(hipDeviceSynchronize());
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream_other_a, 999, other_stream));
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream_other_b, 999, other_stream));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream_other_a, 999, other_stream));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream_other_b, 999, other_stream));
 
     // Check that that we have 2 live blocks on the initial GPU
     ASSERT_EQ(allocator.live_blocks.size(), 2u);
@@ -146,9 +138,7 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
 
     // Run some big kernel in other_stream
     hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(EmptyKernel),
-        dim3(32000), dim3(256), 1024 * 8, other_stream
-    );
+        HIP_KERNEL_NAME(EmptyKernel), dim3(32000), dim3(256), 1024 * 8, other_stream);
 
     // Free d_999B_stream_other_a and d_999B_stream_other_b
     HIP_CHECK(allocator.DeviceFree(d_999B_stream_other_a));
@@ -157,8 +147,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     // Check that we can now use both allocations in stream 0 after synchronizing the device and destroying the other stream
     HIP_CHECK(hipDeviceSynchronize());
     HIP_CHECK(hipStreamDestroy(other_stream));
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream0_a, 999, 0));
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_999B_stream0_b, 999, 0));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream0_a, 999, 0));
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_999B_stream0_b, 999, 0));
 
     // Check that that we have 2 live blocks on the initial GPU
     ASSERT_EQ(allocator.live_blocks.size(), 2u);
@@ -178,8 +168,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     //
 
     // Allocate 5 bytes on the current gpu
-    char *d_5B;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_5B, 5));
+    char* d_5B;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_5B, 5));
 
     // Check that that we have zero free bytes cached on the initial GPU
     ASSERT_EQ(allocator.cached_bytes[initial_gpu].free, 0u);
@@ -192,8 +182,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     //
 
     // Allocate 4096 bytes on the current gpu
-    char *d_4096B;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_4096B, 4096));
+    char* d_4096B;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_4096B, 4096));
 
     // Check that that we have 2 live blocks on the initial GPU
     ASSERT_EQ(allocator.live_blocks.size(), 2u);
@@ -235,8 +225,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     //
 
     // Allocate 768 bytes on the current gpu
-    char *d_768B;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_768B, 768));
+    char* d_768B;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_768B, 768));
 
     // Check that that we have the min_bin free bytes cached on the initial gpu (4096 was reused)
     ASSERT_EQ(allocator.cached_bytes[initial_gpu].free, allocator.min_bin_bytes);
@@ -252,8 +242,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     //
 
     // Allocate max_cached_bytes on the current gpu
-    char *d_max_cached;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_max_cached, allocator.max_cached_bytes));
+    char* d_max_cached;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_max_cached, allocator.max_cached_bytes));
 
     // DeviceFree d_max_cached
     HIP_CHECK(allocator.DeviceFree(d_max_cached));
@@ -288,8 +278,8 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     //
 
     // Allocate max cached bytes + 1 on the current gpu
-    char *d_max_cached_plus;
-    HIP_CHECK(allocator.DeviceAllocate((void **) &d_max_cached_plus, allocator.max_cached_bytes + 1));
+    char* d_max_cached_plus;
+    HIP_CHECK(allocator.DeviceAllocate((void**)&d_max_cached_plus, allocator.max_cached_bytes + 1));
 
     // DeviceFree max cached bytes
     HIP_CHECK(allocator.DeviceFree(d_max_cached_plus));
@@ -298,7 +288,7 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     HIP_CHECK(allocator.DeviceFree(d_768B));
 
     unsigned int power;
-    size_t rounded_bytes;
+    size_t       rounded_bytes;
     allocator.NearestPowerOf(power, rounded_bytes, allocator.bin_growth, 768);
 
     // Check that that we have 4096 free bytes cached on the initial gpu
@@ -310,22 +300,22 @@ TEST(HipcubCachingDeviceAllocatorTests, Test1)
     // Check that that still we have 0 live block across all GPUs
     ASSERT_EQ(allocator.live_blocks.size(), 0u);
 
-    if (num_gpus > 1)
+    if(num_gpus > 1)
     {
         //
         // Test9
         //
 
         // Allocate 768 bytes on the next gpu
-        int next_gpu = (initial_gpu + 1) % num_gpus;
-        char *d_768B_2;
-        HIP_CHECK(allocator.DeviceAllocate(next_gpu, (void **) &d_768B_2, 768));
+        int   next_gpu = (initial_gpu + 1) % num_gpus;
+        char* d_768B_2;
+        HIP_CHECK(allocator.DeviceAllocate(next_gpu, (void**)&d_768B_2, 768));
 
         // DeviceFree d_768B on the next gpu
         HIP_CHECK(allocator.DeviceFree(next_gpu, d_768B_2));
 
         // Re-allocate 768 bytes on the next gpu
-        HIP_CHECK(allocator.DeviceAllocate(next_gpu, (void **) &d_768B_2, 768));
+        HIP_CHECK(allocator.DeviceAllocate(next_gpu, (void**)&d_768B_2, 768));
 
         // Re-free d_768B on the next gpu
         HIP_CHECK(allocator.DeviceFree(next_gpu, d_768B_2));

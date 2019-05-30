@@ -37,54 +37,54 @@ BEGIN_HIPCUB_NAMESPACE
 class DeviceRunLengthEncode
 {
 public:
-    template<
-        typename InputIteratorT,
-        typename UniqueOutputIteratorT,
-        typename LengthsOutputIteratorT,
-        typename NumRunsOutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Encode(void * d_temp_storage,
-                      size_t& temp_storage_bytes,
-                      InputIteratorT d_in,
-                      UniqueOutputIteratorT d_unique_out,
-                      LengthsOutputIteratorT d_counts_out,
-                      NumRunsOutputIteratorT d_num_runs_out,
-                      int num_items,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template <typename InputIteratorT,
+              typename UniqueOutputIteratorT,
+              typename LengthsOutputIteratorT,
+              typename NumRunsOutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Encode(void*                  d_temp_storage,
+                                                     size_t&                temp_storage_bytes,
+                                                     InputIteratorT         d_in,
+                                                     UniqueOutputIteratorT  d_unique_out,
+                                                     LengthsOutputIteratorT d_counts_out,
+                                                     NumRunsOutputIteratorT d_num_runs_out,
+                                                     int                    num_items,
+                                                     hipStream_t            stream = 0,
+                                                     bool debug_synchronous        = false)
     {
-        return ::rocprim::run_length_encode(
-            d_temp_storage, temp_storage_bytes,
-            d_in, num_items,
-            d_unique_out, d_counts_out, d_num_runs_out,
-            stream, debug_synchronous
-        );
+        return ::rocprim::run_length_encode(d_temp_storage,
+                                            temp_storage_bytes,
+                                            d_in,
+                                            num_items,
+                                            d_unique_out,
+                                            d_counts_out,
+                                            d_num_runs_out,
+                                            stream,
+                                            debug_synchronous);
     }
 
-    template<
-        typename InputIteratorT,
-        typename OffsetsOutputIteratorT,
-        typename LengthsOutputIteratorT,
-        typename NumRunsOutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t NonTrivialRuns(void * d_temp_storage,
-                              size_t& temp_storage_bytes,
-                              InputIteratorT d_in,
-                              OffsetsOutputIteratorT d_offsets_out,
-                              LengthsOutputIteratorT d_lengths_out,
-                              NumRunsOutputIteratorT d_num_runs_out,
-                              int num_items,
-                              hipStream_t stream = 0,
-                              bool debug_synchronous = false)
+    template <typename InputIteratorT,
+              typename OffsetsOutputIteratorT,
+              typename LengthsOutputIteratorT,
+              typename NumRunsOutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t NonTrivialRuns(void*          d_temp_storage,
+                                                             size_t&        temp_storage_bytes,
+                                                             InputIteratorT d_in,
+                                                             OffsetsOutputIteratorT d_offsets_out,
+                                                             LengthsOutputIteratorT d_lengths_out,
+                                                             NumRunsOutputIteratorT d_num_runs_out,
+                                                             int                    num_items,
+                                                             hipStream_t            stream = 0,
+                                                             bool debug_synchronous        = false)
     {
-        return ::rocprim::run_length_encode_non_trivial_runs(
-            d_temp_storage, temp_storage_bytes,
-            d_in, num_items,
-            d_offsets_out, d_lengths_out, d_num_runs_out,
-            stream, debug_synchronous
-        );
+        return ::rocprim::run_length_encode_non_trivial_runs(d_temp_storage,
+                                                             temp_storage_bytes,
+                                                             d_in,
+                                                             num_items,
+                                                             d_offsets_out,
+                                                             d_lengths_out,
+                                                             d_num_runs_out,
+                                                             stream,
+                                                             debug_synchronous);
     }
 };
 

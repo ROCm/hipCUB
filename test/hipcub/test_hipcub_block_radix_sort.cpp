@@ -24,8 +24,8 @@
 #include <functional>
 #include <iostream>
 #include <type_traits>
-#include <vector>
 #include <utility>
+#include <vector>
 
 // Google Test
 #include <gtest/gtest.h>
@@ -36,30 +36,29 @@
 
 #define HIP_CHECK(error) ASSERT_EQ(error, hipSuccess)
 
-template<
-    class Key,
-    class Value,
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    bool Descending = false,
-    bool ToStriped = false,
-    unsigned int StartBit = 0,
-    unsigned int EndBit = sizeof(Key) * 8
->
+template <class Key,
+          class Value,
+          unsigned int BlockSize,
+          unsigned int ItemsPerThread,
+          bool         Descending = false,
+          bool         ToStriped  = false,
+          unsigned int StartBit   = 0,
+          unsigned int EndBit     = sizeof(Key) * 8>
 struct params
 {
-    using key_type = Key;
-    using value_type = Value;
-    static constexpr unsigned int block_size = BlockSize;
+    using key_type                                 = Key;
+    using value_type                               = Value;
+    static constexpr unsigned int block_size       = BlockSize;
     static constexpr unsigned int items_per_thread = ItemsPerThread;
-    static constexpr bool descending = Descending;
-    static constexpr bool to_striped = ToStriped;
-    static constexpr unsigned int start_bit = StartBit;
-    static constexpr unsigned int end_bit = EndBit;
+    static constexpr bool         descending       = Descending;
+    static constexpr bool         to_striped       = ToStriped;
+    static constexpr unsigned int start_bit        = StartBit;
+    static constexpr unsigned int end_bit          = EndBit;
 };
 
-template<class Params>
-class HipcubBlockRadixSort : public ::testing::Test {
+template <class Params>
+class HipcubBlockRadixSort : public ::testing::Test
+{
 public:
     using params = Params;
 };
@@ -97,43 +96,41 @@ typedef ::testing::Types<
     // Stability (a number of key values is lower than BlockSize * ItemsPerThread: some keys appear
     // multiple times with different values or key parts outside [StartBit, EndBit))
     params<unsigned char, int, 512U, 2, false, true>,
-    params<unsigned short, double, 60U, 1, true, false, 8, 11>
-> Params;
+    params<unsigned short, double, 60U, 1, true, false, 8, 11>>
+    Params;
 
 TYPED_TEST_CASE(HipcubBlockRadixSort, Params);
 
-template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
+template <class Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_comparator
 {
 private:
-    template<unsigned int CStartBit, unsigned int CEndBit>
+    template <unsigned int CStartBit, unsigned int CEndBit>
     constexpr static bool all_bits()
     {
         return (CStartBit == 0 && CEndBit == sizeof(Key) * 8);
     }
 
-    template<unsigned int CStartBit, unsigned int CEndBit>
-    auto compare(const Key& lhs, const Key& rhs) const
-        -> typename std::enable_if<all_bits<CStartBit, CEndBit>(), bool>::type
+    template <unsigned int CStartBit, unsigned int CEndBit>
+    auto compare(const Key& lhs, const Key& rhs) const ->
+        typename std::enable_if<all_bits<CStartBit, CEndBit>(), bool>::type
     {
         return Descending ? (rhs < lhs) : (lhs < rhs);
     }
 
-    template<unsigned int CStartBit, unsigned int CEndBit>
-    auto compare(const Key& lhs, const Key& rhs) const
-        -> typename std::enable_if<!all_bits<CStartBit, CEndBit>(), bool>::type
+    template <unsigned int CStartBit, unsigned int CEndBit>
+    auto compare(const Key& lhs, const Key& rhs) const ->
+        typename std::enable_if<!all_bits<CStartBit, CEndBit>(), bool>::type
     {
         auto mask = (1ull << (EndBit - StartBit)) - 1;
-        auto l = (static_cast<unsigned long long>(lhs) >> StartBit) & mask;
-        auto r = (static_cast<unsigned long long>(rhs) >> StartBit) & mask;
+        auto l    = (static_cast<unsigned long long>(lhs) >> StartBit) & mask;
+        auto r    = (static_cast<unsigned long long>(rhs) >> StartBit) & mask;
         return Descending ? (r < l) : (l < r);
     }
 
 public:
-    static_assert(
-        key_comparator::all_bits<StartBit, EndBit>() || std::is_unsigned<Key>::value,
-        "Test supports start and end bits only for unsigned integers"
-    );
+    static_assert(key_comparator::all_bits<StartBit, EndBit>() || std::is_unsigned<Key>::value,
+                  "Test supports start and end bits only for unsigned integers");
 
     bool operator()(const Key& lhs, const Key& rhs)
     {
@@ -141,7 +138,7 @@ public:
     }
 };
 
-template<class Key, class Value, bool Descending, unsigned int StartBit, unsigned int EndBit>
+template <class Key, class Value, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_value_comparator
 {
     bool operator()(const std::pair<Key, Value>& lhs, const std::pair<Key, Value>& rhs)
@@ -150,22 +147,16 @@ struct key_value_comparator
     }
 };
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    class key_type
->
-__global__
-void sort_key_kernel(
-    key_type* device_keys_output,
-    bool to_striped,
-    bool descending,
-    unsigned int start_bit,
-    unsigned int end_bit)
+template <unsigned int BlockSize, unsigned int ItemsPerThread, class key_type>
+__global__ void sort_key_kernel(key_type*    device_keys_output,
+                                bool         to_striped,
+                                bool         descending,
+                                unsigned int start_bit,
+                                unsigned int end_bit)
 {
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
-    const unsigned int lid = hipThreadIdx_x;
-    const unsigned int block_offset = hipBlockIdx_x * items_per_block;
+    const unsigned int     lid             = hipThreadIdx_x;
+    const unsigned int     block_offset    = hipBlockIdx_x * items_per_block;
 
     key_type keys[ItemsPerThread];
     hipcub::LoadDirectBlocked(lid, device_keys_output + block_offset, keys);
@@ -193,75 +184,70 @@ void sort_key_kernel(
 
 TYPED_TEST(HipcubBlockRadixSort, SortKeys)
 {
-    using key_type = typename TestFixture::params::key_type;
-    constexpr size_t block_size = TestFixture::params::block_size;
-    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
-    constexpr bool descending = TestFixture::params::descending;
-    constexpr bool to_striped = TestFixture::params::to_striped;
-    constexpr unsigned int start_bit = TestFixture::params::start_bit;
-    constexpr unsigned int end_bit = TestFixture::params::end_bit;
-    constexpr size_t items_per_block = block_size * items_per_thread;
+    using key_type                          = typename TestFixture::params::key_type;
+    constexpr size_t       block_size       = TestFixture::params::block_size;
+    constexpr size_t       items_per_thread = TestFixture::params::items_per_thread;
+    constexpr bool         descending       = TestFixture::params::descending;
+    constexpr bool         to_striped       = TestFixture::params::to_striped;
+    constexpr unsigned int start_bit        = TestFixture::params::start_bit;
+    constexpr unsigned int end_bit          = TestFixture::params::end_bit;
+    constexpr size_t       items_per_block  = block_size * items_per_thread;
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
     {
         return;
     }
 
-    const size_t size = items_per_block * 1134;
+    const size_t size      = items_per_block * 1134;
     const size_t grid_size = size / items_per_block;
     // Generate data
     std::vector<key_type> keys_output;
     if(std::is_floating_point<key_type>::value)
     {
-        keys_output = test_utils::get_random_data<key_type>(size, (key_type)-1000, (key_type)+1000);
+        keys_output
+            = test_utils::get_random_data<key_type>(size, (key_type)-1000, (key_type) + 1000);
     }
     else
     {
         keys_output = test_utils::get_random_data<key_type>(
-            size,
-            std::numeric_limits<key_type>::min(),
-            std::numeric_limits<key_type>::max()
-        );
+            size, std::numeric_limits<key_type>::min(), std::numeric_limits<key_type>::max());
     }
 
     // Calculate expected results on host
     std::vector<key_type> expected(keys_output);
     for(size_t i = 0; i < size / items_per_block; i++)
     {
-        std::stable_sort(
-            expected.begin() + (i * items_per_block),
-            expected.begin() + ((i + 1) * items_per_block),
-            key_comparator<key_type, descending, start_bit, end_bit>()
-        );
+        std::stable_sort(expected.begin() + (i * items_per_block),
+                         expected.begin() + ((i + 1) * items_per_block),
+                         key_comparator<key_type, descending, start_bit, end_bit>());
     }
 
     // Preparing device
     key_type* device_keys_output;
     HIP_CHECK(hipMalloc(&device_keys_output, keys_output.size() * sizeof(key_type)));
 
-    HIP_CHECK(
-        hipMemcpy(
-            device_keys_output, keys_output.data(),
-            keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(device_keys_output,
+                        keys_output.data(),
+                        keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
+                        hipMemcpyHostToDevice));
 
     // Running kernel
-    hipLaunchKernelGGL(
-        HIP_KERNEL_NAME(sort_key_kernel<block_size, items_per_thread, key_type>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_keys_output, to_striped, descending, start_bit, end_bit
-    );
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(sort_key_kernel<block_size, items_per_thread, key_type>),
+                       dim3(grid_size),
+                       dim3(block_size),
+                       0,
+                       0,
+                       device_keys_output,
+                       to_striped,
+                       descending,
+                       start_bit,
+                       end_bit);
 
     // Getting results to host
-    HIP_CHECK(
-        hipMemcpy(
-            keys_output.data(), device_keys_output,
-            keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(keys_output.data(),
+                        device_keys_output,
+                        keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
+                        hipMemcpyDeviceToHost));
 
     // Verifying results
     for(size_t i = 0; i < size; i++)
@@ -272,26 +258,19 @@ TYPED_TEST(HipcubBlockRadixSort, SortKeys)
     HIP_CHECK(hipFree(device_keys_output));
 }
 
-template<
-    unsigned int BlockSize,
-    unsigned int ItemsPerThread,
-    class key_type,
-    class value_type
->
-__global__
-void sort_key_value_kernel(
-    key_type* device_keys_output,
-    value_type* device_values_output,
-    bool to_striped,
-    bool descending,
-    unsigned int start_bit,
-    unsigned int end_bit)
+template <unsigned int BlockSize, unsigned int ItemsPerThread, class key_type, class value_type>
+__global__ void sort_key_value_kernel(key_type*    device_keys_output,
+                                      value_type*  device_values_output,
+                                      bool         to_striped,
+                                      bool         descending,
+                                      unsigned int start_bit,
+                                      unsigned int end_bit)
 {
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
-    const unsigned int lid = hipThreadIdx_x;
-    const unsigned int block_offset = hipBlockIdx_x * items_per_block;
+    const unsigned int     lid             = hipThreadIdx_x;
+    const unsigned int     block_offset    = hipBlockIdx_x * items_per_block;
 
-    key_type keys[ItemsPerThread];
+    key_type   keys[ItemsPerThread];
     value_type values[ItemsPerThread];
     hipcub::LoadDirectBlocked(lid, device_keys_output + block_offset, keys);
     hipcub::LoadDirectBlocked(lid, device_values_output + block_offset, values);
@@ -319,53 +298,48 @@ void sort_key_value_kernel(
     }
 }
 
-
 TYPED_TEST(HipcubBlockRadixSort, SortKeysValues)
 {
-    using key_type = typename TestFixture::params::key_type;
-    using value_type = typename TestFixture::params::value_type;
-    constexpr size_t block_size = TestFixture::params::block_size;
-    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
-    constexpr bool descending = TestFixture::params::descending;
-    constexpr bool to_striped = TestFixture::params::to_striped;
-    constexpr unsigned int start_bit = TestFixture::params::start_bit;
-    constexpr unsigned int end_bit = TestFixture::params::end_bit;
-    constexpr size_t items_per_block = block_size * items_per_thread;
+    using key_type                          = typename TestFixture::params::key_type;
+    using value_type                        = typename TestFixture::params::value_type;
+    constexpr size_t       block_size       = TestFixture::params::block_size;
+    constexpr size_t       items_per_thread = TestFixture::params::items_per_thread;
+    constexpr bool         descending       = TestFixture::params::descending;
+    constexpr bool         to_striped       = TestFixture::params::to_striped;
+    constexpr unsigned int start_bit        = TestFixture::params::start_bit;
+    constexpr unsigned int end_bit          = TestFixture::params::end_bit;
+    constexpr size_t       items_per_block  = block_size * items_per_thread;
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
     {
         return;
     }
 
-    const size_t size = items_per_block * 1134;
+    const size_t size      = items_per_block * 1134;
     const size_t grid_size = size / items_per_block;
     // Generate data
     std::vector<key_type> keys_output;
     if(std::is_floating_point<key_type>::value)
     {
-        keys_output = test_utils::get_random_data<key_type>(size, (key_type)-1000, (key_type)+1000);
+        keys_output
+            = test_utils::get_random_data<key_type>(size, (key_type)-1000, (key_type) + 1000);
     }
     else
     {
         keys_output = test_utils::get_random_data<key_type>(
-            size,
-            std::numeric_limits<key_type>::min(),
-            std::numeric_limits<key_type>::max()
-        );
+            size, std::numeric_limits<key_type>::min(), std::numeric_limits<key_type>::max());
     }
 
     std::vector<value_type> values_output;
     if(std::is_floating_point<value_type>::value)
     {
-        values_output = test_utils::get_random_data<value_type>(size, (value_type)-1000, (value_type)+1000);
+        values_output
+            = test_utils::get_random_data<value_type>(size, (value_type)-1000, (value_type) + 1000);
     }
     else
     {
         values_output = test_utils::get_random_data<value_type>(
-            size,
-            std::numeric_limits<value_type>::min(),
-            std::numeric_limits<value_type>::max()
-        );
+            size, std::numeric_limits<value_type>::min(), std::numeric_limits<value_type>::max());
     }
 
     using key_value = std::pair<key_type, value_type>;
@@ -382,8 +356,7 @@ TYPED_TEST(HipcubBlockRadixSort, SortKeysValues)
         std::stable_sort(
             expected.begin() + (i * items_per_block),
             expected.begin() + ((i + 1) * items_per_block),
-            key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
-        );
+            key_value_comparator<key_type, value_type, descending, start_bit, end_bit>());
     }
 
     key_type* device_keys_output;
@@ -391,45 +364,40 @@ TYPED_TEST(HipcubBlockRadixSort, SortKeysValues)
     value_type* device_values_output;
     HIP_CHECK(hipMalloc(&device_values_output, values_output.size() * sizeof(value_type)));
 
-    HIP_CHECK(
-        hipMemcpy(
-            device_keys_output, keys_output.data(),
-            keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(device_keys_output,
+                        keys_output.data(),
+                        keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
+                        hipMemcpyHostToDevice));
 
-    HIP_CHECK(
-        hipMemcpy(
-            device_values_output, values_output.data(),
-            values_output.size() * sizeof(typename decltype(values_output)::value_type),
-            hipMemcpyHostToDevice
-        )
-    );
+    HIP_CHECK(hipMemcpy(device_values_output,
+                        values_output.data(),
+                        values_output.size() * sizeof(typename decltype(values_output)::value_type),
+                        hipMemcpyHostToDevice));
 
     // Running kernel
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(sort_key_value_kernel<block_size, items_per_thread, key_type, value_type>),
-        dim3(grid_size), dim3(block_size), 0, 0,
-        device_keys_output, device_values_output, to_striped, descending, start_bit, end_bit
-    );
+        dim3(grid_size),
+        dim3(block_size),
+        0,
+        0,
+        device_keys_output,
+        device_values_output,
+        to_striped,
+        descending,
+        start_bit,
+        end_bit);
 
     // Getting results to host
-    HIP_CHECK(
-        hipMemcpy(
-            keys_output.data(), device_keys_output,
-            keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(keys_output.data(),
+                        device_keys_output,
+                        keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
+                        hipMemcpyDeviceToHost));
 
-    HIP_CHECK(
-        hipMemcpy(
-            values_output.data(), device_values_output,
-            values_output.size() * sizeof(typename decltype(values_output)::value_type),
-            hipMemcpyDeviceToHost
-        )
-    );
+    HIP_CHECK(hipMemcpy(values_output.data(),
+                        device_values_output,
+                        values_output.size() * sizeof(typename decltype(values_output)::value_type),
+                        hipMemcpyDeviceToHost));
 
     for(size_t i = 0; i < size; i++)
     {
@@ -440,4 +408,3 @@ TYPED_TEST(HipcubBlockRadixSort, SortKeysValues)
     HIP_CHECK(hipFree(device_keys_output));
     HIP_CHECK(hipFree(device_values_output));
 }
-

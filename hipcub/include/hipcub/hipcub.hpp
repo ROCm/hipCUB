@@ -33,9 +33,9 @@
 #include "hipcub_version.hpp"
 
 #ifdef __HIP_PLATFORM_HCC__
-    #include "rocprim/hipcub.hpp"
+#include "rocprim/hipcub.hpp"
 #elif defined(__HIP_PLATFORM_NVCC__)
-    #include "cub/hipcub.hpp"
+#include "cub/hipcub.hpp"
 #endif
 
 #endif // HIPCUB_HPP_

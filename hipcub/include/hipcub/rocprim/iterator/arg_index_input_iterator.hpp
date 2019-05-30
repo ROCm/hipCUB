@@ -34,11 +34,9 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
-template<
-    typename InputIterator,
-    typename Difference = std::ptrdiff_t,
-    typename Value = typename std::iterator_traits<InputIterator>::value_type
->
+template <typename InputIterator,
+          typename Difference = std::ptrdiff_t,
+          typename Value      = typename std::iterator_traits<InputIterator>::value_type>
 using ArgIndexInputIterator = ::rocprim::arg_index_iterator<InputIterator, Difference, Value>;
 
 END_HIPCUB_NAMESPACE

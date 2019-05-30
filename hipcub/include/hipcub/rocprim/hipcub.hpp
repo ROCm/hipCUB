@@ -32,10 +32,10 @@
 
 #include "../config.hpp"
 
-#include "util_allocator.hpp"
-#include "util_type.hpp"
-#include "util_ptx.hpp"
 #include "thread/thread_operators.hpp"
+#include "util_allocator.hpp"
+#include "util_ptx.hpp"
+#include "util_type.hpp"
 
 // Iterator
 #include "iterator/arg_index_input_iterator.hpp"

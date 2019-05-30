@@ -39,98 +39,75 @@ BEGIN_HIPCUB_NAMESPACE
 class DeviceScan
 {
 public:
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t InclusiveSum(void *d_temp_storage,
-                            size_t &temp_storage_bytes,
-                            InputIteratorT d_in,
-                            OutputIteratorT d_out,
-                            int num_items,
-                            hipStream_t stream = 0,
-                            bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t InclusiveSum(void*           d_temp_storage,
+                                                           size_t&         temp_storage_bytes,
+                                                           InputIteratorT  d_in,
+                                                           OutputIteratorT d_out,
+                                                           int             num_items,
+                                                           hipStream_t     stream = 0,
+                                                           bool debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceScan::InclusiveSum(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceScan::InclusiveSum(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT,
-        typename ScanOpT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t InclusiveScan(void *d_temp_storage,
-                             size_t &temp_storage_bytes,
-                             InputIteratorT d_in,
-                             OutputIteratorT d_out,
-                             ScanOpT scan_op,
-                             int num_items,
-                             hipStream_t stream = 0,
-                             bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT, typename ScanOpT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t InclusiveScan(void*           d_temp_storage,
+                                                            size_t&         temp_storage_bytes,
+                                                            InputIteratorT  d_in,
+                                                            OutputIteratorT d_out,
+                                                            ScanOpT         scan_op,
+                                                            int             num_items,
+                                                            hipStream_t     stream = 0,
+                                                            bool debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceScan::InclusiveScan(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, scan_op, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceScan::InclusiveScan(d_temp_storage,
+                                                                       temp_storage_bytes,
+                                                                       d_in,
+                                                                       d_out,
+                                                                       scan_op,
+                                                                       num_items,
+                                                                       stream,
+                                                                       debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ExclusiveSum(void *d_temp_storage,
-                            size_t &temp_storage_bytes,
-                            InputIteratorT d_in,
-                            OutputIteratorT d_out,
-                            int num_items,
-                            hipStream_t stream = 0,
-                            bool debug_synchronous = false)
+    template <typename InputIteratorT, typename OutputIteratorT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t ExclusiveSum(void*           d_temp_storage,
+                                                           size_t&         temp_storage_bytes,
+                                                           InputIteratorT  d_in,
+                                                           OutputIteratorT d_out,
+                                                           int             num_items,
+                                                           hipStream_t     stream = 0,
+                                                           bool debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceScan::ExclusiveSum(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceScan::ExclusiveSum(
+            d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream, debug_synchronous));
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT,
-        typename ScanOpT,
-        typename InitValueT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ExclusiveScan(void *d_temp_storage,
-                             size_t &temp_storage_bytes,
-                             InputIteratorT d_in,
-                             OutputIteratorT d_out,
-                             ScanOpT scan_op,
-                             InitValueT init_value,
-                             int num_items,
-                             hipStream_t stream = 0,
-                             bool debug_synchronous = false)
+    template <typename InputIteratorT,
+              typename OutputIteratorT,
+              typename ScanOpT,
+              typename InitValueT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t ExclusiveScan(void*           d_temp_storage,
+                                                            size_t&         temp_storage_bytes,
+                                                            InputIteratorT  d_in,
+                                                            OutputIteratorT d_out,
+                                                            ScanOpT         scan_op,
+                                                            InitValueT      init_value,
+                                                            int             num_items,
+                                                            hipStream_t     stream = 0,
+                                                            bool debug_synchronous = false)
     {
-        return hipCUDAErrorTohipError(
-            ::cub::DeviceScan::ExclusiveScan(
-                d_temp_storage, temp_storage_bytes,
-                d_in, d_out, scan_op, init_value, num_items,
-                stream, debug_synchronous
-            )
-        );
+        return hipCUDAErrorTohipError(::cub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                                       temp_storage_bytes,
+                                                                       d_in,
+                                                                       d_out,
+                                                                       scan_op,
+                                                                       init_value,
+                                                                       num_items,
+                                                                       stream,
+                                                                       debug_synchronous));
     }
 };
 
