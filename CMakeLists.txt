@@ -60,7 +60,6 @@ include(cmake/Dependencies.cmake)
 
 # Setup VERSION
 set(VERSION_STRING "2.7.0")
-
 rocm_setup_version(VERSION ${VERSION_STRING})
 
 # AMD targets
