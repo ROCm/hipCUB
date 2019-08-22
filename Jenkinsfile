@@ -2,7 +2,7 @@
 // This shared library is available at https://github.com/ROCmSoftwarePlatform/rocJENKINS/
 @Library('rocJenkins') _
 
-// This is file for internal AMD use.
+// This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
 
 import com.amd.project.*
@@ -49,7 +49,7 @@ hipCUBCI:
             command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
+                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
                     """
         }
         else
