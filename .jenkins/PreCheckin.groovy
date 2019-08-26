@@ -17,9 +17,7 @@ hipCUBCI:
     // Define test architectures, optional rocm version argument is available
     def nodes = new dockerNodes(['gfx900 && ubuntu', 'gfx906 && ubuntu', 'gfx900 && centos7', 'gfx906 && centos7', 'RCCL'], hipcub)
 
-    common = load 'Common.groovy'
-
-    boolean formatCheck = common.formatCheck
+    boolean formatCheck = false
 
     def compileCommand =
     {
