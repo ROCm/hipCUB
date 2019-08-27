@@ -15,7 +15,7 @@ hipCUBCI:
     def hipcub = new rocProject('hipCUB')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(['RCCL'], hipcub)
+    def nodes = new dockerNodes(['rccl'], hipcub)
 
     boolean formatCheck = false
 
