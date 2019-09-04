@@ -18,17 +18,9 @@ RUN yum install -y \
     clang \
     clang-devel \
     gcc-c++ \
-    gcc-gfortran \
     gtest \
     gtest-devel \
-    lapack \
-    lapack-devel \
-    lapack-static \
-    fftw-devel \
     pkgconfig \
-    python27 \
-    python34 \
-    PyYAML \
     libcxx-devel \
     boost-devel\
     numactl-libs \
