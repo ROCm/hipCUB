@@ -8,22 +8,6 @@
 import com.amd.project.*
 import com.amd.docker.*
 
-////////////////////////////////////////////////////////////////////////
-// Mostly generated from snippet generator 'properties; set job properties'
-// Time-based triggers added to execute nightly tests, eg '30 2 * * *' means 2:30 AM
-properties([
-    pipelineTriggers([cron('0 1 * * *'), [$class: 'PeriodicFolderTrigger', interval: '5m']]),
-    buildDiscarder(logRotator(
-      artifactDaysToKeepStr: '',
-      artifactNumToKeepStr: '',
-      daysToKeepStr: '',
-      numToKeepStr: '10')),
-    disableConcurrentBuilds(),
-    [$class: 'CopyArtifactPermissionProperty', projectNames: '*']
-   ])
-
-
-////////////////////////////////////////////////////////////////////////
 import java.nio.file.Path;
 
 hipCUBCI:
@@ -32,7 +16,7 @@ hipCUBCI:
     def hipcub = new rocProject('hipCUB')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(['gfx900 && ubuntu && hip-clang', 'gfx906 && ubuntu && hip-clang'], hipcub)
+    def nodes = new dockerNodes(['gfx803 && centos && hip-clang', 'gfx900 && ubuntu && hip-clang', 'gfx906 && ubuntu && hip-clang'], hipcub)
 
     boolean formatCheck = false
 
@@ -42,25 +26,12 @@ hipCUBCI:
 
         project.paths.construct_build_prefix()
         
-        def command 
-
-        if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            command = """#!/usr/bin/env bash
+        def command = """#!/usr/bin/env bash
                     set -x
                     cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
+                    LD_LIBRARY_PATH=/opt/rocm/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
                     """
-        }
-        else
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
-                    """
-        }
-
+        
         platform.runCommand(this, command)
     }
 
@@ -70,7 +41,7 @@ hipCUBCI:
 
         def command
 
-        if(platform.jenkinsLabel.contains('centos'))
+        if(platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('sles'))
         {
             command = """#!/usr/bin/env bash
                     set -x
@@ -92,45 +63,7 @@ hipCUBCI:
         platform.runCommand(this, command)
     }
 
-    def packageCommand =
-    {
-        platform, project->
-
-        def command
-        
-        if(platform.jenkinsLabel.contains('centos'))
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.rpm package/
-                    rpm -qlp package/*.rpm
-                  """
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")
-        }
-        else if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            packageCommand = null
-        }
-        else
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.deb package/
-                    dpkg -c package/*.deb
-                  """        
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.deb""")
-        }
-    }
+    def packageCommand = null
 
     buildProject(hipcub, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
