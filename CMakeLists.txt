@@ -1,5 +1,5 @@
 # MIT License
-#
+0;136;0c#
 # Copyright (c) 2018-2019 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -59,7 +59,7 @@ option(BUILD_TEST "Build tests (requires googletest)" ON)
 include(cmake/Dependencies.cmake)
 
 # Setup VERSION
-set(VERSION_STRING "2.8.0")
+set(VERSION_STRING "2.9.0")
 
 rocm_setup_version(VERSION ${VERSION_STRING})
 
