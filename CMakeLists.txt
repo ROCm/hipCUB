@@ -1,5 +1,5 @@
 # MIT License
-0;136;0c#
+#
 # Copyright (c) 2018-2019 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
