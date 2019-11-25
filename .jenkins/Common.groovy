@@ -5,41 +5,12 @@ import groovy.transform.Field
 
 @Field boolean formatCheck = false
 
-echo "*************** COMMON GROOVY"
-// def getCompileCommand =
-// {
-//     platform, project->
-
-//     project.paths.construct_build_prefix()
-    
-//     echo "************Generating compile command"
-//     def command 
-
-//     if(platform.jenkinsLabel.contains('hip-clang'))
-//     {
-//         command = """#!/usr/bin/env bash
-//                 set -x
-//                 cd ${project.paths.project_build_prefix}
-//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
-//                 """
-//     }
-//     else
-//     {
-//         command = """#!/usr/bin/env bash
-//                 set -x
-//                 cd ${project.paths.project_build_prefix}
-//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
-//                 """
-//     }
-//     return command
-// }
-
 @Field def compileCommand =
 {
     platform, project->
 
     project.paths.construct_build_prefix()
-    
+
     def command 
 
     if(platform.jenkinsLabel.contains('hip-clang'))
@@ -95,7 +66,7 @@ echo "*************** COMMON GROOVY"
     platform, project->
 
     def command
-    
+
     if(platform.jenkinsLabel.contains('centos'))
     {
         command = """
@@ -106,7 +77,7 @@ echo "*************** COMMON GROOVY"
                 mv *.rpm package/
                 rpm -qlp package/*.rpm
               """
-        
+
         platform.runCommand(this, command)
         platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")
     }
@@ -124,10 +95,38 @@ echo "*************** COMMON GROOVY"
                 mv *.deb package/
                 dpkg -c package/*.deb
               """        
-        
+
         platform.runCommand(this, command)
         platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.deb""")
     }
 }
 
 return this
+
+// def getCompileCommand =
+// {
+//     platform, project->
+
+//     project.paths.construct_build_prefix()
+    
+//     echo "************Generating compile command"
+//     def command 
+
+//     if(platform.jenkinsLabel.contains('hip-clang'))
+//     {
+//         command = """#!/usr/bin/env bash
+//                 set -x
+//                 cd ${project.paths.project_build_prefix}
+//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
+//                 """
+//     }
+//     else
+//     {
+//         command = """#!/usr/bin/env bash
+//                 set -x
+//                 cd ${project.paths.project_build_prefix}
+//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
+//                 """
+//     }
+//     return command
+// }

@@ -26,6 +26,7 @@ hipCUBCI:
         sh '''
             ls 
             ls .jenkins/
+            cat .jenkins/Common.groovy
         '''
         echo "************Loading common file"
         def common = load "${pwd()}/.jenkins/Common.groovy"
