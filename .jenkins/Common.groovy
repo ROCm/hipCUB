@@ -5,13 +5,40 @@ import groovy.transform.Field
 
 @Field boolean formatCheck = false
 
-@Field def getCompileCommand =
+// def getCompileCommand =
+// {
+//     platform, project->
+
+//     project.paths.construct_build_prefix()
+    
+//     echo "************Generating compile command"
+//     def command 
+
+//     if(platform.jenkinsLabel.contains('hip-clang'))
+//     {
+//         command = """#!/usr/bin/env bash
+//                 set -x
+//                 cd ${project.paths.project_build_prefix}
+//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
+//                 """
+//     }
+//     else
+//     {
+//         command = """#!/usr/bin/env bash
+//                 set -x
+//                 cd ${project.paths.project_build_prefix}
+//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
+//                 """
+//     }
+//     return command
+// }
+
+@Field def compileCommand =
 {
     platform, project->
 
     project.paths.construct_build_prefix()
     
-    echo "************Generating compile command"
     def command 
 
     if(platform.jenkinsLabel.contains('hip-clang'))
@@ -31,36 +58,8 @@ import groovy.transform.Field
                 """
     }
 
-    return command
+    platform.runCommand(this, command)
 }
-
-// @Field def compileCommand =
-// {
-//     platform, project->
-
-//     project.paths.construct_build_prefix()
-    
-//     def command 
-
-//     if(platform.jenkinsLabel.contains('hip-clang'))
-//     {
-//         command = """#!/usr/bin/env bash
-//                 set -x
-//                 cd ${project.paths.project_build_prefix}
-//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
-//                 """
-//     }
-//     else
-//     {
-//         command = """#!/usr/bin/env bash
-//                 set -x
-//                 cd ${project.paths.project_build_prefix}
-//                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
-//                 """
-//     }
-
-//     platform.runCommand(this, command)
-// }
 
 @Field def testCommand =
 {
