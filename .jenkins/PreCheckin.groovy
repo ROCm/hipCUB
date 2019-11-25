@@ -22,6 +22,11 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
+
+        sh '''
+            ls 
+            ls .jenkins/
+        '''
         echo "************Loading common file"
         def common = load "${pwd()}/.jenkins/Common.groovy"
 
