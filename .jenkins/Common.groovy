@@ -8,9 +8,10 @@ import groovy.transform.Field
 @Field def getCompileCommand
 {
     platform, project->
-    
+
     project.paths.construct_build_prefix()
     
+    echo "************Generating compile command"
     def command 
 
     if(platform.jenkinsLabel.contains('hip-clang'))

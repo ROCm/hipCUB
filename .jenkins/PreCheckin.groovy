@@ -22,9 +22,10 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
-        
+        echo "************Loading common file"
         def common = load "${pwd()}/.jenkins/Common.groovy"
 
+        echo "************Getting compile command"
         def command = common.getCompileCommand(platform, project)
         platform.runCommand(this, command)
     }
