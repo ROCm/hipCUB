@@ -22,6 +22,7 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
+        
         def common = load "${pwd()}/.jenkins/Common.groovy"
 
         def command = common.getCompileCommand(platform, project)

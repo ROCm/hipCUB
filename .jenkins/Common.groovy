@@ -5,8 +5,10 @@ import groovy.transform.Field
 
 @Field boolean formatCheck = false
 
-@Field def getCompileCommand(platform, project)
+@Field def getCompileCommand
 {
+    platform, project->
+    
     project.paths.construct_build_prefix()
     
     def command 
