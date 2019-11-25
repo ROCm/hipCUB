@@ -18,12 +18,11 @@ hipCUBCI:
     def nodes = new dockerNodes(['ubuntu && gfx803'], hipcub)
 
     boolean formatCheck = false
-    
-    checkout scm
-    def common = load "${pwd()}/Common.groovy"
 
     def compileCommand =
     {
+        def common = load "${pwd()}/Common.groovy"
+
         def command = common.getCompileCommand()
 
         platform.runCommand(this, command)
