@@ -21,10 +21,10 @@ hipCUBCI:
 
     def compileCommand =
     {
-        checkout scm
+        platform, project->
         def common = load "${pwd()}/.jenkins/Common.groovy"
 
-        def command = common.getCompileCommand()
+        def command = common.getCompileCommand(platform, project)
         platform.runCommand(this, command)
     }
 
