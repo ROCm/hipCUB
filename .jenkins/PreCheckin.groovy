@@ -15,34 +15,15 @@ hipCUBCI:
     def hipcub = new rocProject('hipCUB')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(['ubuntu && gfx803', 'sles && gfx906', 'gfx900 && centos7', 'gfx906 && centos7'], hipcub)
+    def nodes = new dockerNodes(['ubuntu && gfx803'], hipcub)
 
     boolean formatCheck = false
 
+    def common = load "${pwd()}/Common.groovy"
+
     def compileCommand =
     {
-        platform, project->
-
-        project.paths.construct_build_prefix()
-        
-        def command 
-
-        if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
-                    """
-        }
-        else
-        {
-            command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}
-                    LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
-                    """
-        }
+        def command = common.getCompileCommand()
 
         platform.runCommand(this, command)
     }
