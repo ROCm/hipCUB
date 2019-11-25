@@ -5,7 +5,7 @@ import groovy.transform.Field
 
 @Field boolean formatCheck = false
 
-def getCompileCommand =
+@Field def getCompileCommand =
 {
     platform, project->
 
