@@ -5,6 +5,7 @@ import groovy.transform.Field
 
 @Field boolean formatCheck = false
 
+echo "*************** COMMON GROOVY"
 // def getCompileCommand =
 // {
 //     platform, project->
