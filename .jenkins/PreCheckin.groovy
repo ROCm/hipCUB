@@ -19,6 +19,8 @@ hipCUBCI:
 
     boolean formatCheck = false
 
+    def commonGroovy
+
     def compileCommand =
     {
         platform, project->
@@ -31,7 +33,7 @@ hipCUBCI:
         '''
         echo "************Loading common file"
         
-        def commonGroovy = load ".jenkins/Common.groovy"
+        commonGroovy = load ".jenkins/Common.groovy"
 
         // echo "************Listing properties"
         // echo commonGroovy.getProperties().toString()
