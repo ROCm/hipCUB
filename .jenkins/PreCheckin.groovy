@@ -31,7 +31,7 @@ hipCUBCI:
         '''
         echo "************Loading common file"
         
-        def common = load "${pwd()}/.jenkins/Common.groovy"
+        def common = load ".jenkins/Common.groovy"
 
         echo "************Getting compile command"
         def command = common.getCompileCommand(platform, project)
