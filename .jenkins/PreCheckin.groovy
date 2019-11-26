@@ -19,28 +19,27 @@ hipCUBCI:
 
     boolean formatCheck = false
 
-    def commonGroovy
+    echo "************Checkout common file"
+    checkout scm
+    echo "************Loading common file"
+    def commonGroovy = load ".jenkins/Common.groovy"
 
     def compileCommand =
     {
         platform, project->
         
-        checkout scm
+        
         sh '''
             ls 
             ls .jenkins/
             cat .jenkins/Common.groovy
         '''
-        echo "************Loading common file"
         
-        commonGroovy = load ".jenkins/Common.groovy"
-
-        // echo "************Listing properties"
-        // echo commonGroovy.getProperties().toString()
         
         echo "************Getting compile command"
-        def command = commonGroovy.getCompileCommand(platform, project)
-        platform.runCommand(this, command)
+        // def command = commonGroovy.getCompileCommand(platform, project)
+        commonGroovy.runCompileCommand(platform, project)
+        
     }
 
     def testCommand =

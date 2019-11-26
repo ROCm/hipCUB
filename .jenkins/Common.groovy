@@ -7,7 +7,7 @@ import groovy.transform.Field
 
 echo "TEST"
 
-def getCompileCommand(platform, project)
+def runCompileCommand(platform, project)
 {
 
     project.paths.construct_build_prefix()
@@ -31,7 +31,8 @@ def getCompileCommand(platform, project)
                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
                 """
     }
-    return command
+    // return command
+    platform.runCommand(this, command)
 }
 
 
