@@ -22,7 +22,7 @@ hipCUBCI:
     echo "************Checkout common file"
     checkout scm
     echo "************Loading common file"
-    def commonGroovy = load ".jenkins/Common.groovy"
+    def commonGroovy = load "${pwd}/.jenkins/Common.groovy"
 
     def compileCommand =
     {
