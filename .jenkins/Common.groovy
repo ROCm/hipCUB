@@ -33,11 +33,6 @@ def runTestCommand (platform, project)
 
 	def command = """#!/usr/bin/env bash
                     set -x
-                    ls
-                    ls ${project.paths.project_build_prefix}
-                    ls ${project.paths.project_build_prefix}/build
-                    ls ${project.paths.project_build_prefix}/build/release
-                    cd ${project.paths.project_build_prefix}/build/release
                     make -j4
                     ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ctest --output-on-failure
                 """
