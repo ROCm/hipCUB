@@ -27,17 +27,17 @@ hipCUBCI:
         
         echo "************Checkout common file"
         checkout scm
-        echo "************Loading common file"
-        commonGroovy = load "${pwd}/.jenkins/Common.groovy"
-        
+
         sh '''
             ls 
             ls .jenkins/
             cat .jenkins/Common.groovy
         '''
+
+        echo "************Loading common file"
+        commonGroovy = load ".jenkins/Common.groovy"
         
-        
-        echo "************Getting compile command"
+        echo "************Running compile command"
         // def command = commonGroovy.getCompileCommand(platform, project)
         commonGroovy.runCompileCommand(platform, project)
     }
