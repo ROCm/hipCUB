@@ -24,21 +24,9 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
-        
-        echo "************Checkout common file"
+
         checkout scm
-
-        sh '''
-            ls 
-            ls .jenkins/
-            cat .jenkins/Common.groovy
-        '''
-
-        echo "************Loading common file"
         commonGroovy = load ".jenkins/Common.groovy"
-        
-        echo "************Running compile command"
-        // def command = commonGroovy.getCompileCommand(platform, project)
         commonGroovy.runCompileCommand(platform, project)
     }
 
@@ -46,56 +34,14 @@ hipCUBCI:
     {
         platform, project->
 
-        String sudo = auxiliary.sudo(platform.jenkinsLabel)
-
-	def command = """#!/usr/bin/env bash
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make -j4
-                    ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ctest --output-on-failure
-                """
-
-        platform.runCommand(this, command)
+        commonGroovy.runTestCommand(platform, project)
     }
 
     def packageCommand =
     {
         platform, project->
-
-        def command
         
-        if(platform.jenkinsLabel.contains('hip-clang'))
-        {
-            packageCommand = null
-        }
-        else if(platform.jenkinsLabel.contains('ubuntu'))
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.deb package/
-                    dpkg -c package/*.deb
-                  """        
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.deb""")
-        }
-        else
-        {
-            command = """
-                    set -x
-                    cd ${project.paths.project_build_prefix}/build/release
-                    make package
-                    rm -rf package && mkdir -p package
-                    mv *.rpm package/
-                    rpm -qlp package/*.rpm
-                  """
-            
-            platform.runCommand(this, command)
-            platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")
-        }
+        commonGroovy.runPackageCommand(platform, project)
     }
 
     buildProject(hipcub, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
