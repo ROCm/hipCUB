@@ -1,11 +1,8 @@
-import com.amd.project.*
-import com.amd.docker.*
-import java.nio.file.Path;
-import groovy.transform.Field
+// This file is for internal AMD use.
+// If you are interested in running your own Jenkins, please raise a github issue for assistance.
 
 def runCompileCommand(platform, project)
 {
-
     project.paths.construct_build_prefix()
         
     def command 
