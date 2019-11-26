@@ -28,9 +28,9 @@ hipCUBCI:
         //       ls'''
         // Needed to get the latest version of Common.groovy. To be properly implemented in the future in rocJenkins
         // checkout scm
-        sh '''pwd
-              ls
-              ls ${project.paths.project_src_prefix} -a'''
+        sh """"pwd
+            ls
+            ls ${project.paths.project_src_prefix} -a"""
         commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/Common.groovy"
         commonGroovy.runCompileCommand(platform, project)
     }
