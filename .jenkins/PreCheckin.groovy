@@ -31,10 +31,14 @@ hipCUBCI:
         '''
         echo "************Loading common file"
         
-        def common = load ".jenkins/Common.groovy"
+        def commonGroovy = load ".jenkins/Common.groovy"
 
+        echo "************Listing properties"
+        echo commonGroovy.getProperties().toString()
+        
         echo "************Getting compile command"
-        def command = common.getCompileCommand(platform, project)
+        
+        def command = commonGroovy.getCompileCommand(platform, project)
         platform.runCommand(this, command)
     }
 
