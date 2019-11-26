@@ -15,7 +15,7 @@ hipCUBCI:
     def hipcub = new rocProject('hipCUB')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(['ubuntu && gfx906'], hipcub)
+    def nodes = new dockerNodes(['ubuntu && gfx803', 'sles && gfx906', 'gfx900 && centos7', 'gfx906 && centos7'], hipcub)
 
     boolean formatCheck = false
 
@@ -24,13 +24,7 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
-        // sh '''pwd
-        //       ls'''
-        // Needed to get the latest version of Common.groovy. To be properly implemented in the future in rocJenkins
-        // checkout scm
-        sh """pwd
-            ls
-            ls ${project.paths.project_src_prefix} -a"""
+  
         commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/Common.groovy"
         commonGroovy.runCompileCommand(platform, project)
     }
