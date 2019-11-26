@@ -24,8 +24,10 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
-
+        sh '''pwd'''
+        // Needed to get the latest version of Common.groovy. To be properly implemented in the future in rocJenkins
         checkout scm
+        sh '''pwd'''
         commonGroovy = load ".jenkins/Common.groovy"
         commonGroovy.runCompileCommand(platform, project)
     }

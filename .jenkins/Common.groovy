@@ -3,8 +3,6 @@ import com.amd.docker.*
 import java.nio.file.Path;
 import groovy.transform.Field
 
-echo "Common Groovy Loaded"
-
 def runCompileCommand(platform, project)
 {
 
@@ -87,6 +85,8 @@ def runPackageCommand(platform, project)
         platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.rpm""")
     }
 }
+
+echo "Common Groovy Loaded"
 
 return this
 
