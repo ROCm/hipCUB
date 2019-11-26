@@ -7,7 +7,7 @@ import groovy.transform.Field
 
 echo "TEST"
 
-@Field def getCompileCommand(platform, project)
+def getCompileCommand(platform, project)
 {
 
     project.paths.construct_build_prefix()
