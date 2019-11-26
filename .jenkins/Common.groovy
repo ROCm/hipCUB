@@ -9,8 +9,7 @@ def runCompileCommand(platform, project)
 {
 
     project.paths.construct_build_prefix()
-    
-    echo "************Generating compile command"
+        
     def command 
 
     if(platform.jenkinsLabel.contains('hip-clang'))
@@ -29,18 +28,20 @@ def runCompileCommand(platform, project)
                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
                 """
     }
-    // return command
+
     platform.runCommand(this, command)
 }
 
 def runTestCommand (platform, project)
 {
-    def command
-
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
 
-    def command = """#!/usr/bin/env bash
+	def command = """#!/usr/bin/env bash
                     set -x
+                    ls
+                    ls ${project.paths.project_build_prefix}
+                    ls ${project.paths.project_build_prefix}/build
+                    ls ${project.paths.project_build_prefix}/build/release
                     cd ${project.paths.project_build_prefix}/build/release
                     make -j4
                     ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ctest --output-on-failure
