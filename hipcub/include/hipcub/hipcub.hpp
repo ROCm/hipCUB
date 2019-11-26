@@ -29,10 +29,11 @@
 
 // Meta configuration for hipCUB
 #include "config.hpp"
-// Version
-#include "hipcub_version.hpp"
 
 #ifdef __HIP_PLATFORM_HCC__
+    // Version, only needed with HCC backend
+    #include "hipcub_version.hpp"
+
     #include "rocprim/hipcub.hpp"
 #elif defined(__HIP_PLATFORM_NVCC__)
     #include "cub/hipcub.hpp"
