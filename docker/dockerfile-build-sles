@@ -11,7 +11,7 @@ ARG user_uid
 # * hcc-config.cmake: pkg-config
 # * libhsakmt.so: libnuma1
 RUN zypper -n update && zypper -n install\
-    rock-dkms \
+    rocm-dev \
     sudo \
     ca-certificates \
     git \
