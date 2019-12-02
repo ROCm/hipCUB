@@ -24,10 +24,8 @@ hipCUBCI:
     def compileCommand =
     {
         platform, project->
-  
-        stage(buildName + ' Initialize CI ' + platform.jenkinsLabel) {
-            commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/Common.groovy"
-        }
+
+        commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/Common.groovy"
         commonGroovy.runCompileCommand(platform, project)
     }
 
