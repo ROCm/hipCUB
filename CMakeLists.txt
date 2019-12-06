@@ -81,8 +81,8 @@ endif()
 
 # Package
 if(HIP_PLATFORM STREQUAL "hcc")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 1.5), rocprim (>= 2.5)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 1.5, rocprim >= 2.5")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27), rocprim (>= 2.5)")
+  set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 2.5.27, rocprim >= 2.5")
   set(CPACK_DEBIAN_PACKAGE_REPLACES "cub-hip")
   set(CPACK_RPM_PACKAGE_OBSOLETES "cub-hip")
 else()
