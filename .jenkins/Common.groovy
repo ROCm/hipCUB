@@ -3,8 +3,6 @@
 
 def runCompileCommand(platform, project)
 {
-    properties(auxiliary.setProperties([pipelineTriggers([cron('0 1 * * *'), [$class: 'PeriodicFolderTrigger', interval: '5m']])]))
-    
     project.paths.construct_build_prefix()
         
     def command 
