@@ -16,7 +16,7 @@ hipCUBCI:
     def hipcub = new rocProject('hipCUB', 'PreCheckin')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes([ubuntu:['gfx803']], 'hcc.no-npi-dkms', hipcub)
+    def nodes = new dockerNodes([ubuntu:['gfx803'],centos7:['gfx803','gfx900']], 'compute-rocm-dkms-no-npi ', hipcub)
 
     boolean formatCheck = false
 
