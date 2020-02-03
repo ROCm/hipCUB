@@ -51,16 +51,14 @@ def hipCUBCI =
 
 ci: { 
     String buildURL = env.BUILD_URL
-    echo buildURL
-    println(buildURL)
-    // 'http://10.216.151.18:8080/job/PreCheckin/job/Tensile/job/develop/18'
     def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']]), 
                         "rocm-docker":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']])]
     jobNameList.each 
     {
         jobName, nodeDetails->
         echo jobName
-        if (${env.buildURL}.contains(jobName))
+        if (buildURL.contains(jobName))
+            echo nodeDetails
             hipCUBCI(nodeDetails, jobName)
     }
 }
