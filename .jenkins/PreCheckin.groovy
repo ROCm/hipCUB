@@ -13,7 +13,8 @@ properties(auxiliary.setProperties())
 
 def hipCUBCI = 
 {
-    nodeDetails, jobName
+    nodeDetails, jobName->
+
     def hipcub = new rocProject('hipCUB', 'PreCheckin')
 
     // Define test architectures, optional rocm version argument is available
