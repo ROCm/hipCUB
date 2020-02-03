@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 // This shared library is available at https://github.com/ROCmSoftwarePlatform/rocJENKINS/
-@Library('rocJenkins') _
+@Library('rocJenkins@ping') _
 
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
@@ -11,12 +11,13 @@ import java.nio.file.Path;
 
 properties(auxiliary.setProperties())
 
-hipCUBCI:
+def hipCUBCI = 
 {
+    nodeDetails, jobName
     def hipcub = new rocProject('hipCUB', 'PreCheckin')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(['ubuntu && gfx803', 'sles && gfx906', 'gfx900 && centos7', 'gfx906 && centos7'], hipcub)
+    def nodes = new dockerNodes(nodeDetails, jobName, hipcub)
 
     boolean formatCheck = false
 
@@ -46,4 +47,18 @@ hipCUBCI:
 
     buildProject(hipcub, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
+
+ci: { 
+    String buildURL = env.BUILD_URL
+    echo buildURL
+    println(buildURL)
+    // 'http://10.216.151.18:8080/job/PreCheckin/job/Tensile/job/develop/18'
+
+    def nodeDetails = [ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']]
+    def jobName = 'compute-rocm-dkms-no-npi'
+    
+    hipcubCI(nodeDetails, jobName)
+}
+
+
 
