@@ -60,7 +60,7 @@ ci: {
     {
         jobName, nodeDetails->
         echo jobName
-        if (env.buildURL.contains(jobName))
+        if (buildURL.contains(jobName))
             hipCUBCI(nodeDetails, jobName)
     }
 }
