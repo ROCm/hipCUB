@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 // This shared library is available at https://github.com/ROCmSoftwarePlatform/rocJENKINS/
-@Library('rocJenkins@ping') _
+@Library('rocJenkins@pong') _
 
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
@@ -78,8 +78,7 @@ ci: {
             runCI(nodeDetails, jobName)
     }
 
-    // For url job names that are not seen in the jobNameList
-    // i.e. compute-rocm-dkms-no-npi-1901
+    // For url job names that are outside of the standardJobNameSet i.e. compute-rocm-dkms-no-npi-1901
     if(!seenJobNames.contains(urlJobName))
     {
         properties(auxiliary.addCommonProperties([pipelineTriggers([cron('0 1 * * *')])]))
