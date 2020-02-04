@@ -54,6 +54,8 @@ ci: {
                         "compute-rocm-dkms-no-npi-hipclang":[pipelineTriggers([cron('0 1 * * 0')])],
                         "rocm-docker":[]]
 
+    Set standardJobNameSet = ["compute-rocm-dkms-no-npi", "compute-rocm-dkms-no-npi-hipclang", "rocm-docker"]
+
     def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']]), 
                        "compute-rocm-dkms-no-npi-hipclang":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']]), 
                        "rocm-docker":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']])]
@@ -65,11 +67,21 @@ ci: {
             properties(auxiliary.setProperties(property))
     }
 
+    Set seenJobNames = []
     jobNameList.each 
     {
         jobName, nodeDetails->
+        seenJobNames.add(jobName)
         if (urlJobName == jobName)
             runCI(nodeDetails, jobName)
+    }
+
+    // For url job names that are not seen in the jobNameList
+    // i.e. compute-rocm-dkms-no-npi-1901
+    if(!seenJobNames.contains(urlJobName))
+    {
+        properties(auxiliary.setProperties([pipelineTriggers([cron('0 1 * * *')])]))
+        runCI([centos7:['gfx906']], jobName)       
     }
 }
 
