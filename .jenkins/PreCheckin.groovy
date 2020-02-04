@@ -50,7 +50,7 @@ def hipCUBCI =
 ci: { 
     String buildURL = env.BUILD_URL
     String tempName = buildURL.substring(buildURL.indexOf('job/')+4, buildURL.length())
-    String urlJobName = tempName.substring(0, buildURL.indexOf('/job'))
+    String urlJobName = tempName.substring(0, tempName.indexOf('/job'))
     // final afterLastSlash = buildURL.substring(buildURL.lastIndexOf('/') + 1, buildURL.length())
     echo tempName
     echo urlJobName
