@@ -51,9 +51,6 @@ ci: {
     String buildURL = env.BUILD_URL
     String tempName = buildURL.substring(buildURL.indexOf('job/')+4, buildURL.length())
     String urlJobName = tempName.substring(0, tempName.indexOf('/job'))
-    // final afterLastSlash = buildURL.substring(buildURL.lastIndexOf('/') + 1, buildURL.length())
-    echo tempName
-    echo urlJobName
 
     def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
                         "rocm-docker":[]]
@@ -63,15 +60,14 @@ ci: {
     propertyList.each 
     {
         jobName, property->
-        if (buildURL.contains(jobName))
+        if (urlJobName == jobName)
             properties(auxiliary.setProperties(property))
     }
 
     jobNameList.each 
     {
         jobName, nodeDetails->
-        echo jobName
-        if (buildURL.contains(jobName))
+        if (urlJobName == jobName)
             hipCUBCI(nodeDetails, jobName)
     }
 }
