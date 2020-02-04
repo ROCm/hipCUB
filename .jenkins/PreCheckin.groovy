@@ -48,7 +48,7 @@ def runCI =
 }
 
 ci: { 
-    String urlJobName = getFolderName(env.BUILD_URL)
+    String urlJobName = auxiliary.getTopJobName(env.BUILD_URL)
 
     def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
                         "compute-rocm-dkms-no-npi-hipclang":[pipelineTriggers([cron('0 1 * * 0')])],
