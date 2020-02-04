@@ -49,8 +49,8 @@ def hipCUBCI =
 
 ci: { 
     String buildURL = env.BUILD_URL
-    final beforeColon = url.substring(0, buildURL.indexOf('job/'))  // git@github.com
-    final afterLastSlash = url.substring(buildURL.lastIndexOf('/') + 1, buildURL.length()) // 
+    final beforeColon = buildURL.substring(0, buildURL.indexOf('job/')) 
+    final afterLastSlash = buildURL.substring(buildURL.lastIndexOf('/') + 1, buildURL.length())
     echo beforeColon
     echo afterLastSlash
 
