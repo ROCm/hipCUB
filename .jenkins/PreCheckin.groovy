@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 // This shared library is available at https://github.com/ROCmSoftwarePlatform/rocJENKINS/
-@Library('rocJenkins@ping') _
+@Library('rocJenkins@eidenping') _
 
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
@@ -48,9 +48,7 @@ def runCI =
 }
 
 ci: { 
-    String buildURL = env.BUILD_URL
-    String tempName = buildURL.substring(buildURL.indexOf('job/')+4, buildURL.length())
-    String urlJobName = tempName.substring(0, tempName.indexOf('/job'))
+    String urlJobName = getFolderName(env.BUILD_URL)
 
     def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
                         "compute-rocm-dkms-no-npi-hipclang":[pipelineTriggers([cron('0 1 * * 0')])],
