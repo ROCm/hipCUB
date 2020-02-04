@@ -9,30 +9,6 @@ import com.amd.project.*
 import com.amd.docker.*
 import java.nio.file.Path;
 
-ci: { 
-    String buildURL = env.BUILD_URL
-
-    def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
-                        "rocm-docker":[]]
-    def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']]), 
-                        "rocm-docker":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']])]
-
-    propertyList.each 
-    {
-        jobName, property->
-        if (buildURL.contains(jobName))
-            properties(auxiliary.setProperties(property))
-    }
-
-    jobNameList.each 
-    {
-        jobName, nodeDetails->
-        echo jobName
-        if (buildURL.contains(jobName))
-            hipCUBCI(nodeDetails, jobName)
-    }
-}
-
 def hipCUBCI = 
 {
     nodeDetails, jobName->
@@ -71,5 +47,31 @@ def hipCUBCI =
     buildProject(hipcub, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
 
+ci: { 
+    String buildURL = env.BUILD_URL
+    final beforeColon = url.substring(0, buildURL.indexOf('job/'))  // git@github.com
+    final afterLastSlash = url.substring(buildURL.lastIndexOf('/') + 1, buildURL.length()) // 
+    echo beforeColon
+    echo afterLastSlash
 
+    def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
+                        "rocm-docker":[]]
+    def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']]), 
+                        "rocm-docker":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']])]
+
+    propertyList.each 
+    {
+        jobName, property->
+        if (buildURL.contains(jobName))
+            properties(auxiliary.setProperties(property))
+    }
+
+    jobNameList.each 
+    {
+        jobName, nodeDetails->
+        echo jobName
+        if (buildURL.contains(jobName))
+            hipCUBCI(nodeDetails, jobName)
+    }
+}
 
