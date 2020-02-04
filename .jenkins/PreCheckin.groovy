@@ -59,7 +59,8 @@ ci: {
     propertyList.each 
     {
         jobName, property->
-        properties(auxiliary.setProperties(property))
+        if (buildURL.contains(jobName))
+            properties(auxiliary.setProperties(property))
     }
     jobNameList.each 
     {
