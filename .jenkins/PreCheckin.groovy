@@ -49,10 +49,11 @@ def hipCUBCI =
 
 ci: { 
     String buildURL = env.BUILD_URL
-    final beforeColon = buildURL.substring(0, buildURL.indexOf('job/')) 
-    final afterLastSlash = buildURL.substring(buildURL.lastIndexOf('/') + 1, buildURL.length())
-    echo beforeColon
-    echo afterLastSlash
+    String tempName = buildURL.substring(buildURL.indexOf('job/'), buildURL.length())
+    Stringg urlJobName = tempName.substring(0, buildURL.indexOf('/job')
+    // final afterLastSlash = buildURL.substring(buildURL.lastIndexOf('/') + 1, buildURL.length())
+    echo tempName
+    echo urlJobName
 
     def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
                         "rocm-docker":[]]
