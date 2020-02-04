@@ -81,7 +81,7 @@ ci: {
     if(!seenJobNames.contains(urlJobName))
     {
         properties(auxiliary.setProperties([pipelineTriggers([cron('0 1 * * *')])]))
-        runCI([centos7:['gfx906']], jobName)       
+        runCI([centos7:['gfx906']], urlJobName)       
     }
 }
 
