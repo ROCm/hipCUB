@@ -9,14 +9,14 @@ import com.amd.project.*
 import com.amd.docker.*
 import java.nio.file.Path;
 
-def hipCUBCI = 
+def runCI = 
 {
     nodeDetails, jobName->
 
-    def hipcub = new rocProject('hipCUB', 'PreCheckin')
+    def prj = new rocProject('hipCUB', 'PreCheckin')
 
     // Define test architectures, optional rocm version argument is available
-    def nodes = new dockerNodes(nodeDetails, jobName, hipcub)
+    def nodes = new dockerNodes(nodeDetails, jobName, prj)
 
     boolean formatCheck = false
 
@@ -44,7 +44,7 @@ def hipCUBCI =
         commonGroovy.runPackageCommand(platform, project)
     }
 
-    buildProject(hipcub, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
+    buildProject(prj, formatCheck, nodes.dockerArray, compileCommand, testCommand, packageCommand)
 }
 
 ci: { 
@@ -53,9 +53,12 @@ ci: {
     String urlJobName = tempName.substring(0, tempName.indexOf('/job'))
 
     def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
+                        "compute-rocm-dkms-no-npi-hipclang":[pipelineTriggers([cron('0 1 * * 0')])],
                         "rocm-docker":[]]
-    def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']]), 
-                        "rocm-docker":([ubuntu16:['gfx803'],centos7:['gfx803','gfx900'],sles15sp1:['gfx803']])]
+
+    def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']]), 
+                       "compute-rocm-dkms-no-npi-hipclang":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']]), 
+                       "rocm-docker":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']])]
 
     propertyList.each 
     {
@@ -68,7 +71,7 @@ ci: {
     {
         jobName, nodeDetails->
         if (urlJobName == jobName)
-            hipCUBCI(nodeDetails, jobName)
+            runCI(nodeDetails, jobName)
     }
 }
 
