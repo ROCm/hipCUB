@@ -26,7 +26,7 @@ def runCI =
     {
         platform, project->
 
-        commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/Common.groovy"
+        commonGroovy = load "${project.paths.project_src_prefix}/.jenkins/common.groovy"
         commonGroovy.runCompileCommand(platform, project)
     }
 
@@ -53,18 +53,20 @@ ci: {
     def propertyList = ["compute-rocm-dkms-no-npi":[pipelineTriggers([cron('0 1 * * 0')])], 
                         "compute-rocm-dkms-no-npi-hipclang":[pipelineTriggers([cron('0 1 * * 0')])],
                         "rocm-docker":[]]
+    propertyList = auxiliary.appendPropertyList(propertyList)
 
     Set standardJobNameSet = ["compute-rocm-dkms-no-npi", "compute-rocm-dkms-no-npi-hipclang", "rocm-docker"]
 
     def jobNameList = ["compute-rocm-dkms-no-npi":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']]), 
                        "compute-rocm-dkms-no-npi-hipclang":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']]), 
                        "rocm-docker":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']])]
+    jobNameList = auxiliary.appendJobNameList(jobNameList)
 
     propertyList.each 
     {
         jobName, property->
         if (urlJobName == jobName)
-            properties(auxiliary.setProperties(property))
+            properties(auxiliary.addCommonProperties(property))
     }
 
     Set seenJobNames = []
@@ -80,7 +82,7 @@ ci: {
     // i.e. compute-rocm-dkms-no-npi-1901
     if(!seenJobNames.contains(urlJobName))
     {
-        properties(auxiliary.setProperties([pipelineTriggers([cron('0 1 * * *')])]))
+        properties(auxiliary.addCommonProperties([pipelineTriggers([cron('0 1 * * *')])]))
         runCI([centos7:['gfx906']], urlJobName)       
     }
 }
