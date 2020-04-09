@@ -56,10 +56,6 @@ def runTestCommand (platform, project)
                     make -j4
                     ${sudo} LD_LIBRARY_PATH=/opt/rocm/lib/ ctest --output-on-failure
                 """
-    if (platform.jenkinsLabel.contains('cuda'))
-    {
-        command = null
-    }
 
     platform.runCommand(this, command)
 }
@@ -67,7 +63,13 @@ def runTestCommand (platform, project)
 def runPackageCommand(platform, project)
 {
     def command
-        
+
+    if (platform.jenkinsLabel.contains('cuda'))
+    {
+        command = null
+        return
+    }
+
     if(platform.jenkinsLabel.contains('ubuntu'))
     {
         command = """
