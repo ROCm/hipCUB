@@ -38,7 +38,7 @@ def runCompileCommand(platform, project, jobName)
                 export HIP_PLATFORM=nvcc
                 export CUDADIR=/usr/local/cuda
                 export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64
-                CXX=hcc cmake -DBUILD_TEST=ON ../.
+                CXX=hcc cmake -DBUILD_TEST=ON ../../.
                 make -j
                 """
     }
