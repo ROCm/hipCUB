@@ -7,7 +7,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
     cmake \
     wget \
     git \
-    cuda-samples-10-2 \
+    ssh \
     && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -21,6 +21,9 @@ RUN apt-get update && \
     && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Create softlink from rocm to rocm-xxx
+RUN ln -s /opt/rocm* /opt/rocm
 
 # create a jenkins user with this specific uid so it can use sudo priviledges
 # Grant any member of sudo group password-less sudo privileges
