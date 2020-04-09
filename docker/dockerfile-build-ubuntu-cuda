@@ -15,7 +15,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 RUN echo 'deb [arch=amd64 trusted=yes] http://repo.radeon.com/rocm/apt/debian/ xenial main' | tee /etc/apt/sources.list.d/rocm.list
 
 RUN apt-get update && \
-    apt-get install -y hip-base hcc && \
+    apt-get install -y hip-base && \
     apt-get download hip-nvcc && \
     dpkg -i --ignore-depends=cuda hip*.deb \
     && \

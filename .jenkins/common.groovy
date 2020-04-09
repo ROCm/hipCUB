@@ -34,11 +34,7 @@ def runCompileCommand(platform, project, jobName)
                 pushd build/release
                 export PATH=\$PATH:/opt/rocm/bin
                 hipconfig
-                export PATH=\$PATH:/usr/local/cuda/bin
-                export HIP_PLATFORM=nvcc
-                export CUDADIR=/usr/local/cuda
-                export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64
-                CXX=hcc cmake -DBUILD_TEST=ON ../../.
+                cmake -DBUILD_TEST=ON ../../.
                 make -j
                 """
     }
