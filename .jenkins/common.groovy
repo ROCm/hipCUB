@@ -32,12 +32,12 @@ def runCompileCommand(platform, project, jobName)
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/release 
                 pushd build/release
-                export PATH=$PATH:/opt/rocm/bin
+                export PATH=\$PATH:/opt/rocm/bin
                 hipconfig
-                export PATH=$PATH:/usr/local/cuda/bin
+                export PATH=\$PATH:/usr/local/cuda/bin
                 export HIP_PLATFORM=nvcc
                 export CUDADIR=/usr/local/cuda
-                export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
+                export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64
                 CXX=hcc cmake -DBUILD_TEST=ON ../.
                 make -j
                 """
