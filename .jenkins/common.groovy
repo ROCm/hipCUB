@@ -15,7 +15,17 @@ def runCompileCommand(platform, project, jobName)
                 LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hipcc ${project.paths.build_command} --hip-clang
                 """
     }
-    else if(platform.label.contains('cuda'))
+    else
+    {
+        command = """#!/usr/bin/env bash
+                set -x
+                cd ${project.paths.project_build_prefix}
+                LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
+                """
+    }
+
+    //cuda specific build
+    if(platform.jenkinsLabel.contains('cuda'))
     {
         command = """#!/usr/bin/env bash
                 set -x
@@ -30,14 +40,6 @@ def runCompileCommand(platform, project, jobName)
                 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
                 CXX=hcc cmake -DBUILD_TEST=ON ../.
                 make -j
-                """
-    }
-    else
-    {
-        command = """#!/usr/bin/env bash
-                set -x
-                cd ${project.paths.project_build_prefix}
-                LD_LIBRARY_PATH=/opt/rocm/hcc/lib CXX=/opt/rocm/bin/hcc ${project.paths.build_command}
                 """
     }
 
