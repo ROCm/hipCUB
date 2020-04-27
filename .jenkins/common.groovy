@@ -7,7 +7,7 @@ def runCompileCommand(platform, project, jobName)
         
     def command 
 
-    def getRocPRIM = auxiliary.getLibrary('rocBLAS-internal',platform.jenkinsLabel,'develop')
+    def getRocPRIM = auxiliary.getLibrary('rocPRIM', platform.jenkinsLabel,'develop')
 
     if(jobName.contains('hipclang'))
     {
