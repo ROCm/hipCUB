@@ -30,9 +30,9 @@
 #ifndef HIPCUB_DEVICE_DEVICE_SEGMENTED_REDUCE_HPP_
 #define HIPCUB_DEVICE_DEVICE_SEGMENTED_REDUCE_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
     #include "../backend/rocprim/device/device_segmented_reduce.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "../backend/cub/device/device_segmented_reduce.hpp"
 #endif
 

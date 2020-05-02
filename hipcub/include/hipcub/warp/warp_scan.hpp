@@ -30,9 +30,9 @@
 #ifndef HIPCUB_WARP_WARP_SCAN_HPP_
 #define HIPCUB_WARP_WARP_SCAN_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) OR __HIP_COMPILER_CLANG__
     #include "../backend/rocprim/warp/warp_scan.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "../config.hpp"
     #include <cub/warp/warp_scan.cuh>
 #endif

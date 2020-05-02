@@ -40,10 +40,12 @@
 #define END_HIPCUB_NAMESPACE \
     } /* hipcub */
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
+    #include<iostream>
+    std::cout<<"Hi mom!"<<std::endl;
     #define HIPCUB_ROCPRIM_API 1
     #define HIPCUB_RUNTIME_FUNCTION __host__
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #define HIPCUB_CUB_API 1
     #define HIPCUB_RUNTIME_FUNCTION CUB_RUNTIME_FUNCTION
 

@@ -30,9 +30,9 @@
 #ifndef HIPCUB_WARP_WARP_REDUCE_HPP_
 #define HIPCUB_WARP_WARP_REDUCE_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP__COMPILER_CLANG__)
     #include "../backend/rocprim/warp/warp_reduce.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "../config.hpp"
     #include <cub/warp/warp_reduce.cuh>
 #endif

@@ -30,9 +30,9 @@
 #ifndef HIPCUB_DEVICE_DEVICE_RUN_LENGTH_ENCODE_HPP_
 #define HIPCUB_DEVICE_DEVICE_RUN_LENGTH_ENCODE_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
     #include "../backend/rocprim/device/device_run_length_encode.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "../backend/cub/device/device_run_length_encode.hpp"
 #endif
 

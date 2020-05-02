@@ -32,9 +32,9 @@
 // Version
 #include "hipcub_version.hpp"
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
     #include "backend/rocprim/hipcub.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "backend/cub/hipcub.hpp"
 #endif
 

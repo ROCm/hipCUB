@@ -30,9 +30,9 @@
 #ifndef HIPCUB_UTIL_ALLOCATOR_HPP_
 #define HIPCUB_UTIL_ALLOCATOR_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
     #include "backend/rocprim/util_allocator.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "backend/cub/util_allocator.hpp"
 #endif
 

@@ -30,9 +30,9 @@
 #ifndef HIPCUB_BLOCK_BLOCK_DISCONTINUITY_HPP_
 #define HIPCUB_BLOCK_BLOCK_DISCONTINUITY_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
     #include "../backend/rocprim/block/block_discontinuity.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "../config.hpp"
     #include <cub/block/block_discontinuity.cuh>
 #endif

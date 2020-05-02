@@ -30,9 +30,9 @@
 #ifndef HIPCUB_ITERATOR_TRANSFORM_INPUT_ITERATOR_HPP_
 #define HIPCUB_ITERATOR_TRANSFORM_INPUT_ITERATOR_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#if defined(__HIP_COMPILER_HCC__) || defined(__HIP_COMPILER_CLANG__)
     #include "../backend/rocprim/iterator/transform_input_iterator.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_COMPILER_NVCC__)
     #include "../config.hpp"
     #include <cub/iterator/transform_input_iterator.cuh>
 #endif

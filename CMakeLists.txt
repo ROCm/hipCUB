@@ -80,9 +80,9 @@ if(BUILD_TEST)
 endif()
 
 # Package
-if(HIP_PLATFORM STREQUAL "hcc")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocm-dev (>= 2.5.27), rocprim (>= 2.5)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "rocm-dev >= 2.5.27, rocprim >= 2.5")
+if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocprim (>= 2.5)")
+  set(CPACK_RPM_PACKAGE_REQUIRES "rocprim >= 2.5")
   set(CPACK_DEBIAN_PACKAGE_REPLACES "cub-hip")
   set(CPACK_RPM_PACKAGE_OBSOLETES "cub-hip")
 else()
@@ -96,7 +96,7 @@ endif()
 
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
 
-if(HIP_PLATFORM STREQUAL "hcc")
+if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
   rocm_create_package(
     NAME hipcub
     DESCRIPTION "hipCUB (rocPRIM backend)"
