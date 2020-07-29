@@ -1,7 +1,7 @@
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
 
-def runCompileCommand(platform, project, jobName, boolean debug=false, boolean sameOrg=false)
+def runCompileCommand(platform, project, jobName, boolean debug=false, boolean sameOrg=true)
 {
     project.paths.construct_build_prefix()
         
