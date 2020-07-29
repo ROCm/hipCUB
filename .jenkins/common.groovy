@@ -1,7 +1,7 @@
 // This file is for internal AMD use.
 // If you are interested in running your own Jenkins, please raise a github issue for assistance.
 
-def runCompileCommand(platform, project, jobName, boolean debug=false)
+def runCompileCommand(platform, project, jobName, boolean debug=false, boolean sameOrg=false)
 {
     project.paths.construct_build_prefix()
         
@@ -10,7 +10,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false)
     String buildTypeDir = debug ? 'debug' : 'release'
     String cmake = platform.jenkinsLabel.contains('centos') ? 'cmake3' : 'cmake'
 
-    def getRocPRIM = auxiliary.getLibrary('rocPRIM', platform.jenkinsLabel)
+    def getRocPRIM = auxiliary.getLibrary('rocPRIM', platform.jenkinsLabel, 'develop', sameOrg)
 
     def command = """#!/usr/bin/env bash
                 set -x
