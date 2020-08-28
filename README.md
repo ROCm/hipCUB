@@ -156,6 +156,9 @@ cd hipCUB; cd build
 
 
 ## Documentation
+The latest hipCUB documentation and API description can be found [here](https://codedocs.xyz/ROCmSoftwarePlatform/hipCUB/).
+
+It can also be build using the following commands
 
 ```shell
 # go to hipCUB doc directory
