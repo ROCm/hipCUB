@@ -72,7 +72,7 @@ set(VERSION_STRING "2.10.5")
 rocm_setup_version(VERSION ${VERSION_STRING})
 
 # AMD targets
-set(AMDGPU_TARGETS gfx803;gfx900;gfx906;gfx908 CACHE STRING "List of specific machine types for library to target")
+set(AMDGPU_TARGETS gfx900:xnack-;gfx906:xnack-;gfx908:xnack- CACHE STRING "List of specific machine types for library to target")
 
 # Print configuration summary
 include(cmake/Summary.cmake)
