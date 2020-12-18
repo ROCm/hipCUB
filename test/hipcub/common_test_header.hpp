@@ -28,7 +28,7 @@
 #include <utility>
 #include <tuple>
 #include <random>
-#include <limits> 
+#include <limits>
 #include <cmath>
 #include <cstdlib>
 
@@ -44,4 +44,48 @@
 #define TEST_UTILS_INCLUDE_GAURD
 #include "test_utils.hpp"
 
-#define HIP_CHECK(error) ASSERT_EQ(error, hipSuccess)
+#define HIP_CHECK(condition)         \
+{                                    \
+    hipError_t error = condition;    \
+    if(error != hipSuccess){         \
+        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
+        exit(error); \
+    } \
+}
+
+namespace test_common_utils
+{
+
+bool supports_hmm()
+{
+    hipDeviceProp_t device_prop;
+    int device_id;
+    HIP_CHECK(hipGetDevice(&device_id));
+    HIP_CHECK(hipGetDeviceProperties(&device_prop, device_id));
+    if (device_prop.managedMemory == 1) return true;
+
+    return false;
+}
+
+bool use_hmm()
+{
+    return std::getenv("HIPCUB_USE_HMM");
+}
+
+// Helper for HMM allocations: if device supports managedMemory, and HMM is requested through
+// HIPCUB_MALLOC_MANAGED environment variable
+template <class T>
+hipError_t hipMallocHelper(T** devPtr, size_t size)
+{
+    if (supports_hmm() && use_hmm())
+    {
+        return hipMallocManaged((void**)devPtr, size);
+    }
+    else
+    {
+        return hipMalloc((void**)devPtr, size);
+    }
+    return hipSuccess;
+}
+
+}
