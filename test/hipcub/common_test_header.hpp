@@ -73,11 +73,11 @@ bool use_hmm()
 }
 
 // Helper for HMM allocations: if device supports managedMemory, and HMM is requested through
-// HIPCUB_MALLOC_MANAGED environment variable
+// HIPCUB_USE_HMM environment variable
 template <class T>
 hipError_t hipMallocHelper(T** devPtr, size_t size)
 {
-    if (supports_hmm() && use_hmm())
+    if (use_hmm())
     {
         return hipMallocManaged((void**)devPtr, size);
     }
