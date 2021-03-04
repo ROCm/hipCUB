@@ -31,64 +31,8 @@
 #define HIPCUB_THREAD_THREAD_REDUCE_HPP_
 
 #ifdef __HIP_PLATFORM_HCC__
-
-#include "../config.hpp"
-
-BEGIN_HIPCUB_NAMESPACE
-
-/// Internal namespace (to prevent ADL mishaps between static functions when mixing different CUB installations)
-namespace internal {
-
-template <
-    int         LENGTH,
-    typename    T,
-    typename    ReductionOp,
-    bool        NoPrefix = false>
-__device__ __forceinline__ T ThreadReduce(
-    T*           input,
-    ReductionOp reduction_op,
-    T           prefix = T(0))
-{
-    T retval;
-    if(NoPrefix)
-        retval = input[0];
-    else
-        retval = prefix;
-
-    #pragma unroll
-    for (int i = 0 + NoPrefix; i < LENGTH; ++i)
-        retval = reduction_op(retval, input[i]);
-
-    return retval;
-}
-
-template <
-    int         LENGTH,
-    typename    T,
-    typename    ReductionOp>
-__device__ __forceinline__ T ThreadReduce(
-    T           (&input)[LENGTH],
-    ReductionOp reduction_op,
-    T           prefix)
-{
-    return ThreadReduce<LENGTH, false>((T*)input, reduction_op, prefix);
-}
-
-template <
-    int         LENGTH,
-    typename    T,
-    typename    ReductionOp>
-__device__ __forceinline__ T ThreadReduce(
-    T           (&input)[LENGTH],
-    ReductionOp reduction_op)
-{
-    return ThreadReduce<LENGTH, true>((T*)input, reduction_op);
-}
-
-}
-
-END_HIPCUB_NAMESPACE
-
+    #include "../config.hpp"
+    #include "../backend/rocprim/thread/thread_reduce.hpp"
 #elif defined(__HIP_PLATFORM_NVCC__)
     #include "../config.hpp"
     #include <cub/thread/thread_reduce.cuh>

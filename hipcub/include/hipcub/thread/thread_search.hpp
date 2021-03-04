@@ -35,7 +35,7 @@
  #ifndef HIPCUB_THREAD_THREAD_SEARCH_HPP_
  #define HIPCUB_THREAD_THREAD_SEARCH_HPP_
 
- #ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_HCC__
     #include "../backend/rocprim/thread/thread_search.hpp"
 #elif defined(__HIP_PLATFORM_NVCC__)
     #include "../config.hpp"
