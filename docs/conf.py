@@ -53,7 +53,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'hipCUB'
-copyright = u'2010-2011, Duane Merrill; 2011-2018, NVIDIA CORPORATION; Modifications Copyright 2019 Advanced Micro Devices'
+copyright = u'2010-2011, Duane Merrill; 2011-2018, NVIDIA CORPORATION; Modifications Copyright 2019-2021 Advanced Micro Devices'
 author = u'Advanced Micro Devices'
 
 # The version info for the project you're documenting, acts as replacement for
