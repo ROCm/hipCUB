@@ -140,7 +140,7 @@ else
     build_tests="-DBUILD_TEST=OFF"
 fi
 
-if ($build_sanitizer); then
+if [[ "${build_sanitizer}" == true ]]; then
     cmake_common_options="$cmake_common_options -DBUILD_ADDRESS_SANITIZER=ON"
 fi
 
