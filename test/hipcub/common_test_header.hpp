@@ -48,7 +48,7 @@
 {                                    \
     hipError_t error = condition;    \
     if(error != hipSuccess){         \
-        std::cout << "HIP error: " << error << " line: " << __LINE__ << std::endl; \
+        std::cout << "HIP error: " << hipGetErrorString(error) << " line: " << __LINE__ << std::endl; \
         exit(error); \
     } \
 }
@@ -56,29 +56,18 @@
 namespace test_common_utils
 {
 
-bool supports_hmm()
-{
-    hipDeviceProp_t device_prop;
-    int device_id;
-    HIP_CHECK(hipGetDevice(&device_id));
-    HIP_CHECK(hipGetDeviceProperties(&device_prop, device_id));
-    if (device_prop.managedMemory == 1) return true;
-
-    return false;
-}
-
 bool use_hmm()
 {
     return std::getenv("HIPCUB_USE_HMM");
 }
 
-// Helper for HMM allocations: if device supports managedMemory, and HMM is requested through
-// HIPCUB_USE_HMM environment variable
+// Helper for HMM allocations: HMM is requested through HIPCUB_USE_HMM environment variable
 template <class T>
 hipError_t hipMallocHelper(T** devPtr, size_t size)
 {
-    if (use_hmm() && supports_hmm())
+    if (use_hmm())
     {
+        printf("using hmm\n");
         return hipMallocManaged((void**)devPtr, size);
     }
     else
