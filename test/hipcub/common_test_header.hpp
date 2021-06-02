@@ -77,7 +77,7 @@ bool use_hmm()
 template <class T>
 hipError_t hipMallocHelper(T** devPtr, size_t size)
 {
-    if (use_hmm())
+    if (use_hmm() && supports_hmm())
     {
         return hipMallocManaged((void**)devPtr, size);
     }
