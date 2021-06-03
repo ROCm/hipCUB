@@ -40,28 +40,28 @@ endif()
 if(HIP_COMPILER STREQUAL "nvcc")
   if(NOT DEFINED CUB_INCLUDE_DIR)
     file(
-      DOWNLOAD https://github.com/NVlabs/cub/archive/1.8.0.zip
-      ${CMAKE_CURRENT_BINARY_DIR}/cub-1.8.0.zip
+      DOWNLOAD https://github.com/NVlabs/cub/archive/1.11.0.zip
+      ${CMAKE_CURRENT_BINARY_DIR}/cub-1.11.0.zip
       STATUS cub_download_status LOG cub_download_log
     )
     list(GET cub_download_status 0 cub_download_error_code)
     if(cub_download_error_code)
       message(FATAL_ERROR "Error: downloading "
-        "https://github.com/NVlabs/cub/archive/1.8.0.zip failed "
+        "https://github.com/NVlabs/cub/archive/1.11.0.zip failed "
         "error_code: ${cub_download_error_code} "
         "log: ${cub_download_log} "
       )
     endif()
 
     execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/cub-1.8.0.zip
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/cub-1.11.0.zip
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       RESULT_VARIABLE cub_unpack_error_code
     )
     if(cub_unpack_error_code)
-      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/cub-1.8.0.zip failed")
+      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/cub-1.11.0.zip failed")
     endif()
-    set(CUB_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/cub-1.8.0/ CACHE PATH "")
+    set(CUB_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/cub-1.11.0/ CACHE PATH "")
   endif()
 endif()
 
@@ -127,7 +127,7 @@ if(BUILD_BENCHMARK)
   download_project(
     PROJ           googlebenchmark
     GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG        v1.4.0
+    GIT_TAG        v1.5.2
     INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
     CMAKE_ARGS     -DCMAKE_BUILD_TYPE=RELEASE -DBENCHMARK_ENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${COMPILER_OVERRIDE}
     LOG_DOWNLOAD   TRUE
@@ -139,38 +139,3 @@ if(BUILD_BENCHMARK)
   )
   find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT})
 endif()
-
-# Find or download/install rocm-cmake project
-find_package(ROCM QUIET CONFIG PATHS /opt/rocm)
-if(NOT ROCM_FOUND)
-  set(rocm_cmake_tag "master" CACHE STRING "rocm-cmake tag to download")
-  file(
-    DOWNLOAD https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip
-    ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag}.zip
-    STATUS rocm_cmake_download_status LOG rocm_cmake_download_log
-  )
-  list(GET rocm_cmake_download_status 0 rocm_cmake_download_error_code)
-  if(rocm_cmake_download_error_code)
-    message(FATAL_ERROR "Error: downloading "
-      "https://github.com/RadeonOpenCompute/rocm-cmake/archive/${rocm_cmake_tag}.zip failed "
-      "error_code: ${rocm_cmake_download_error_code} "
-      "log: ${rocm_cmake_download_log} "
-    )
-  endif()
-
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag}.zip
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    RESULT_VARIABLE rocm_cmake_unpack_error_code
-  )
-  if(rocm_cmake_unpack_error_code)
-    message(FATAL_ERROR "Error: unpacking  ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag}.zip failed")
-  endif()
-  find_package(ROCM REQUIRED CONFIG PATHS ${CMAKE_CURRENT_BINARY_DIR}/rocm-cmake-${rocm_cmake_tag})
-endif()
-
-include(ROCMSetupVersion)
-include(ROCMCreatePackage)
-include(ROCMInstallTargets)
-include(ROCMPackageConfigHelpers)
-include(ROCMInstallSymlinks)
