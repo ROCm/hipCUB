@@ -58,7 +58,16 @@ namespace test_common_utils
 
 bool use_hmm()
 {
-    return std::getenv("HIPCUB_USE_HMM");
+    if (getenv("HIPCUB_USE_HMM") == nullptr)
+    {
+        return false;
+    }
+
+    if (strcmp(getenv("HIPCUB_USE_HMM"), "1") == 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 // Helper for HMM allocations: HMM is requested through HIPCUB_USE_HMM environment variable
@@ -67,7 +76,6 @@ hipError_t hipMallocHelper(T** devPtr, size_t size)
 {
     if (use_hmm())
     {
-        printf("using hmm\n");
         return hipMallocManaged((void**)devPtr, size);
     }
     else
