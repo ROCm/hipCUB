@@ -2,6 +2,10 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
+## [Latest changes]
+### Fixed
+- Added missing includes to hipcub.hpp
+
 ## (Unreleased) hipCUB-2.10.12 for ROCm 4.5.0
 ### Addded
 - Initial HIP on Windows support. See README for instructions on how to build and install.
