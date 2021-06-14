@@ -2,6 +2,10 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
+## [Latest changes]
+### Fixed
+- Added missing includes to hipcub.hpp
+
 ## [Unreleased hipCUB-2.10.11 for ROCm 4.4.0]
 ### Added
 - gfx1030 support added.
