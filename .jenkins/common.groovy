@@ -39,7 +39,7 @@ def runTestCommand (platform, project)
     {
         hmmTestCommand = """
                             export HSA_XNACK=1
-                            export ROCRAND_USE_HMM=1
+                            export HIPCUB_USE_HMM=1
                             ${testCommand}
                          """
     }
