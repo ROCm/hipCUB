@@ -6,10 +6,6 @@ foreach(cub_target IN LISTS CUB_TARGETS)
   add_dependencies(${config_prefix}.all ${config_meta_target})
 endforeach()
 
-if (WIN32)
-  set(DLLS_COPIED OFF)
-endif()
-
 ## cub_add_example
 #
 # Add an example executable and register it with ctest.
@@ -53,7 +49,9 @@ function(add_hipcub_example EXAMPLE_NAME EXAMPLE_SOURCES)
     NAME ${EXAMPLE_NAME}
     COMMAND ${EXAMPLE_TARGET}
   )
-  if (WIN32 AND NOT DLLS_COPIED)
+  if (WIN32 AND NOT DEFINED DLLS_COPIED)
+    set(DLLS_COPIED "YES")
+    set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
     # for now adding in all .dll as dependency chain is not cmake based on win32
     file( GLOB third_party_dlls
     LIST_DIRECTORIES ON
@@ -62,10 +60,9 @@ function(add_hipcub_example EXAMPLE_NAME EXAMPLE_SOURCES)
     ${CMAKE_SOURCE_DIR}/rtest.*
     )
     foreach( file_i ${third_party_dlls})
-    add_custom_command( TARGET ${EXAMPLE_TARGET} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy ${file_i} ${PROJECT_BINARY_DIR}/examples )
+      add_custom_command( TARGET ${EXAMPLE_TARGET} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/examples )
     endforeach( file_i )
-    set(DLLS_COPIED ON)
-  endif()      
+  endif()   
 endfunction()
 
 add_subdirectory(block)

@@ -77,7 +77,7 @@ make package
 Initial support for HIP on Windows has been added.  To install, use the provided rmake.py python script:
 ```shell
 git clone https://github.com/ROCmSoftwarePlatform/hipCUB.git
-cd rocPRIM
+cd hipCUB
 
 # the -i option will install rocPRIM to C:\hipSDK by default
 python rmake.py -i
