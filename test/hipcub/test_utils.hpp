@@ -66,20 +66,6 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value)
 }
 
 #if defined(_WIN32) && defined(__clang__)
-#if 0
-template<>
-inline std::vector<short> get_random_data(size_t size, short min, short max, int seed_value)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
-    std::uniform_int_distribution<int> distribution(static_cast<int>(min), static_cast<int>(max));
-    std::vector<short> data(size);
-    std::generate(data.begin(), data.end(), [&]() { return static_cast<short>(distribution(gen)); });
-    return data;
-}
-#endif
-
 template<>
 inline std::vector<unsigned char> get_random_data(size_t size, unsigned char min, unsigned char max, int seed_value)
 {
