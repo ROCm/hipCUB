@@ -18,7 +18,7 @@ environment, hipCUB uses the rocPRIM library as the backend.  However, on CUDA p
 * For NVIDIA GPUs:
   * CUDA Toolkit
   * CUB library (automatically downloaded and by CMake script)
-* Python 3.6 or higher (HIP on Windows only)
+* Python 3.6 or higher (HIP on Windows only, only required for install scripts)
 * Visual Studio 2019 with clang support (HIP on Windows only)
 * Strawberry Perl (HIP on Windows only)
 
