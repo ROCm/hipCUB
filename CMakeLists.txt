@@ -147,8 +147,8 @@ endif()
 
 # Package
 if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocprim (>= 2.10.1)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "rocprim >= 2.10.1")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocprim-devel (>= 2.10.1)")
+  set(CPACK_RPM_PACKAGE_REQUIRES "rocprim-devel >= 2.10.1")
   set(CPACK_DEBIAN_PACKAGE_REPLACES "cub-hip")
   set(CPACK_RPM_PACKAGE_OBSOLETES "cub-hip")
 else()
