@@ -167,11 +167,13 @@ if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
     NAME hipcub
     DESCRIPTION "hipCUB (rocPRIM backend)"
     MAINTAINER "hipcub-maintainer@amd.com"
+    HEADER_ONLY
   )
 else()
   rocm_create_package(
     NAME hipcub_nvcc
     DESCRIPTION "hipCUB (CUB backend)"
     MAINTAINER "hipcub-maintainer@amd.com"
+    HEADER_ONLY
   )
 endif()
