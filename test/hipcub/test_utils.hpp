@@ -26,9 +26,9 @@
 #endif
 
 // hipCUB API
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     #include "hipcub/backend/rocprim/util_ptx.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_PLATFORM_NVIDIA__)
     #include "hipcub/config.hpp"
     #include <cub/util_ptx.cuh>
 #endif
@@ -89,7 +89,11 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value)
     gen.seed(seed_value);
     std::uniform_real_distribution<T> distribution(min, max);
     std::vector<T> data(size);
-    std::generate(data.begin(), data.end(), [&]() { return distribution(gen); });
+    std::generate(
+        data.begin(),
+        data.end(),
+        [&]() { return static_cast<T>(distribution(gen)); }
+    );
     return data;
 }
 
@@ -131,7 +135,6 @@ inline std::vector<char> get_random_data(size_t size, char min, char max, int se
 }
 #endif
 
-
 template<class T>
 inline auto get_random_data(size_t size, T min, T max, int seed_value)
     -> typename std::enable_if<std::is_same<test_utils::half, T>::value, std::vector<T>>::type
@@ -143,15 +146,15 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value)
     std::vector<T> data(size);
     std::generate(
         data.begin(),
-        data.begin() + size,
+        data.end(),
         [&]() { return static_cast<T>(distribution(gen)); }
     );
     return data;
 }
 
 template<class T>
-inline auto get_random_data(size_t size, T min, T max, int seed_value)
-    -> typename std::enable_if<std::is_same<bfloat16, T>::value, std::vector<T>>::type
+inline auto get_random_data(size_t size, float min, float max, int seed_value)
+    -> typename std::enable_if<std::is_same<test_utils::bfloat16, T>::value, std::vector<T>>::type
 {
     std::random_device rd;
     std::default_random_engine gen(rd());
@@ -160,9 +163,9 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value)
     std::vector<T> data(size);
     std::generate(
         data.begin(),
-        data.begin() + size,
+        data.end(),
         [&]() { return static_cast<T>(distribution(gen)); }
-    );
+        );
     return data;
 }
 
@@ -506,7 +509,7 @@ struct custom_test_type<test_utils::bfloat16>
     // Non-zero values in default constructor for checking reduce and scan:
     // ensure that scan_op(custom_test_type(), value) != value
     HIPCUB_HOST_DEVICE inline
-    custom_test_type() : x(12), y(34) {}
+    custom_test_type() : x(float(12)), y(float(34)) {}
 
     HIPCUB_HOST_DEVICE inline
     custom_test_type(test_utils::bfloat16 x, test_utils::bfloat16 y) : x(x), y(y) {}
@@ -839,9 +842,52 @@ namespace std
             return std::numeric_limits<typename T::value_type>::max();
         }
 
+        static constexpr inline T min()
+        {
+            return std::numeric_limits<typename T::value_type>::min();
+        }
+
         static constexpr inline T lowest()
         {
             return std::numeric_limits<typename T::value_type>::lowest();
+        }
+    };
+
+    template<>
+    class numeric_limits<test_utils::half> {
+        using T = typename test_utils::half;
+
+    public:
+
+        static inline T max() {
+            return test_utils::half(65504.0f);
+        }
+
+        static inline T min() {
+            return test_utils::half(0.0f);
+        }
+
+        static inline T lowest() {
+            return test_utils::half(-65504.0f);
+        }
+    };
+
+    template<>
+    class numeric_limits<test_utils::bfloat16> {
+        using T = typename test_utils::bfloat16;
+
+    public:
+
+        static inline T max() {
+            return test_utils::bfloat16(std::numeric_limits<float>::max()*0.998);
+        }
+
+        static inline T min() {
+            return test_utils::bfloat16(std::numeric_limits<float>::min());
+        }
+
+        static inline T lowest() {
+            return test_utils::bfloat16(std::numeric_limits<float>::lowest()*0.998);
         }
     };
 }

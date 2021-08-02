@@ -130,13 +130,6 @@ struct half_t
         this->__x = ir;
     }
 
-    /// Cast to __half
-    __host__ __device__ __forceinline__
-    operator __half() const
-    {
-        return reinterpret_cast<const __half&>(__x);
-    }
-
     /// Cast to float
     __host__ __device__ __forceinline__
     operator float() const
@@ -235,6 +228,13 @@ struct half_t
         return half_t(float(*this) + float(other));
     }
 
+    /// Subtract
+    __host__ __device__ __forceinline__
+    half_t operator-(const half_t &other)
+    {
+        return half_t(float(*this) - float(other));
+    }
+
     /// Less-than
     __host__ __device__ __forceinline__
     bool operator<(const half_t &other) const
@@ -289,14 +289,6 @@ std::ostream& operator<<(std::ostream &out, const half_t &x)
     out << (float)x;
     return out;
 }
-
-
-/// Insert formatted \p __half into the output stream
-/*std::ostream& operator<<(std::ostream &out, const __half &x)
-{
-    return out << half_t(x);
-}*/
-
 
 /******************************************************************************
  * Traits overloads

@@ -31,13 +31,10 @@ namespace test_utils
 {
 
 /// \brief Bfloat16-precision floating point type
-
-
-
 #ifdef __HIP_PLATFORM_HCC__
-    using bfloat16 = ::hip_bfloat16;
-#elif defined(__HIP_PLATFORM_NVCC__)
-    using bfloat16 = ::__nv_bfloat16;
+using bfloat16 = ::hip_bfloat16;
+#elif defined(__HIP_PLATFORM_NVIDIA__)
+using bfloat16 = ::__nv_bfloat16;
 #endif
 
 #ifdef __HIP_CPU_RT__
@@ -45,6 +42,7 @@ using native_bfloat16 = bfloat16_t;
 #else
 using native_bfloat16 = bfloat16_t;
 #endif
+// hipCUB
 
 // Support bfloat16 operators on host side
 HIPCUB_HOST inline

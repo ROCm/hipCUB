@@ -23,7 +23,9 @@
 #ifndef TEST_SORT_COMPARATOR_HPP_
 #define TEST_SORT_COMPARATOR_HPP_
 
+#ifdef __HIP_PLATFORM_HCC__
 #include <rocprim/type_traits.hpp>
+#endif
 
 // Original C++17 logic
 //
@@ -135,7 +137,9 @@
 template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit, bool ShiftLess = (StartBit == 0 && EndBit == sizeof(Key) * 8)>
 struct key_comparator
 {
+    #ifdef __HIP_PLATFORM_HCC__
     static_assert(rocprim::is_unsigned<Key>::value, "Test supports start and end bits only for unsigned integers");
+    #endif
 
     bool operator()(const Key& lhs, const Key& rhs)
     {
@@ -156,12 +160,22 @@ struct key_comparator<Key, Descending, StartBit, EndBit, true>
 };
 
 template<bool Descending>
-struct key_comparator<rocprim::half, Descending, 0, sizeof(rocprim::half) * 8>
+struct key_comparator<test_utils::half, Descending, 0, sizeof(test_utils::half) * 8>
 {
-    bool operator()(const rocprim::half& lhs, const rocprim::half& rhs)
+    bool operator()(const test_utils::half& lhs, const test_utils::half& rhs)
     {
-        // HIP's half doesn't have __host__ comparison operators, use floats instead
-        return key_comparator<float, Descending, 0, sizeof(float) * 8>()(lhs, rhs);
+        // HIP's half doesn't have __host__ comparison operators, use test_utils::native_half instead
+        return key_comparator<test_utils::native_half, Descending, 0, sizeof(test_utils::native_half) * 8>()(test_utils::half_to_native(lhs), test_utils::half_to_native(rhs));
+    }
+};
+
+template<bool Descending>
+struct key_comparator<test_utils::bfloat16, Descending, 0, sizeof(test_utils::bfloat16) * 8>
+{
+    bool operator()(const test_utils::bfloat16& lhs, const test_utils::bfloat16& rhs)
+    {
+        // HIP's bfloat16 doesn't have __host__ comparison operators, use test_utils::native_bfloat16 instead
+        return key_comparator<test_utils::native_bfloat16, Descending, 0, sizeof(test_utils::native_bfloat16) * 8>()(test_utils::bfloat16_to_native(lhs), test_utils::bfloat16_to_native(rhs));
     }
 };
 

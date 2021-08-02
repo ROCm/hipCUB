@@ -517,8 +517,6 @@ struct FpLimits<double>
     }
 };
 
-
-#if (__CUDACC_VER_MAJOR__ >= 9 || CUDA_VERSION >= 9000) && !__NVCOMPILER_CUDA__
 template <>
 struct FpLimits<__half>
 {
@@ -532,11 +530,9 @@ struct FpLimits<__half>
         return reinterpret_cast<__half&>(lowest_word);
     }
 };
-#endif
 
-#if (__CUDACC_VER_MAJOR__ >= 11 || CUDA_VERSION >= 11000) && !__NVCOMPILER_CUDA__
 template <>
-struct FpLimits<hip_bfloat16 >
+struct FpLimits<hip_bfloat16>
 {
     static __host__ __device__ __forceinline__ hip_bfloat16  Max() {
         unsigned short max_word = 0x7F7F;
@@ -548,7 +544,6 @@ struct FpLimits<hip_bfloat16 >
         return reinterpret_cast<hip_bfloat16 &>(lowest_word);
     }
 };
-#endif
 
 /**
  * Basic type traits (fp primitive specialization)
@@ -613,12 +608,8 @@ template <> struct NumericTraits<unsigned long long> :  BaseTraits<UNSIGNED_INTE
 
 template <> struct NumericTraits<float> :               BaseTraits<FLOATING_POINT, true, false, unsigned int, float> {};
 template <> struct NumericTraits<double> :              BaseTraits<FLOATING_POINT, true, false, unsigned long long, double> {};
-#if (__CUDACC_VER_MAJOR__ >= 9 || CUDA_VERSION >= 9000) && !__NVCOMPILER_CUDA__
-    template <> struct NumericTraits<__half> :          BaseTraits<FLOATING_POINT, true, false, unsigned short, __half> {};
-#endif
-#if (__CUDACC_VER_MAJOR__ >= 11 || CUDA_VERSION >= 11000) && !__NVCOMPILER_CUDA__
-    template <> struct NumericTraits<hip_bfloat16 > :   BaseTraits<FLOATING_POINT, true, false, unsigned short, hip_bfloat16 > {};
-#endif
+template <> struct NumericTraits<__half> :              BaseTraits<FLOATING_POINT, true, false, unsigned short, __half> {};
+template <> struct NumericTraits<hip_bfloat16 > :       BaseTraits<FLOATING_POINT, true, false, unsigned short, hip_bfloat16 > {};
 
 template <> struct NumericTraits<bool> :                BaseTraits<UNSIGNED_INTEGER, true, false, typename UnitWord<bool>::VolatileWord, bool> {};
 

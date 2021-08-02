@@ -112,26 +112,13 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
 
             // Generate data
             std::vector<key_type> keys_input;
-            if(std::is_floating_point<key_type>::value)
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    (key_type)-1000,
-                    (key_type)+1000,
-                    seed_value
-                );
-            }
-            else
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    std::numeric_limits<key_type>::min(),
-                    std::numeric_limits<key_type>::max(),
-                    seed_value + seed_value_addition
-                );
-            }
-
-            key_type * d_keys_input;
+            keys_input = test_utils::get_random_data<key_type>(
+                size,
+                std::numeric_limits<key_type>::min(),
+                std::numeric_limits<key_type>::max(),
+                seed_value + seed_value_addition
+            );
+            key_type *d_keys_input;
             key_type * d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));
@@ -229,25 +216,12 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairs)
 
             // Generate data
             std::vector<key_type> keys_input;
-            if(std::is_floating_point<key_type>::value)
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    (key_type)-1000,
-                    (key_type)+1000,
-                    seed_value
-                );
-            }
-            else
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    std::numeric_limits<key_type>::min(),
-                    std::numeric_limits<key_type>::max(),
-                    seed_value + seed_value_addition
-                );
-            }
-
+            keys_input = test_utils::get_random_data<key_type>(
+                size,
+                std::numeric_limits<key_type>::min(),
+                std::numeric_limits<key_type>::max(),
+                seed_value + seed_value_addition
+            );
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
@@ -389,25 +363,12 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeysDoubleBuffer)
 
             // Generate data
             std::vector<key_type> keys_input;
-            if(std::is_floating_point<key_type>::value)
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    (key_type)-1000,
-                    (key_type)+1000,
-                    seed_value
-                );
-            }
-            else
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    std::numeric_limits<key_type>::min(),
-                    std::numeric_limits<key_type>::max(),
-                    seed_value + seed_value_addition
-                );
-            }
-
+            keys_input = test_utils::get_random_data<key_type>(
+                size,
+                std::numeric_limits<key_type>::min(),
+                std::numeric_limits<key_type>::max(),
+                seed_value + seed_value_addition
+            );
             key_type * d_keys_input;
             key_type * d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
@@ -508,25 +469,12 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairsDoubleBuffer)
 
             // Generate data
             std::vector<key_type> keys_input;
-            if(std::is_floating_point<key_type>::value)
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    (key_type)-1000,
-                    (key_type)+1000,
-                    seed_value
-                );
-            }
-            else
-            {
-                keys_input = test_utils::get_random_data<key_type>(
-                    size,
-                    std::numeric_limits<key_type>::min(),
-                    std::numeric_limits<key_type>::max(),
-                    seed_value + seed_value_addition
-                );
-            }
-
+            keys_input = test_utils::get_random_data<key_type>(
+                size,
+                std::numeric_limits<key_type>::min(),
+                std::numeric_limits<key_type>::max(),
+                seed_value + seed_value_addition
+            );
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 

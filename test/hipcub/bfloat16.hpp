@@ -35,10 +35,6 @@
 #include <stdint.h>
 #include <hipcub/util_type.hpp>
 
-#if defined(__HIP_PLATFORM_NVCC__)
-    #include <cuda_bf16.h>
-#endif
-
 #include <iosfwd>
 
 
@@ -95,7 +91,7 @@ struct bfloat16_t
     __host__ __device__ __forceinline__
     bfloat16_t(float a)
     {
-        // Refrence:
+        // Reference:
         // https://github.com/pytorch/pytorch/blob/44cc873fba5e5ffc4d4d4eef3bd370b653ce1ce1/c10/util/BFloat16.h#L51
         uint16_t ir;
         if (a != a) {
@@ -152,9 +148,8 @@ struct bfloat16_t
 
     /// Equality
     __host__ __device__ __forceinline__
-    bool operator ==(const bfloat16_t &other)
-    {
-        return (this->__x == other.__x);
+    friend bool operator ==(const bfloat16_t &a, const bfloat16_t &b){
+        return (a.__x == b.__x);
     }
 
     /// Inequality
@@ -184,6 +179,13 @@ struct bfloat16_t
     bfloat16_t operator+(const bfloat16_t &other)
     {
         return bfloat16_t(float(*this) + float(other));
+    }
+
+    /// Subtract
+    __host__ __device__ __forceinline__
+    bfloat16_t operator-(const bfloat16_t &other)
+    {
+        return bfloat16_t(float(*this) - float(other));
     }
 
     /// Less-than
@@ -267,7 +269,6 @@ struct hipcub::FpLimits<bfloat16_t>
 };
 
 template <> struct hipcub::NumericTraits<bfloat16_t> : hipcub::BaseTraits<FLOATING_POINT, true, false, unsigned short, bfloat16_t> {};
-
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
