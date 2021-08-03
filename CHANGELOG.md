@@ -6,7 +6,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 ### Addded
 - Initial HIP on Windows support. See README for instructions on how to build and install.
 ### Changed
-- Packaging changed to a development package (called hipcub-dev for Debian, and hipcub-devel for other OSes). As hipCUB is a header-only library, there is no runtime package. To aid in the transition, the development package sets the "provides" field to provide the package hipcub, so that existing packages depending on hipcub can continue to work. This provides feature is introduced as a deprecated feature and will be removed in a future ROCm release.
+- Packaging changed to a development package (called hipcub-dev for `.deb` packages, and hipcub-devel for `.rpm` packages). As hipCUB is a header-only library, there is no runtime package. To aid in the transition, the development package sets the "provides" field to provide the package hipcub, so that existing packages depending on hipcub can continue to work. This provides feature is introduced as a deprecated feature and will be removed in a future ROCm release.
 
 ## [Unreleased hipCUB-2.10.11 for ROCm 4.4.0]
 ### Added
