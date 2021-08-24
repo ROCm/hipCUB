@@ -92,6 +92,7 @@ variables:
       -D CMAKE_BUILD_TYPE=Release
       -D BUILD_TEST=OFF
       -D BUILD_EXAMPLE=OFF
+      -D ROCM_DEP_ROCMCORE=OFF
       -B build
       ../.
     - $SUDO_CMD cpack
