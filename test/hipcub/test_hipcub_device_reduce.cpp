@@ -54,8 +54,11 @@ typedef ::testing::Types<
     DeviceReduceParams<unsigned long>,
     DeviceReduceParams<short>,
     DeviceReduceParams<short, float>,
-    DeviceReduceParams<int, double>,
+    DeviceReduceParams<int, double>
+    #if __CUDA_ARCH__ >= 700
+    ,
     DeviceReduceParams<test_utils::bfloat16, float>
+    #endif
     #ifdef __HIP_PLATFORM_AMD__
     ,
     DeviceReduceParams<test_utils::bfloat16, test_utils::bfloat16> // Kernel crash on NVIDIA / CUB, failing Reduce::Sum test on AMD due to rounding.
