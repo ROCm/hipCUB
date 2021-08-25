@@ -44,7 +44,7 @@
 CUB_NS_PREFIX
 
 namespace cub {
-
+/*
 #if (__CUDACC_VER_MAJOR__ >= 11 || CUDA_VERSION >= 11000) && !__NVCOMPILER_CUDA__
 
 template <>
@@ -66,7 +66,7 @@ struct FpLimits<__nv_bfloat16>
 #endif
 
 #endif
-
+*/
 }
 CUB_NS_POSTFIX  // Optional outer namespace(s)
 
