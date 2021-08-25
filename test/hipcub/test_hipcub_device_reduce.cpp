@@ -55,7 +55,7 @@ typedef ::testing::Types<
     DeviceReduceParams<short>,
     DeviceReduceParams<short, float>,
     DeviceReduceParams<int, double>
-    #if __CUDA_ARCH__ >= 700
+    #if (__CUDA_ARCH__ >= 700 || !defined(__HIP_PLATFORM_NVIDIA__))
     ,
     DeviceReduceParams<test_utils::bfloat16, float>
     #endif
@@ -158,6 +158,9 @@ TYPED_TEST(HipcubDeviceReduceTests, Reduce)
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
     const bool debug_synchronous = TestFixture::debug_synchronous;
+
+    if(std::is_same<U, test_utils::bfloat16>::value)
+        GTEST_SKIP();
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
