@@ -58,7 +58,7 @@ typedef ::testing::Types<
     params<double, unsigned int>,
     params<double, int, true>,
     params<float, int>,
-    #if __CUDA_ARCH__ >= 700
+    #if (__CUDA_ARCH__ >= 700 || !defined(__HIP_PLATFORM_NVIDIA__))
     params<test_utils::half, int>,
     params<test_utils::half, int, true>,
     params<test_utils::bfloat16, int>,
