@@ -171,6 +171,7 @@ test:rocm_vega20:
   script:
     - cd build
     - $SUDO_CMD ctest --output-on-failure --repeat-until-fail 2
+  allow_failure: true
 
 benchmark:rocm_vega20:
   extends: .rocm
@@ -283,6 +284,7 @@ test:rocm_package:
     - $SUDO_CMD ctest --output-on-failure --repeat-until-fail 2
     - $SUDO_CMD dpkg -r hipcub
     - $SUDO_CMD dpkg -r rocprim
+  allow_failure: true
 
 test:rocm_install:
   extends: .rocm
@@ -311,7 +313,7 @@ test:rocm_install:
     - CXX=hipcc cmake ../test/extra/.
     - make VERBOSE=1
     - $SUDO_CMD ctest --output-on-failure --repeat-until-fail 2
-
+  allow_failure: true
 
 # hipCUB with CUB backend
 
@@ -440,6 +442,7 @@ test:nvcc_package:
     - make VERBOSE=1
     - ctest --output-on-failure --repeat-until-fail 2
     - $SUDO_CMD dpkg -r hipcub_nvcc
+  allow_failure: true
 
 test:nvcc_install:
   extends: .nvcc
