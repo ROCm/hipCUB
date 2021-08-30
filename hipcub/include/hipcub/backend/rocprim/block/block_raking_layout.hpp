@@ -95,6 +95,7 @@ struct block_raking_layout
     };
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
     /**
      * \brief Shared memory storage type
      */
@@ -102,6 +103,8 @@ struct block_raking_layout
     {
         T buff[BlockRakingLayout::GRID_ELEMENTS];
     };
+
+#endif
 
     /// Alias wrapper allowing storage to be unioned
     struct TempStorage : Uninitialized<_TempStorage> {};

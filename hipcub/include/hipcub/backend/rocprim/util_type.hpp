@@ -42,7 +42,11 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
+
 using NullType = ::rocprim::empty_type;
+
+#endif
 
 template<bool B, typename T, typename F>
 struct If
@@ -140,11 +144,15 @@ struct Int2Type
     enum {VALUE = A};
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
+
 template<
     class Key,
     class Value
 >
 using KeyValuePair = ::rocprim::key_value_pair<Key, Value>;
+
+#endif
 
 namespace detail
 {
@@ -166,9 +174,13 @@ void update_double_buffer(DoubleBuffer<T>& target, ::rocprim::double_buffer<T>& 
     }
 }
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
+
 template <typename T>
 using is_integral_or_enum =
   std::integral_constant<bool, std::is_integral<T>::value || std::is_enum<T>::value>;
+
+#endif
 
 }
 
