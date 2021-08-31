@@ -37,7 +37,9 @@
 
 #include <iosfwd>
 
-
+#if defined(__HIP_PLATFORM_NVIDIA__)
+#include <cuda_bf16.h>
+#endif
 
 #ifdef __GNUC__
 // There's a ton of type-punning going on in this file.
