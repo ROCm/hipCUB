@@ -28,7 +28,8 @@ stages:
 variables:
   SUDO_CMD: "" # Must be "sudo" on images which don't use root user
   DEPS_DIR: "$CI_PROJECT_DIR/__dependencies"
-  CMAKE_MINIMUM_URL: "https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.tar.gz"
+  CMAKE_ROCM_MINIMUM_URL: "https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.tar.gz"
+  CMAKE_NVIDIA_MINIMUM_URL: "https://cmake.org/files/v3.15/cmake-3.15.7-Linux-x86_64.tar.gz"
   # General build flags
   CXXFLAGS: ""
   CMAKE_OPTIONS: ""
@@ -54,12 +55,11 @@ variables:
     - hipconfig
     # cmake
     - mkdir -p $DEPS_DIR/cmake
-    - wget --no-check-certificate --quiet -O - $CMAKE_MINIMUM_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
+    - wget --no-check-certificate --quiet -O - $CMAKE_ROCM_MINIMUM_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
     - export PATH=$DEPS_DIR/cmake/bin:$PATH
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
     - export CMAKE_OPTIONS=$CXXFLAGS" "$LOCAL_CMAKE_OPTIONS
-
 .rocm:build:
   extends: .rocm
   before_script:
@@ -73,7 +73,7 @@ variables:
     - hipconfig
     # cmake
     - mkdir -p $DEPS_DIR/cmake
-    - wget --no-check-certificate --quiet -O - $CMAKE_MINIMUM_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
+    - wget --no-check-certificate --quiet -O - $CMAKE_ROCM_MINIMUM_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
     - export PATH=$DEPS_DIR/cmake/bin:$PATH
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
@@ -340,7 +340,7 @@ test:rocm_install:
     - hipconfig
     # cmake
     - mkdir -p $DEPS_DIR/cmake
-    - wget --no-check-certificate --quiet -O - $CMAKE_MINIMUM_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
+    - wget --no-check-certificate --quiet -O - $CMAKE_NVIDIA_MINIMUM_URL | tar --strip-components=1 -xz -C $DEPS_DIR/cmake
     - export PATH=$DEPS_DIR/cmake/bin:$PATH
     # Combine global build options with local options
     - export CXXFLAGS=$CXXFLAGS" "$LOCAL_CXXFLAGS
@@ -351,16 +351,16 @@ build:nvcc:
   stage: build
   script:
     - mkdir build
-    - cd build
     - cmake
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -B build
-      ../.
+      .
     - cmake
-      --build ./
+      --build build
+    - cd build
     - $SUDO_CMD cpack
       -G "DEB;ZIP"
   artifacts:
@@ -385,7 +385,6 @@ build:nvcc-benchmark:
     - master
   script:
     - mkdir build
-    - cd build
     - cmake
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
@@ -393,9 +392,9 @@ build:nvcc-benchmark:
       -D CMAKE_CXX_COMPILER=g++-8
       -D CMAKE_C_COMPILER=g++-8
       -B build
-      ../.
+      .
     - cmake
-      --build ./
+      --build build
   artifacts:
     paths:
       - build/benchmark/*
