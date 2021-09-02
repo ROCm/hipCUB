@@ -52,7 +52,7 @@ struct half_less
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hlt(a, b);
         #else
         return half_to_native(a) < half_to_native(b);
@@ -65,7 +65,7 @@ struct half_less_equal
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hle(a, b);
         #else
         return half_to_native(a) <= half_to_native(b);
@@ -78,7 +78,7 @@ struct half_greater
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hgt(a, b);
         #else
         return half_to_native(a) > half_to_native(b);
@@ -91,7 +91,7 @@ struct half_greater_equal
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hge(a, b);
         #else
         return half_to_native(a) >= half_to_native(b);
@@ -104,7 +104,7 @@ struct half_equal_to
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __heq(a, b);
         #else
         return half_to_native(a) == half_to_native(b);
@@ -117,7 +117,7 @@ struct half_not_equal_to
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hne(a, b);
         #else
         return half_to_native(a) != half_to_native(b);
@@ -130,7 +130,7 @@ struct half_plus
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hadd(a, b);
         #else
         return native_to_half(half_to_native(a) + half_to_native(b));
@@ -143,7 +143,7 @@ struct half_minus
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hsub(a, b);
         #else
         return native_to_half(half_to_native(a) - half_to_native(b));
@@ -156,7 +156,7 @@ struct half_multiplies
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hmul(a, b);
         #else
         return native_to_half(half_to_native(a) * half_to_native(b));
@@ -169,7 +169,7 @@ struct half_maximum
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hlt(a, b) ? b : a;
         #else
         return half_to_native(a) < half_to_native(b) ? b : a;
@@ -182,7 +182,7 @@ struct half_minimum
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
         return __hlt(a, b) ? a : b;
         #else
         return half_to_native(a) < half_to_native(b) ? a : b;

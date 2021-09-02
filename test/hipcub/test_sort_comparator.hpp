@@ -23,7 +23,7 @@
 #ifndef TEST_SORT_COMPARATOR_HPP_
 #define TEST_SORT_COMPARATOR_HPP_
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
 #include <rocprim/type_traits.hpp>
 #endif
 
@@ -137,7 +137,7 @@
 template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit, bool ShiftLess = (StartBit == 0 && EndBit == sizeof(Key) * 8)>
 struct key_comparator
 {
-    #ifdef __HIP_PLATFORM_HCC__
+    #ifdef __HIP_PLATFORM_AMD__
     static_assert(rocprim::is_unsigned<Key>::value, "Test supports start and end bits only for unsigned integers");
     #endif
 

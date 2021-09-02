@@ -69,7 +69,7 @@ private:
         BLOCK_THREADS               = BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z,
 
         // Whether or not there are values to be trucked along with keys
-        #ifdef __HIP_PLATFORM_HCC__
+        #ifdef __HIP_PLATFORM_AMD__
         KEYS_ONLY                   = rocprim::Equals<ValueT, hipcub::NullType>::VALUE,
         #else
         KEYS_ONLY                   = cub::Equals<ValueT, hipcub::NullType>::VALUE,

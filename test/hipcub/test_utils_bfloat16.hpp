@@ -31,7 +31,7 @@ namespace test_utils
 {
 
 /// \brief Bfloat16-precision floating point type
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
 using bfloat16 = ::hip_bfloat16;
 #elif defined(__HIP_PLATFORM_NVIDIA__)
 using bfloat16 = ::__nv_bfloat16;
@@ -62,7 +62,7 @@ struct bfloat16_less
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a < b;
         #else
         return bfloat16_to_native(a) < bfloat16_to_native(b);
@@ -75,7 +75,7 @@ struct bfloat16_less_equal
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a <= b;
         #else
         return bfloat16_to_native(a) <= bfloat16_to_native(b);
@@ -88,7 +88,7 @@ struct bfloat16_greater
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a > b;
         #else
         return bfloat16_to_native(a) > bfloat16_to_native(b);
@@ -101,7 +101,7 @@ struct bfloat16_greater_equal
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a >= b;
         #else
         return bfloat16_to_native(a) >= bfloat16_to_native(b);
@@ -114,7 +114,7 @@ struct bfloat16_equal_to
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a == b;
         #else
         return bfloat16_to_native(a) == bfloat16_to_native(b);
@@ -127,7 +127,7 @@ struct bfloat16_not_equal_to
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a != b;
         #else
         return bfloat16_to_native(a) != bfloat16_to_native(b);
@@ -140,7 +140,7 @@ struct bfloat16_plus
     HIPCUB_HOST_DEVICE inline
     test_utils::bfloat16 operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a + b;
         #else
         return native_to_bfloat16(bfloat16_to_native(a) + bfloat16_to_native(b));
@@ -153,7 +153,7 @@ struct bfloat16_minus
     HIPCUB_HOST_DEVICE inline
     test_utils::bfloat16 operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a - b;
         #else
         return native_to_bfloat16(bfloat16_to_native(a) - bfloat16_to_native(b));
@@ -166,7 +166,7 @@ struct bfloat16_multiplies
     HIPCUB_HOST_DEVICE inline
     test_utils::bfloat16 operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a * b;
         #else
         return native_to_bfloat16(bfloat16_to_native(a) * bfloat16_to_native(b));
@@ -179,7 +179,7 @@ struct bfloat16_maximum
     HIPCUB_HOST_DEVICE inline
     test_utils::bfloat16 operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a < b ? b : a;
         #else
         return bfloat16_to_native(a) < bfloat16_to_native(b) ? b : a;
@@ -192,7 +192,7 @@ struct bfloat16_minimum
     HIPCUB_HOST_DEVICE inline
     test_utils::bfloat16 operator()(const test_utils::bfloat16& a, const test_utils::bfloat16& b) const
     {
-        #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 700
         return a < b ? a : b;
         #else
         return bfloat16_to_native(a) < bfloat16_to_native(b) ? a : b;

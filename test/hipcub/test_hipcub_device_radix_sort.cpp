@@ -58,12 +58,10 @@ typedef ::testing::Types<
     params<double, unsigned int>,
     params<double, int, true>,
     params<float, int>,
-    #if (__CUDA_ARCH__ >= 700 || !defined(__HIP_PLATFORM_NVIDIA__))
     params<test_utils::half, int>,
     params<test_utils::half, int, true>,
     params<test_utils::bfloat16, int>,
     params<test_utils::bfloat16, int, true>,
-    #endif
     params<int, test_utils::custom_test_type<float>>,
 
     // start_bit and end_bit
