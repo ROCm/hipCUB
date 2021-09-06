@@ -45,7 +45,7 @@
 BEGIN_HIPCUB_NAMESPACE
 
 /**
- * \brief BlockRakingLayout provides a conflict-free shared memory layout abstraction for 1D raking across thread block data.    ![](raking.png)
+ * \brief BlockRakingLayout provides a conflict-free shared memory layout abstraction for 1D raking across thread block data.
  * \ingroup BlockModule
  *
  * \par Overview

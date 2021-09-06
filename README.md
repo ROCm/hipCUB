@@ -182,7 +182,7 @@ cd hipCUB; cd build
 cd hipCUB; cd docs
 
 # run doxygen and sphinx
-./run_docs.sh
+./run_doc.sh
 
 # open docBin/html/index.html
 
