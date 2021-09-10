@@ -32,9 +32,9 @@
 // Version
 #include "hipcub_version.hpp"
 
-#ifdef __HIP_PLATFORM_HCC__
+#ifdef __HIP_PLATFORM_AMD__
     #include "backend/rocprim/hipcub.hpp"
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_PLATFORM_NVIDIA__)
     #include "backend/cub/hipcub.hpp"
 #endif
 
