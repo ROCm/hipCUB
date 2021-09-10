@@ -37,7 +37,7 @@ variables:
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
   ROCM_LATEST_PATH: "/opt/rocm-4.3.0/"
-  ROCPRIM_GIT_BRANCH: "add_block_load_store_striped"
+  ROCPRIM_GIT_BRANCH: "develop_stream"
 
 # hipCUB with rocPRIM backend
 .rocm:

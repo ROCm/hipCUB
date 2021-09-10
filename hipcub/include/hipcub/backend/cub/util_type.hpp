@@ -38,35 +38,13 @@
     #include <cuda_bf16.h>
 #endif
 
-//TODO: Remove this section after CUB update
-
 /// Optional outer namespace(s)
 CUB_NS_PREFIX
 
 namespace cub {
-/*
-#if (__CUDACC_VER_MAJOR__ >= 11 || CUDA_VERSION >= 11000) && !__NVCOMPILER_CUDA__
 
-template <>
-struct FpLimits<__nv_bfloat16>
-{
-    static __host__ __device__ __forceinline__ __nv_bfloat16 Max() {
-        unsigned short max_word = 0x7F7F;
-        return reinterpret_cast<__nv_bfloat16&>(max_word);
-    }
+    // Empty for now
 
-    static __host__ __device__ __forceinline__ __nv_bfloat16 Lowest() {
-        unsigned short lowest_word = 0xFF7F;
-        return reinterpret_cast<__nv_bfloat16&>(lowest_word);
-    }
-};
-
-#if (__CUDACC_VER_MAJOR__ >= 11 || CUDA_VERSION >= 11000) && !__NVCOMPILER_CUDA__
-    template <> struct NumericTraits<__nv_bfloat16> :   BaseTraits<FLOATING_POINT, true, false, unsigned short, __nv_bfloat16> {};
-#endif
-
-#endif
-*/
 }
 CUB_NS_POSTFIX  // Optional outer namespace(s)
 
