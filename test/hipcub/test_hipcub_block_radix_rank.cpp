@@ -41,8 +41,6 @@
 
 #include "hipcub/block/radix_rank_sort_operations.hpp"
 
-#include "test_sort_comparator.hpp"
-
 namespace hipcub_test {
 
 template <
@@ -586,7 +584,7 @@ TYPED_TEST(HipcubBlockRadixSort, SortKeys)
             std::stable_sort(
                 expected.begin() + (i * items_per_block),
                 expected.begin() + ((i + 1) * items_per_block),
-                key_comparator<key_type, descending, start_bit, end_bit>()
+                test_utils::key_comparator<key_type, descending, start_bit, end_bit>()
             );
         }
 
@@ -758,7 +756,7 @@ TYPED_TEST(HipcubBlockRadixSort, SortKeysValues)
             std::stable_sort(
                 expected.begin() + (i * items_per_block),
                 expected.begin() + ((i + 1) * items_per_block),
-                key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
+                test_utils::key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
             );
         }
 

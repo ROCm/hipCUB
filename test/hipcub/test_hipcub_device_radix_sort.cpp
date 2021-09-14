@@ -24,7 +24,7 @@
 
 // hipcub API
 #include "hipcub/device/device_radix_sort.hpp"
-#include "test_sort_comparator.hpp"
+
 
 template<
     class Key,
@@ -132,7 +132,7 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
 
             // Calculate expected results on host
             std::vector<key_type> expected(keys_input);
-            std::stable_sort(expected.begin(), expected.end(), key_comparator<key_type, descending, start_bit, end_bit>());
+            std::stable_sort(expected.begin(), expected.end(), test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
 
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(
@@ -259,7 +259,7 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairs)
             }
             std::stable_sort(
                 expected.begin(), expected.end(),
-                key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
+                test_utils::key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
             );
 
             void * d_temporary_storage = nullptr;
@@ -383,7 +383,7 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeysDoubleBuffer)
 
             // Calculate expected results on host
             std::vector<key_type> expected(keys_input);
-            std::stable_sort(expected.begin(), expected.end(), key_comparator<key_type, descending, start_bit, end_bit>());
+            std::stable_sort(expected.begin(), expected.end(), test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
 
             hipcub::DoubleBuffer<key_type> d_keys(d_keys_input, d_keys_output);
 
@@ -512,7 +512,7 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairsDoubleBuffer)
             }
             std::stable_sort(
                 expected.begin(), expected.end(),
-                key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
+                test_utils::key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
             );
 
             hipcub::DoubleBuffer<key_type> d_keys(d_keys_input, d_keys_output);

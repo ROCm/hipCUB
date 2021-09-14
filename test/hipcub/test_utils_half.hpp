@@ -47,57 +47,53 @@ test_utils::half native_to_half(const test_utils::native_half& x)
     return *reinterpret_cast<const test_utils::half *>(&x);
 }
 
-struct half_less
+template<>
+HIPCUB_HOST_DEVICE inline bool test_utils::less::operator()<test_utils::half>(
+    const test_utils::half & a,
+    const test_utils::half & b) const
 {
-    HIPCUB_HOST_DEVICE inline
-    bool operator()(const test_utils::half& a, const test_utils::half& b) const
-    {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
-        return __hlt(a, b);
-        #else
-        return half_to_native(a) < half_to_native(b);
-        #endif
-    }
-};
+#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+    return __hlt(a, b);
+#else
+    return half_to_native(a) < half_to_native(b);
+#endif
+}
 
-struct half_less_equal
+template<>
+HIPCUB_HOST_DEVICE inline bool test_utils::less_equal::operator()<test_utils::half>(
+    const test_utils::half & a,
+    const test_utils::half & b) const
 {
-    HIPCUB_HOST_DEVICE inline
-    bool operator()(const test_utils::half& a, const test_utils::half& b) const
-    {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
-        return __hle(a, b);
-        #else
-        return half_to_native(a) <= half_to_native(b);
-        #endif
-    }
-};
+#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+    return __hle(a, b);
+#else
+    return half_to_native(a) <= half_to_native(b);
+#endif
+}
 
-struct half_greater
+template<>
+HIPCUB_HOST_DEVICE inline bool test_utils::greater::operator()<test_utils::half>(
+    const test_utils::half & a,
+    const test_utils::half & b) const
 {
-    HIPCUB_HOST_DEVICE inline
-    bool operator()(const test_utils::half& a, const test_utils::half& b) const
-    {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
-        return __hgt(a, b);
-        #else
-        return half_to_native(a) > half_to_native(b);
-        #endif
-    }
-};
+#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+    return __hgt(a, b);
+#else
+    return half_to_native(a) > half_to_native(b);
+#endif
+}
 
-struct half_greater_equal
+template<>
+HIPCUB_HOST_DEVICE inline bool test_utils::greater_equal::operator()<test_utils::half>(
+    const test_utils::half & a,
+    const test_utils::half & b) const
 {
-    HIPCUB_HOST_DEVICE inline
-    bool operator()(const test_utils::half& a, const test_utils::half& b) const
-    {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
-        return __hge(a, b);
-        #else
-        return half_to_native(a) >= half_to_native(b);
-        #endif
-    }
-};
+#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+    return __hge(a, b);
+#else
+    return half_to_native(a) >= half_to_native(b);
+#endif
+}
 
 struct half_equal_to
 {
@@ -190,6 +186,20 @@ struct half_minimum
     }
 };
 
+template<bool Descending>
+struct key_comparator<test_utils::half, Descending, 0, sizeof(test_utils::half) * 8>
+{
+    bool operator()(const test_utils::half & lhs, const test_utils::half & rhs)
+    {
+        // HIP's half doesn't have __host__ comparison operators, use test_utils::native_half instead
+        return key_comparator<test_utils::native_half,
+                              Descending,
+                              0,
+                              sizeof(test_utils::native_half) * 8>()(
+            test_utils::half_to_native(lhs),
+            test_utils::half_to_native(rhs));
+    }
+};
 }
 
 #endif // HIPCUB_TEST_HIPCUB_TEST_UTILS_HALF_HPP_

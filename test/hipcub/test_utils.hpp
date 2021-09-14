@@ -33,6 +33,7 @@
     #include <cub/util_ptx.cuh>
 #endif
 
+#include "test_utils_sort_comparator.hpp"
 #include "test_utils_half.hpp"
 #include "test_utils_bfloat16.hpp"
 
@@ -475,13 +476,13 @@ struct custom_test_type<test_utils::half>
     HIPCUB_HOST_DEVICE inline
     bool operator<(const custom_test_type& other) const
     {
-        return (half_less()(x, other.x) || (half_equal_to()(x, other.x) && half_less()(y, other.y)));
+        return (test_utils::less()(x, other.x) || (half_equal_to()(x, other.x) && test_utils::less()(y, other.y)));
     }
 
     HIPCUB_HOST_DEVICE inline
     bool operator>(const custom_test_type& other) const
     {
-        return (half_greater()(x, other.x) || (half_equal_to()(x, other.x) && half_greater()(y, other.y)));
+        return (greater()(x, other.x) || (half_equal_to()(x, other.x) && greater()(y, other.y)));
     }
 
     HIPCUB_HOST_DEVICE inline
@@ -551,13 +552,13 @@ struct custom_test_type<test_utils::bfloat16>
     HIPCUB_HOST_DEVICE inline
     bool operator<(const custom_test_type& other) const
     {
-        return (bfloat16_less()(x, other.x) || (bfloat16_equal_to()(x, other.x) && bfloat16_less()(y, other.y)));
+        return (test_utils::less()(x, other.x) || (bfloat16_equal_to()(x, other.x) && test_utils::less()(y, other.y)));
     }
 
     HIPCUB_HOST_DEVICE inline
     bool operator>(const custom_test_type& other) const
     {
-        return (bfloat16_greater()(x, other.x) || (bfloat16_equal_to()(x, other.x) && bfloat16_greater()(y, other.y)));
+        return (greater()(x, other.x) || (bfloat16_equal_to()(x, other.x) && greater()(y, other.y)));
     }
 
     HIPCUB_HOST_DEVICE inline
