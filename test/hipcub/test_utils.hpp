@@ -752,7 +752,7 @@ void assert_eq(const std::vector<test_utils::half>& result, const std::vector<te
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        ASSERT_EQ(half_to_native(result[i]), half_to_native(expected[i])) << "where index = " << i;
+        ASSERT_EQ(test_utils::native_half(result[i]), test_utils::native_half(expected[i])) << "where index = " << i;
     }
 }
 
@@ -761,7 +761,7 @@ void assert_eq(const std::vector<test_utils::bfloat16>& result, const std::vecto
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        ASSERT_EQ(bfloat16_to_native(result[i]), bfloat16_to_native(expected[i])) << "where index = " << i;
+        ASSERT_EQ(test_utils::native_bfloat16(result[i]), test_utils::native_bfloat16(expected[i])) << "where index = " << i;
     }
 }
 
@@ -778,7 +778,7 @@ void custom_assert_eq(const std::vector<test_utils::half>& result, const std::ve
 {
     for(size_t i = 0; i < size; i++)
     {
-        ASSERT_EQ(half_to_native(result[i]), half_to_native(expected[i])) << "where index = " << i;
+        ASSERT_EQ(test_utils::native_half(result[i]), test_utils::native_half(expected[i])) << "where index = " << i;
     }
 }
 
@@ -786,7 +786,7 @@ void custom_assert_eq(const std::vector<test_utils::bfloat16>& result, const std
 {
     for(size_t i = 0; i < size; i++)
     {
-        ASSERT_EQ(bfloat16_to_native(result[i]), bfloat16_to_native(expected[i])) << "where index = " << i;
+        ASSERT_EQ(test_utils::native_bfloat16(result[i]), test_utils::native_bfloat16(expected[i])) << "where index = " << i;
     }
 }
 
@@ -799,12 +799,12 @@ void assert_eq(const T& result, const T& expected)
 
 void assert_eq(const test_utils::half& result, const test_utils::half& expected)
 {
-    ASSERT_EQ(half_to_native(result), half_to_native(expected));
+    ASSERT_EQ(test_utils::native_half(result), test_utils::native_half(expected));
 }
 
 void assert_eq(const test_utils::bfloat16& result, const test_utils::bfloat16& expected)
 {
-    ASSERT_EQ(bfloat16_to_native(result), bfloat16_to_native(expected));
+    ASSERT_EQ(test_utils::native_bfloat16(result), test_utils::native_bfloat16(expected));
 }
 
 

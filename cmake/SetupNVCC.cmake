@@ -26,7 +26,6 @@
 # by nvcc compiler (CMake's CUDA package handles this).
 
 # A function for automatic detection of the lowest CC of the installed NV GPUs
-# Minimum is 7.0
 function(hip_cuda_detect_lowest_cc out_variable)
     set(__cufile ${PROJECT_BINARY_DIR}/detect_nvgpus_cc.cu)
 
@@ -46,9 +45,6 @@ function(hip_cuda_detect_lowest_cc out_variable)
         "      if (prop.major < major || (prop.major == major && prop.minor < minor)){\n"
         "        major = prop.major; minor = prop.minor;\n"
         "      }\n"
-        "  }\n"
-        "  if (major < 7 || (major == 7 && minor < 0)){\n"
-        "     major = 7; minor = 0;\n"
         "  }\n"
         "  std::printf(\"%d%d\", major, minor);\n"
         "  return 0;\n"

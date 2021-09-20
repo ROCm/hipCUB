@@ -33,15 +33,7 @@ namespace test_utils
 using half = ::__half;
 using native_half = half_t;
 
-
-// Support half operators on host side
-HIPCUB_HOST inline
-test_utils::native_half half_to_native(const test_utils::half& x)
-{
-    return *reinterpret_cast<const test_utils::native_half *>(&x);
-}
-
-HIPCUB_HOST inline
+HIPCUB_HOST_DEVICE
 test_utils::half native_to_half(const test_utils::native_half& x)
 {
     return *reinterpret_cast<const test_utils::half *>(&x);
@@ -52,10 +44,10 @@ HIPCUB_HOST_DEVICE inline bool test_utils::less::operator()<test_utils::half>(
     const test_utils::half & a,
     const test_utils::half & b) const
 {
-#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+#if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
     return __hlt(a, b);
 #else
-    return half_to_native(a) < half_to_native(b);
+    return test_utils::native_half(a) < test_utils::native_half(b);
 #endif
 }
 
@@ -64,10 +56,10 @@ HIPCUB_HOST_DEVICE inline bool test_utils::less_equal::operator()<test_utils::ha
     const test_utils::half & a,
     const test_utils::half & b) const
 {
-#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+#if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
     return __hle(a, b);
 #else
-    return half_to_native(a) <= half_to_native(b);
+    return test_utils::native_half(a) <= test_utils::native_half(b);
 #endif
 }
 
@@ -76,10 +68,10 @@ HIPCUB_HOST_DEVICE inline bool test_utils::greater::operator()<test_utils::half>
     const test_utils::half & a,
     const test_utils::half & b) const
 {
-#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+#if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
     return __hgt(a, b);
 #else
-    return half_to_native(a) > half_to_native(b);
+    return test_utils::native_half(a) > test_utils::native_half(b);
 #endif
 }
 
@@ -88,10 +80,10 @@ HIPCUB_HOST_DEVICE inline bool test_utils::greater_equal::operator()<test_utils:
     const test_utils::half & a,
     const test_utils::half & b) const
 {
-#if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+#if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
     return __hge(a, b);
 #else
-    return half_to_native(a) >= half_to_native(b);
+    return test_utils::native_half(a) >= test_utils::native_half(b);
 #endif
 }
 
@@ -100,10 +92,10 @@ struct half_equal_to
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __heq(a, b);
         #else
-        return half_to_native(a) == half_to_native(b);
+        return test_utils::native_half(a) == test_utils::native_half(b);
         #endif
     }
 };
@@ -113,10 +105,10 @@ struct half_not_equal_to
     HIPCUB_HOST_DEVICE inline
     bool operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __hne(a, b);
         #else
-        return half_to_native(a) != half_to_native(b);
+        return test_utils::native_half(a) != test_utils::native_half(b);
         #endif
     }
 };
@@ -126,10 +118,10 @@ struct half_plus
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __hadd(a, b);
         #else
-        return native_to_half(half_to_native(a) + half_to_native(b));
+        return native_to_half(test_utils::native_half(a) + test_utils::native_half(b));
         #endif
     }
 };
@@ -139,10 +131,10 @@ struct half_minus
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __hsub(a, b);
         #else
-        return native_to_half(half_to_native(a) - half_to_native(b));
+        return native_to_half(test_utils::native_half(a) - test_utils::native_half(b));
         #endif
     }
 };
@@ -152,10 +144,10 @@ struct half_multiplies
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __hmul(a, b);
         #else
-        return native_to_half(half_to_native(a) * half_to_native(b));
+        return native_to_half(test_utils::native_half(a) * test_utils::native_half(b));
         #endif
     }
 };
@@ -165,10 +157,10 @@ struct half_maximum
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __hlt(a, b) ? b : a;
         #else
-        return half_to_native(a) < half_to_native(b) ? b : a;
+        return test_utils::native_half(a) < test_utils::native_half(b) ? b : a;
         #endif
     }
 };
@@ -178,10 +170,10 @@ struct half_minimum
     HIPCUB_HOST_DEVICE inline
     test_utils::half operator()(const test_utils::half& a, const test_utils::half& b) const
     {
-        #if defined(__HIP_DEVICE_COMPILE__) || __CUDA_ARCH__ >= 610
+        #if defined(__HIP_DEVICE_COMPILE__) && defined(__HIP_PLATFORM_AMD__) || __CUDA_ARCH__ >= 530
         return __hlt(a, b) ? a : b;
         #else
-        return half_to_native(a) < half_to_native(b) ? a : b;
+        return test_utils::native_half(a) < test_utils::native_half(b) ? a : b;
         #endif
     }
 };
@@ -196,8 +188,8 @@ struct key_comparator<test_utils::half, Descending, 0, sizeof(test_utils::half) 
                               Descending,
                               0,
                               sizeof(test_utils::native_half) * 8>()(
-            test_utils::half_to_native(lhs),
-            test_utils::half_to_native(rhs));
+            test_utils::native_half(lhs),
+            test_utils::native_half(rhs));
     }
 };
 }
