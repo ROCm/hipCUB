@@ -63,7 +63,7 @@ function(add_hipcub_test TEST_NAME TEST_SOURCES)
     foreach( file_i ${third_party_dlls})
       add_custom_command( TARGET ${TEST_TARGET} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${file_i} ${PROJECT_BINARY_DIR}/test/hipcub )
     endforeach( file_i )
-  endif()     
+  endif()
 endfunction()
 
 # ****************************************************************************
@@ -105,3 +105,5 @@ add_hipcub_test("hipcub.WarpReduce" test_hipcub_warp_reduce.cpp)
 add_hipcub_test("hipcub.WarpScan" test_hipcub_warp_scan.cpp)
 add_hipcub_test("hipcub.Iterator" test_hipcub_iterators.cpp)
 add_hipcub_test("hipcub.ThreadOperations" test_hipcub_thread.cpp)
+
+add_hipcub_test("hipcub.DeviceRadixSortSpecial" test_hipcub_device_radix_sort_special.cpp)
