@@ -105,5 +105,3 @@ add_hipcub_test("hipcub.WarpReduce" test_hipcub_warp_reduce.cpp)
 add_hipcub_test("hipcub.WarpScan" test_hipcub_warp_scan.cpp)
 add_hipcub_test("hipcub.Iterator" test_hipcub_iterators.cpp)
 add_hipcub_test("hipcub.ThreadOperations" test_hipcub_thread.cpp)
-
-add_hipcub_test("hipcub.DeviceRadixSortSpecial" test_hipcub_device_radix_sort_special.cpp)
