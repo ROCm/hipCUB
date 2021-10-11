@@ -26,7 +26,7 @@ cmake_minimum_required(VERSION 3.10.2 FATAL_ERROR)
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
 #Adding CMAKE_PREFIX_PATH
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+list( APPEND CMAKE_PREFIX_PATH /opt/rocm )
 
 # hipCUB project
 project(hipcub LANGUAGES CXX)
@@ -34,7 +34,7 @@ project(hipcub LANGUAGES CXX)
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+  ${HIP_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip # FindHIP.cmake
 )
 
 # Set a default build type if none was specified
