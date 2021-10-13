@@ -335,7 +335,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
 
 TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
-    using T = unsigned int;
+    using T = short;
     using Iterator = typename hipcub::CountingInputIterator<T>;
     const bool debug_synchronous = false;
 
@@ -417,7 +417,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 
 TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
 {
-    using T = unsigned int;
+    using T = short;
     using Iterator = typename hipcub::CountingInputIterator<T>;
     const bool debug_synchronous = false;
 
