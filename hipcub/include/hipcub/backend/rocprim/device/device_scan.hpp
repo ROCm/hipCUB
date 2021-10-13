@@ -50,7 +50,7 @@ public:
                             size_t &temp_storage_bytes,
                             InputIteratorT d_in,
                             OutputIteratorT d_out,
-                            int num_items,
+                            size_t num_items,
                             hipStream_t stream = 0,
                             bool debug_synchronous = false,
                             size_t size_limit = size_t(std::numeric_limits<int>::max()) + 1)
@@ -73,7 +73,7 @@ public:
                              InputIteratorT d_in,
                              OutputIteratorT d_out,
                              ScanOpT scan_op,
-                             int num_items,
+                             size_t num_items,
                              hipStream_t stream = 0,
                              bool debug_synchronous = false,
                              size_t size_limit = size_t(std::numeric_limits<int>::max()) + 1)
@@ -95,7 +95,7 @@ public:
                             size_t &temp_storage_bytes,
                             InputIteratorT d_in,
                             OutputIteratorT d_out,
-                            int num_items,
+                            size_t num_items,
                             hipStream_t stream = 0,
                             bool debug_synchronous = false,
                             size_t size_limit = size_t(std::numeric_limits<int>::max()) + 1)
@@ -121,7 +121,7 @@ public:
                              OutputIteratorT d_out,
                              ScanOpT scan_op,
                              InitValueT init_value,
-                             int num_items,
+                             size_t num_items,
                              hipStream_t stream = 0,
                              bool debug_synchronous = false,
                              size_t size_limit = size_t(std::numeric_limits<int>::max()) + 1)
