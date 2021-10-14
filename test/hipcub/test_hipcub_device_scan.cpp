@@ -335,9 +335,9 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
 
 TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
-    using T = unsigned char;
+    using T = unsigned int;
     using Iterator = typename hipcub::CountingInputIterator<T>;
-    const bool debug_synchronous = false;
+    const bool debug_synchroous = false;
 
     const size_t size = (1ul << 31) + 1ul;
 
@@ -413,11 +413,12 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     }
 
     hipFree(d_output);
+    hipFree(d_temp_storage);
 }
 
 TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
 {
-    using T = unsigned char;
+    using T = unsigned int;
     using Iterator = typename hipcub::CountingInputIterator<T>;
     const bool debug_synchronous = false;
 
@@ -499,4 +500,5 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     }
 
     hipFree(d_output);
+    hipFree(d_temp_storage);
 }
