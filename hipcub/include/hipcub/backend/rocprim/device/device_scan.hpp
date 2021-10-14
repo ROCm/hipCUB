@@ -62,8 +62,7 @@ public:
         return InclusiveScan(
             d_temp_storage, temp_storage_bytes,
             d_in, d_out, ::hipcub::Sum(), num_items,
-            stream, debug_synchronous,
-            HIPCUB_DEVICE_SCAN_SIZE_LIMIT
+            stream, debug_synchronous
         );
     }
 
@@ -108,8 +107,7 @@ public:
         return ExclusiveScan(
             d_temp_storage, temp_storage_bytes,
             d_in, d_out, ::hipcub::Sum(), T(0), num_items,
-            stream, debug_synchronous,
-            HIPCUB_DEVICE_SCAN_SIZE_LIMIT
+            stream, debug_synchronous
         );
     }
 
