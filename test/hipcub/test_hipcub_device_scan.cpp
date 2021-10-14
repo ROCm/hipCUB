@@ -337,7 +337,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
     using T = unsigned int;
     using Iterator = typename hipcub::CountingInputIterator<T>;
-    const bool debug_synchroous = false;
+    const bool debug_synchronous = false;
 
     const size_t size = (1ul << 31) + 1ul;
 
