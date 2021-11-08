@@ -36,7 +36,7 @@ target_include_directories(hipcub
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/hipcub>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:hipcub/include/>
+    $<INSTALL_INTERFACE:include/>
 )
 
 if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
@@ -69,13 +69,12 @@ set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 # does not support header-only libraries (INTERFACE targets)
 rocm_install_targets(
   TARGETS hipcub
-  PREFIX hipcub
 )
 install(
   DIRECTORY
     "include/"
     "${PROJECT_BINARY_DIR}/hipcub/include/"
-  DESTINATION hipcub/include/
+  DESTINATION include
   FILES_MATCHING
   PATTERN "*.h"
   PATTERN "*.hpp"
@@ -88,17 +87,12 @@ include(ROCMExportTargetsHeaderOnly)
 if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
   rocm_export_targets_header_only(
     TARGETS hip::hipcub
-    PREFIX hipcub
     DEPENDS PACKAGE rocprim
     NAMESPACE hip::
   )
 else()
   rocm_export_targets_header_only(
     TARGETS hip::hipcub
-    PREFIX hipcub
     NAMESPACE hip::
   )
 endif()
-
-# Create symlinks
-rocm_install_symlink_subdir(hipcub)
