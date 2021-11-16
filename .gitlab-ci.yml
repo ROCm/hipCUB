@@ -28,15 +28,15 @@ stages:
 variables:
   SUDO_CMD: "" # Must be "sudo" on images which don't use root user
   DEPS_DIR: "$CI_PROJECT_DIR/__dependencies"
-  CMAKE_ROCM_MINIMUM_URL: "https://cmake.org/files/v3.10/cmake-3.10.2-Linux-x86_64.tar.gz"
-  CMAKE_NVIDIA_MINIMUM_URL: "https://cmake.org/files/v3.15/cmake-3.15.7-Linux-x86_64.tar.gz"
+  CMAKE_ROCM_MINIMUM_URL: "https://cmake.org/files/v3.16/cmake-3.16.9-Linux-x86_64.tar.gz"
+  CMAKE_NVIDIA_MINIMUM_URL: "https://cmake.org/files/v3.16/cmake-3.16.9-Linux-x86_64.tar.gz"
   # General build flags
   CXXFLAGS: ""
   CMAKE_OPTIONS: ""
   # Local build options
   LOCAL_CXXFLAGS: ""
   LOCAL_CMAKE_OPTIONS: ""
-  ROCM_LATEST_PATH: "/opt/rocm-4.3.0/"
+  ROCM_LATEST_PATH: "/opt/rocm-4.5.0/"
   ROCPRIM_GIT_BRANCH: "develop_stream"
 
 # hipCUB with rocPRIM backend
@@ -86,7 +86,6 @@ variables:
     - git clone -b $branch_name https://gitlab-ci-token:${CI_JOB_TOKEN}@${ROCPRIM_GIT_URL}
     - cd rocPRIM
     - mkdir build
-    - cd build
     - cmake
       -G Ninja
       -D CMAKE_CXX_COMPILER=hipcc
@@ -95,7 +94,11 @@ variables:
       -D BUILD_EXAMPLE=OFF
       -D ROCM_DEP_ROCMCORE=OFF
       -B build
-      ../.
+      -S ./
+    - $SUDO_CMD cmake
+      --build build
+      --target install
+    - cd build
     - $SUDO_CMD cpack
       -G "DEB"
     - $SUDO_CMD dpkg -i rocprim*.deb
@@ -105,9 +108,6 @@ build:rocm:
   extends: .rocm:build
   stage: build
   script:
-    - if [ ! -d "build" ] ; then mkdir build;
-    - fi;
-    - cd build
     - cmake
       -G Ninja
       -D CMAKE_CXX_COMPILER=hipcc
@@ -116,9 +116,10 @@ build:rocm:
       -D BUILD_EXAMPLE=ON
       -D AMDGPU_TARGETS="gfx803;gfx900;gfx906"
       -B build
-      ../.
+      -S ./
     - cmake
-      --build ./
+      --build build
+    - cd build
     - $SUDO_CMD cpack
       -G "DEB;ZIP"
   artifacts:
@@ -142,9 +143,6 @@ build:rocm-benchmark:
     - develop
     - master
   script:
-    - if [ ! -d "build" ] ; then mkdir build;
-    - fi;
-    - cd build
     # Build hipCUB benchmark
     - cmake
       -G Ninja
@@ -152,9 +150,9 @@ build:rocm-benchmark:
       -D CMAKE_BUILD_TYPE=Release
       -D BUILD_BENCHMARK=ON
       -B build
-      ../.
+      -S ./
     - cmake
-      --build ./
+      --build build
   artifacts:
     paths:
       - build/benchmark/*
@@ -324,16 +322,13 @@ test:rocm_install:
   image: nvidia/cuda:11.3.1-devel-ubuntu18.04
   before_script:
     - nvidia-smi
-    # HIP-nvcc
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y -qq libnuma-dev libunwind-dev git wget tar xz-utils bzip2 build-essential pkg-config ninja-build protobuf-compiler gcc-8 g++-8 libidn11 ca-certificates
     - $SUDO_CMD wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | $SUDO_CMD apt-key add -
     - $SUDO_CMD echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | $SUDO_CMD tee /etc/apt/sources.list.d/rocm.list
     - $SUDO_CMD apt-get update -qq
     - $SUDO_CMD apt-get install -y hip-base
-    # Install hip-nvcc ignoring dependencies because it depends on cuda metapackage
-    # (with heavy libraries, tools etc. that also require GUI and other packages)
-    - apt-get download hip-nvcc rocm-cmake
+    - apt-get download hip-runtime-nvidia rocm-cmake hip-dev
     - $SUDO_CMD dpkg -i --ignore-depends=cuda hip*.deb
     - $SUDO_CMD ls -d /opt/*
     - $SUDO_CMD ln -s $ROCM_LATEST_PATH /opt/rocm
