@@ -333,6 +333,9 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     }
 }
 
+// CUB does not support large indices in inclusive and exclusive scans
+#ifndef __HIP_PLATFORM_NVIDIA__
+
 TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
     using T = unsigned int;
@@ -502,3 +505,5 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     hipFree(d_output);
     hipFree(d_temp_storage);
 }
+
+#endif
