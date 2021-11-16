@@ -79,7 +79,7 @@ public:
         return ::rocprim::inclusive_scan(
             d_temp_storage, temp_storage_bytes,
             d_in, d_out, num_items,
-            ::hipcub::detail::convert_result_type<InputIteratorT, OutputIteratorT>(scan_op),
+            scan_op,
             stream, debug_synchronous
         );
     }
@@ -125,7 +125,7 @@ public:
         return ::rocprim::exclusive_scan(
             d_temp_storage, temp_storage_bytes,
             d_in, d_out, init_value, num_items,
-            ::hipcub::detail::convert_result_type<InputIteratorT, OutputIteratorT>(scan_op),
+            scan_op,
             stream, debug_synchronous
         );
     }

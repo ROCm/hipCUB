@@ -336,10 +336,79 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
 // CUB does not support large indices in inclusive and exclusive scans
 #ifndef __HIP_PLATFORM_NVIDIA__
 
+template <typename T>
+class single_index_iterator {
+private:
+    class conditional_discard_value {
+    public:
+        __host__ __device__ explicit conditional_discard_value(T* const value, bool keep)
+            : value_{value}
+            , keep_{keep}
+        {
+        }
+
+        __host__ __device__ conditional_discard_value& operator=(T value) {
+            if(keep_) {
+                *value_ = value;
+            }
+            return *this;
+        }
+    private:
+        T* const   value_;
+        const bool keep_;
+    };
+
+    T*     value_;
+    size_t expected_index_;
+    size_t index_;
+
+public:
+    using value_type        = conditional_discard_value;
+    using reference         = conditional_discard_value;
+    using pointer           = conditional_discard_value*;
+    using iterator_category = std::random_access_iterator_tag;
+    using difference_type   = std::ptrdiff_t;
+    
+    __host__ __device__ single_index_iterator(T* value, size_t expected_index, size_t index = 0)
+        : value_{value}
+        , expected_index_{expected_index}
+        , index_{index}
+    {
+    }
+
+    __host__ __device__ single_index_iterator(const single_index_iterator&) = default;
+    __host__ __device__ single_index_iterator& operator=(const single_index_iterator&) = default;
+
+    // clang-format off
+    __host__ __device__ bool operator==(const single_index_iterator& rhs) { return index_ == rhs.index_; }
+    __host__ __device__ bool operator!=(const single_index_iterator& rhs) { return !(this == rhs);       }
+
+    __host__ __device__ reference operator*() { return value_type{value_, index_ == expected_index_}; }
+
+    __host__ __device__ reference operator[](const difference_type distance) { return *(*this + distance); }
+
+    __host__ __device__ single_index_iterator& operator+=(const difference_type rhs) { index_ += rhs; return *this; }
+    __host__ __device__ single_index_iterator& operator-=(const difference_type rhs) { index_ -= rhs; return *this; }
+
+    __host__ __device__ difference_type operator-(const single_index_iterator& rhs) const { return index_ - rhs.index_; }
+
+    __host__ __device__ single_index_iterator operator+(const difference_type rhs) const { return single_index_iterator(*this) += rhs; }
+    __host__ __device__ single_index_iterator operator-(const difference_type rhs) const { return single_index_iterator(*this) -= rhs; }
+
+    __host__ __device__ single_index_iterator& operator++() { ++index_; return *this; }
+    __host__ __device__ single_index_iterator& operator--() { --index_; return *this; }
+
+    __host__ __device__ single_index_iterator operator++(int) { return ++single_index_iterator{*this}; }
+    __host__ __device__ single_index_iterator operator--(int) { return --single_index_iterator{*this}; }
+    // clang-format on
+};
+
 TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
     using T = unsigned int;
-    using Iterator = typename hipcub::CountingInputIterator<T>;
+    using InputIterator = typename hipcub::CountingInputIterator<T>;
+    using OutputIterator = single_index_iterator<T>;
+
     const bool debug_synchronous = false;
 
     const size_t size = (1ul << 31) + 1ul;
@@ -350,21 +419,12 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
     // Create CountingInputIterator<U> with random starting point
-    Iterator input_begin(test_utils::get_random_value<T>(0, 200, seed_value));
+    InputIterator input_begin(test_utils::get_random_value<T>(0, 200, seed_value));
 
-    std::vector<T> output(size);
     T * d_output;
-    HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(T)));
+    HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, sizeof(T)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    // Calculate expected results on host
-    std::vector<T> expected(size);
-    test_utils::host_inclusive_scan(
-        input_begin,
-        input_begin + size,
-        expected.begin(),
-        ::hipcub::Sum()
-    );
+    OutputIterator output_it(d_output, size - 1);
 
     // temp storage
     size_t temp_storage_size_bytes;
@@ -374,7 +434,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     HIP_CHECK(
         hipcub::DeviceScan::InclusiveScan(
             d_temp_storage, temp_storage_size_bytes,
-            input_begin, d_output,
+            input_begin, output_it,
             ::hipcub::Sum(), size,
             stream, debug_synchronous
         )
@@ -391,7 +451,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     HIP_CHECK(
         hipcub::DeviceScan::InclusiveScan(
             d_temp_storage, temp_storage_size_bytes,
-            input_begin, d_output,
+            input_begin, output_it,
             ::hipcub::Sum(), size,
             stream, debug_synchronous
         )
@@ -400,20 +460,24 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Copy output to host
+    T actual_output;
     HIP_CHECK(
         hipMemcpy(
-            output.data(), d_output,
-            output.size() * sizeof(T),
+            &actual_output, d_output,
+            sizeof(T),
             hipMemcpyDeviceToHost
         )
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     // Validating results
-    for(size_t i = 0; i < output.size(); i++)
-    {
-        ASSERT_EQ(output[i], expected[i]) << "where index = " << i;
-    }
+    // Sum of 'size' increasing numbers starting at 'n' is size * (2n + size - 1) 
+    // The division is not integer division but either (size) or (2n + size - 1) has to be even.
+    const T multiplicand_1 = size;
+    const T multiplicand_2 = 2 * (*input_begin) + size - 1;
+    const T expected_output = (multiplicand_1 % 2 == 0) ? multiplicand_1 / 2 * multiplicand_2
+                                                        : multiplicand_1 * (multiplicand_2 / 2);
+    ASSERT_EQ(expected_output, actual_output);
 
     hipFree(d_output);
     hipFree(d_temp_storage);
@@ -422,7 +486,8 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
 {
     using T = unsigned int;
-    using Iterator = typename hipcub::CountingInputIterator<T>;
+    using InputIterator = typename hipcub::CountingInputIterator<T>;
+    using OutputIterator = single_index_iterator<T>;
     const bool debug_synchronous = false;
 
     const size_t size = (1ul << 31) + 1ul;
@@ -433,23 +498,13 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
     // Create CountingInputIterator<U> with random starting point
-    Iterator input_begin(test_utils::get_random_value<T>(0, 200, seed_value));
+    InputIterator input_begin(test_utils::get_random_value<T>(0, 200, seed_value));
     T initial_value = test_utils::get_random_value<T>(1, 10, seed_value);
 
-    std::vector<T> output(size);
     T * d_output;
-    HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(T)));
+    HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, sizeof(T)));
     HIP_CHECK(hipDeviceSynchronize());
-
-    // Calculate expected results on host
-    std::vector<T> expected(size);
-    test_utils::host_exclusive_scan(
-        input_begin,
-        input_begin + size,
-        initial_value,
-        expected.begin(),
-        ::hipcub::Sum()
-    );
+    OutputIterator output_it(d_output, size - 1);
 
     // temp storage
     size_t temp_storage_size_bytes;
@@ -459,7 +514,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     HIP_CHECK(
         hipcub::DeviceScan::ExclusiveScan(
             d_temp_storage, temp_storage_size_bytes,
-            input_begin, d_output,
+            input_begin, output_it,
             ::hipcub::Sum(),
             initial_value, size,
             stream, debug_synchronous
@@ -477,7 +532,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     HIP_CHECK(
         hipcub::DeviceScan::ExclusiveScan(
             d_temp_storage, temp_storage_size_bytes,
-            input_begin, d_output,
+            input_begin, output_it,
             ::hipcub::Sum(),
             initial_value, size,
             stream, debug_synchronous
@@ -487,20 +542,28 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Copy output to host
+    T actual_output;
     HIP_CHECK(
         hipMemcpy(
-            output.data(), d_output,
-            output.size() * sizeof(T),
+            &actual_output, d_output,
+            sizeof(T),
             hipMemcpyDeviceToHost
         )
     );
     HIP_CHECK(hipDeviceSynchronize());
 
     // Validating results
-    for(size_t i = 0; i < output.size(); i++)
-    {
-        ASSERT_EQ(output[i], expected[i]) << "where index = " << i;
-    }
+    // Sum of 'size' - 1 increasing numbers starting at 'n' is (size - 1) * (2n + size - 2) 
+    // The division is not integer division but either (size - 1) or (2n + size - 2) has to be even.
+    const T multiplicand_1 = size - 1;
+    const T multiplicand_2 = 2 * (*input_begin) + size - 2;
+
+    const T product = (multiplicand_1 % 2 == 0) ? multiplicand_1 / 2 * multiplicand_2
+                                                : multiplicand_1 * (multiplicand_2 / 2);
+
+    const T expected_output = initial_value + product;
+
+    ASSERT_EQ(expected_output, actual_output);
 
     hipFree(d_output);
     hipFree(d_temp_storage);
