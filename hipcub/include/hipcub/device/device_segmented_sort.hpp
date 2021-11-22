@@ -31,8 +31,7 @@
 #define HIPCUB_DEVICE_DEVICE_SEGMENTED_SORT_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    // TODO
-    // #include "../backend/rocprim/device/device_segmented_sort.hpp"
+    #include "../backend/rocprim/device/device_segmented_sort.hpp"
 #elif defined(__HIP_PLATFORM_NVIDIA__)
     #include "../backend/cub/device/device_segmented_sort.hpp"
 #endif
