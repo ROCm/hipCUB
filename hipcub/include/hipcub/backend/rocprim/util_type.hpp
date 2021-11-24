@@ -36,6 +36,7 @@
 #include "../../config.hpp"
 
 #include <rocprim/detail/various.hpp>
+#include <rocprim/types/future_value.hpp>
 
 #include <hip/hip_fp16.h>
 #include <hip/hip_bfloat16.h>
@@ -153,6 +154,9 @@ template<
 using KeyValuePair = ::rocprim::key_value_pair<Key, Value>;
 
 #endif
+
+template <typename T, typename Iter = T*>
+using FutureValue = ::rocprim::future_value<T, Iter>;
 
 namespace detail
 {

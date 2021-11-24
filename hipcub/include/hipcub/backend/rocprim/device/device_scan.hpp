@@ -129,6 +129,32 @@ public:
             stream, debug_synchronous
         );
     }
+
+    template <
+        typename InputIteratorT,
+        typename OutputIteratorT,
+        typename ScanOpT,
+        typename InitValueT,
+        typename InitValueIterT = InitValueT*
+    >
+    HIPCUB_RUNTIME_FUNCTION static
+    hipError_t ExclusiveScan(void *d_temp_storage,
+                             size_t &temp_storage_bytes,
+                             InputIteratorT d_in,
+                             OutputIteratorT d_out,
+                             ScanOpT scan_op,
+                             FutureValue<InitValueT, InitValueIterT> init_value,
+                             int num_items,
+                             hipStream_t stream = 0,
+                             bool debug_synchronous = false)
+    {
+        return ::rocprim::exclusive_scan(
+            d_temp_storage, temp_storage_bytes,
+            d_in, d_out, init_value, num_items,
+            scan_op,
+            stream, debug_synchronous
+        );
+    }
 };
 
 END_HIPCUB_NAMESPACE
