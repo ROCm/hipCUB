@@ -73,7 +73,7 @@ void warp_store_kernel(
     T* d_input,
     T* d_output)
 {
-    int thread_data[ItemsPerThread];
+    T thread_data[ItemsPerThread];
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
         thread_data[i] = d_input[hipThreadIdx_x * ItemsPerThread + i];
@@ -88,7 +88,7 @@ void warp_store_kernel(
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     constexpr int tile_size = ItemsPerThread * LogicalWarpSize;
 
-    unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
     __shared__ typename WarpStoreT::TempStorage temp_storage[warps_in_block];
 
     WarpStoreT(temp_storage[warp_id]).Store(d_output + warp_id * tile_size, thread_data);
@@ -117,7 +117,7 @@ TYPED_TEST(HipcubWarpStoreTest, WarpStore)
     constexpr unsigned warp_size = TestFixture::params::warp_size;
     constexpr ::hipcub::WarpStoreAlgorithm algorithm = TestFixture::params::algorithm;
     constexpr unsigned items_per_thread = 4;
-    constexpr unsigned block_size = 128;
+    constexpr unsigned block_size = 1024;
     constexpr unsigned items_count = items_per_thread * block_size;
 
     std::vector<T> input(items_count);

@@ -82,9 +82,9 @@ void warp_load_kernel(
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     constexpr int tile_size = ItemsPerThread * LogicalWarpSize;
 
-    unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
     __shared__ typename WarpLoadT::TempStorage temp_storage[warps_in_block];
-    int thread_data[ItemsPerThread];
+    T thread_data[ItemsPerThread];
 
     WarpLoadT(temp_storage[warp_id]).Load(d_input + warp_id * tile_size, thread_data);
 
