@@ -23,7 +23,7 @@
 #include "common_benchmark_header.hpp"
 
 // HIP API
-#include "hipcub/warp/warp_load.hpp"
+#include "hipcub/warp/warp_store.hpp"
 
 
 #ifndef DEFAULT_N
@@ -35,14 +35,20 @@ template<
     unsigned BlockSize,
     unsigned ItemsPerThread,
     unsigned LogicalWarpSize,
-    ::hipcub::WarpLoadAlgorithm Algorithm,
+    ::hipcub::WarpStoreAlgorithm Algorithm,
     unsigned Trials
 >
 __global__
 __launch_bounds__(BlockSize)
-void warp_load_kernel(T* d_input, T* d_output)
+void warp_store_kernel(T* d_input, T* d_output)
 {
-    using WarpLoadT = ::hipcub::WarpLoad<
+    int thread_data[ItemsPerThread];
+    for (unsigned i = 0; i < ItemsPerThread; ++i)
+    {
+        thread_data[i] = d_input[hipThreadIdx_x * ItemsPerThread + i];
+    }
+
+    using WarpStoreT = ::hipcub::WarpStore<
         T,
         ItemsPerThread,
         Algorithm,
@@ -50,21 +56,15 @@ void warp_load_kernel(T* d_input, T* d_output)
     >;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     constexpr int tile_size = ItemsPerThread * LogicalWarpSize;
-
+    __shared__ typename WarpStoreT::TempStorage temp_storage[warps_in_block];
     unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
-    __shared__ typename WarpLoadT::TempStorage temp_storage[warps_in_block];
-    int thread_data[ItemsPerThread];
 
     #pragma nounroll
     for (unsigned trial = 0; trial < Trials; ++trial)
     {
-        WarpLoadT(temp_storage[warp_id]).Load(d_input + warp_id * tile_size, thread_data);
+        WarpStoreT(temp_storage[warp_id]).Store(d_output + warp_id * tile_size, thread_data);
     }
 
-    for (unsigned i = 0; i < ItemsPerThread; ++i)
-    {
-        d_output[hipThreadIdx_x * ItemsPerThread + i] = thread_data[i];
-    }
 }
 
 template<
@@ -72,7 +72,7 @@ template<
     unsigned BlockSize,
     unsigned ItemsPerThread,
     unsigned LogicalWarpSize,
-    ::hipcub::WarpLoadAlgorithm Algorithm,
+    ::hipcub::WarpStoreAlgorithm Algorithm,
     unsigned Trials = 100
 >
 void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
@@ -98,7 +98,7 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
         auto start = std::chrono::high_resolution_clock::now();
         
         hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(warp_load_kernel<
+            HIP_KERNEL_NAME(warp_store_kernel<
                 T,
                 BlockSize,
                 ItemsPerThread,
@@ -124,7 +124,7 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 
 #define CREATE_BENCHMARK(T, BS, IT, WS, ALG) \
 benchmark::RegisterBenchmark( \
-    "warp_load<" #T ", " #BS ", " #IT ", " #WS ", " #ALG ">.", \
+    "warp_store<" #T ", " #BS ", " #IT ", " #WS ", " #ALG ">.", \
     &run_benchmark<T, BS, IT, WS, ALG>, \
     stream, size \
 )
@@ -151,14 +151,14 @@ int main(int argc, char *argv[])
 
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks{
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_DIRECT),
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_STRIPED),
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_VECTORIZE),
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
-        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_DIRECT),
-        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_STRIPED),
-        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_VECTORIZE),
-        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_TRANSPOSE)
+        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_STORE_DIRECT),
+        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_STORE_STRIPED),
+        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_STORE_VECTORIZE),
+        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_STORE_TRANSPOSE),
+        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_STORE_DIRECT),
+        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_STORE_STRIPED),
+        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_STORE_VECTORIZE),
+        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_STORE_TRANSPOSE)
     };
 
     // Use manual timing
