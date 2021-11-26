@@ -201,31 +201,37 @@ void add_benchmarks(benchmark_kinds benchmark_kind,
     {
         BENCHMARK_TYPE(int, 64),
         BENCHMARK_TYPE(int, 128),
-        BENCHMARK_TYPE(int, 192),
         BENCHMARK_TYPE(int, 256),
-        BENCHMARK_TYPE(int, 320),
         BENCHMARK_TYPE(int, 512),
 
         BENCHMARK_TYPE(int8_t, 64),
         BENCHMARK_TYPE(int8_t, 128),
-        BENCHMARK_TYPE(int8_t, 192),
         BENCHMARK_TYPE(int8_t, 256),
-        BENCHMARK_TYPE(int8_t, 320),
         BENCHMARK_TYPE(int8_t, 512),
 
         BENCHMARK_TYPE(uint8_t, 64),
         BENCHMARK_TYPE(uint8_t, 128),
-        BENCHMARK_TYPE(uint8_t, 192),
         BENCHMARK_TYPE(uint8_t, 256),
-        BENCHMARK_TYPE(uint8_t, 320),
         BENCHMARK_TYPE(uint8_t, 512),
 
         BENCHMARK_TYPE(long long, 64),
         BENCHMARK_TYPE(long long, 128),
-        BENCHMARK_TYPE(long long, 192),
         BENCHMARK_TYPE(long long, 256),
-        BENCHMARK_TYPE(long long, 320),
         BENCHMARK_TYPE(long long, 512),
+
+#ifndef __HIP_PLATFORM_NVIDIA__
+        BENCHMARK_TYPE(int, 192),
+        BENCHMARK_TYPE(int, 320),
+
+        BENCHMARK_TYPE(int8_t, 192),
+        BENCHMARK_TYPE(int8_t, 320),
+
+        BENCHMARK_TYPE(uint8_t, 192),
+        BENCHMARK_TYPE(uint8_t, 320),
+
+        BENCHMARK_TYPE(long long, 192),
+        BENCHMARK_TYPE(long long, 320)
+#endif
     };
 
     benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
