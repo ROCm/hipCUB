@@ -37,7 +37,7 @@ struct custom_test_type
     T y;
 
     HIPCUB_HOST_DEVICE inline
-        constexpr custom_test_type() {}
+        constexpr custom_test_type() : x{}, y{} {}
 
     HIPCUB_HOST_DEVICE inline
         constexpr custom_test_type(T x, T y) : x(x), y(y) {}
