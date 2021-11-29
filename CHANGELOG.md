@@ -9,6 +9,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 - Bfloat16 support to test cases (device_reduce & device_radix_sort)
 - Device merge sort
 - Block merge sort
+- Device segmented sort
 - API update to CUB 1.14.0
 ### Changed
 - The SetupNVCC.cmake automatic target selector select all of the capabalities of all available card for NVIDIA backend.

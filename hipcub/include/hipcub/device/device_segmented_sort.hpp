@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2017-2020, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2020, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -27,58 +27,13 @@
  *
  ******************************************************************************/
 
-#ifndef HIPCUB_ROCPRIM_HIPCUB_HPP_
-#define HIPCUB_ROCPRIM_HIPCUB_HPP_
+#ifndef HIPCUB_DEVICE_DEVICE_SEGMENTED_SORT_HPP_
+#define HIPCUB_DEVICE_DEVICE_SEGMENTED_SORT_HPP_
 
-#include "../../config.hpp"
+#ifdef __HIP_PLATFORM_AMD__
+    #include "../backend/rocprim/device/device_segmented_sort.hpp"
+#elif defined(__HIP_PLATFORM_NVIDIA__)
+    #include "../backend/cub/device/device_segmented_sort.hpp"
+#endif
 
-#include "util_allocator.hpp"
-#include "util_type.hpp"
-#include "util_ptx.hpp"
-#include "thread/thread_operators.hpp"
-
-// Iterator
-#include "iterator/arg_index_input_iterator.hpp"
-#include "iterator/cache_modified_input_iterator.hpp"
-#include "iterator/cache_modified_output_iterator.hpp"
-#include "iterator/constant_input_iterator.hpp"
-#include "iterator/counting_input_iterator.hpp"
-#include "iterator/discard_output_iterator.hpp"
-#include "iterator/tex_obj_input_iterator.hpp"
-#include "iterator/tex_ref_input_iterator.hpp"
-#include "iterator/transform_input_iterator.hpp"
-
-// Warp
-#include "warp/warp_reduce.hpp"
-#include "warp/warp_scan.hpp"
-
-// Thread
-#include "thread/thread_load.hpp"
-#include "thread/thread_operators.hpp"
-#include "thread/thread_reduce.hpp"
-#include "thread/thread_scan.hpp"
-#include "thread/thread_search.hpp"
-#include "thread/thread_store.hpp"
-
-// Block
-#include "block/block_discontinuity.hpp"
-#include "block/block_exchange.hpp"
-#include "block/block_histogram.hpp"
-#include "block/block_load.hpp"
-#include "block/block_radix_sort.hpp"
-#include "block/block_reduce.hpp"
-#include "block/block_scan.hpp"
-#include "block/block_store.hpp"
-
-// Device
-#include "device/device_histogram.hpp"
-#include "device/device_radix_sort.hpp"
-#include "device/device_reduce.hpp"
-#include "device/device_run_length_encode.hpp"
-#include "device/device_scan.hpp"
-#include "device/device_segmented_radix_sort.hpp"
-#include "device/device_segmented_reduce.hpp"
-#include "device/device_segmented_sort.hpp"
-#include "device/device_select.hpp"
-
-#endif // HIPCUB_ROCPRIM_HIPCUB_HPP_
+#endif // HIPCUB_DEVICE_DEVICE_SEGMENTED_SORT_HPP_
