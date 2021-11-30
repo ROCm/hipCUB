@@ -518,7 +518,6 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeys)
 {
     using params = typename TestFixture::params;
     using key_type = typename params::key_type;
-    using value_type = typename params::value_type;
 
     constexpr auto block_size = params::block_size;
     constexpr auto warp_size =  params::logical_warp_size;
