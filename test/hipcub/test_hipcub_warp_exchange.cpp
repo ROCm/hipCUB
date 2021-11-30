@@ -36,6 +36,7 @@ struct Params
     static constexpr unsigned warp_size = WarpSize;
 };
 
+
 template<class Params>
 class HipcubWarpExchangeTest : public ::testing::Test
 {
@@ -54,47 +55,48 @@ TYPED_TEST_SUITE(HipcubWarpExchangeTest, HipcubWarpExchangeTestParams);
 
 template<
     class T,
-    unsigned BlockSize,
     unsigned ItemsPerThread,
     unsigned LogicalWarpSize
 >
-__global__
-__launch_bounds__(BlockSize)
-void warp_exchange_striped_to_blocked_kernel(T* d_input, T* d_output)
+struct BlockedToStripedOp
 {
-    T thread_data[ItemsPerThread];
-    for (unsigned i = 0; i < ItemsPerThread; ++i)
+    HIPCUB_DEVICE
+    void operator()(
+        ::hipcub::WarpExchange<T, ItemsPerThread, LogicalWarpSize> &warp_exchange,
+        T (&thread_data)[ItemsPerThread]
+    ) const
     {
-        thread_data[i] = d_input[hipThreadIdx_x * ItemsPerThread + i];
+        warp_exchange.BlockedToStriped(thread_data, thread_data);
     }
+};
 
-    using WarpExchangeT = ::hipcub::WarpExchange<
-        T,
-        ItemsPerThread,
-        LogicalWarpSize
-    >;
-    constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
-    __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
-    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
-
-    WarpExchangeT(temp_storage[warp_id]).StripedToBlocked(thread_data, thread_data);
-
-    for (unsigned i = 0; i < ItemsPerThread; ++i)
+template<
+    class T,
+    unsigned ItemsPerThread,
+    unsigned LogicalWarpSize
+>
+struct StripedToBlockedOp
+{
+    HIPCUB_DEVICE
+    void operator()(
+        ::hipcub::WarpExchange<T, ItemsPerThread, LogicalWarpSize> &warp_exchange,
+        T (&thread_data)[ItemsPerThread]
+    ) const
     {
-        d_output[hipThreadIdx_x * ItemsPerThread + i] = thread_data[i];
+        warp_exchange.StripedToBlocked(thread_data, thread_data);
     }
-}
+};
 
-// TODO simplify
 template<
     class T,
     unsigned BlockSize,
     unsigned ItemsPerThread,
-    unsigned LogicalWarpSize
+    unsigned LogicalWarpSize,
+    template<class, unsigned, unsigned> class Op
 >
 __global__
 __launch_bounds__(BlockSize)
-void warp_exchange_blocked_to_striped_kernel(T* d_input, T* d_output)
+void warp_exchange_kernel(T* d_input, T* d_output)
 {
     T thread_data[ItemsPerThread];
     for (unsigned i = 0; i < ItemsPerThread; ++i)
@@ -111,7 +113,8 @@ void warp_exchange_blocked_to_striped_kernel(T* d_input, T* d_output)
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
     const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
 
-    WarpExchangeT(temp_storage[warp_id]).BlockedToStriped(thread_data, thread_data);
+    WarpExchangeT warp_exchange(temp_storage[warp_id]);
+    Op<T, ItemsPerThread, LogicalWarpSize>{}(warp_exchange, thread_data);
 
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
@@ -190,10 +193,12 @@ std::vector<T> stripe_vector(
         {
             for (size_t item_idx = 0; item_idx < items_per_thread; ++item_idx, ++global_idx)
             {
-                const size_t rank = ranks.at(global_idx);
-                const size_t value_idx = warp_offset + ((items_per_thread * rank) % items_per_warp) + rank / threads_per_warp;
-                const T value = v.at(global_idx);
-                striped.at(value_idx) = value;
+                const size_t rank = ranks[global_idx];
+                const size_t value_idx = warp_offset
+                    + ((items_per_thread * rank) % items_per_warp)
+                    + rank / threads_per_warp;
+                const T value = v[global_idx];
+                striped[value_idx] = value;
             }
         }
     }
@@ -219,11 +224,12 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeStripedToBlocked)
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
-            warp_exchange_striped_to_blocked_kernel<
+            warp_exchange_kernel<
                 T,
                 block_size,
                 items_per_thread,
-                warp_size
+                warp_size,
+                StripedToBlockedOp
             >
         ),
         dim3(1), dim3(block_size), 0, 0,
@@ -262,11 +268,12 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeBlockedToStriped)
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
-            warp_exchange_blocked_to_striped_kernel<
+            warp_exchange_kernel<
                 T,
                 block_size,
                 items_per_thread,
-                warp_size
+                warp_size,
+                BlockedToStripedOp
             >
         ),
         dim3(1), dim3(block_size), 0, 0,

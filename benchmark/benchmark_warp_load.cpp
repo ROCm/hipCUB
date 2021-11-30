@@ -63,7 +63,11 @@ void warp_load_kernel(T* d_input, T* d_output)
 
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        d_output[hipThreadIdx_x * ItemsPerThread + i] = thread_data[i];
+        const unsigned global_idx =
+            hipBlockIdx_x * BlockSize
+            + hipThreadIdx_x * ItemsPerThread
+            + i;
+        d_output[global_idx] = thread_data[i];
     }
 }
 

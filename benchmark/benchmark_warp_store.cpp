@@ -45,7 +45,11 @@ void warp_store_kernel(T* d_input, T* d_output)
     int thread_data[ItemsPerThread];
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        thread_data[i] = d_input[hipThreadIdx_x * ItemsPerThread + i];
+        const unsigned global_idx =
+            hipBlockIdx_x * BlockSize
+            + hipThreadIdx_x * ItemsPerThread
+            + i;
+        thread_data[i] = d_input[global_idx];
     }
 
     using WarpStoreT = ::hipcub::WarpStore<
