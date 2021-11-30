@@ -76,7 +76,7 @@ struct RemoveQualifiers
 template<int N>
 struct PowerOfTwo
 {
-    static constexpr bool VALUE = ::rocprim::detail::is_power_of_two<N>();
+    static constexpr bool VALUE = ::rocprim::detail::is_power_of_two(N);
 };
 
 namespace detail

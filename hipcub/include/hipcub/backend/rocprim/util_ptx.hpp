@@ -279,8 +279,8 @@ void CTA_SYNC()
 HIPCUB_DEVICE inline
 void WARP_SYNC(unsigned int member_mask)
 {
-    // Does nothing, on ROCm threads in warp are always in sync
     (void) member_mask;
+    ::rocprim::wave_barrier();
 }
 
 HIPCUB_DEVICE inline

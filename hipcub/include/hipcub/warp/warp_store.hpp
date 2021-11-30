@@ -31,7 +31,6 @@
 #define HIPCUB_WARP_WARP_STORE_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    // TODO
     #include "../backend/rocprim/warp/warp_store.hpp"
 #elif defined(__HIP_PLATFORM_NVIDIA__)
     #include "../config.hpp"
