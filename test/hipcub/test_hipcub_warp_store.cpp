@@ -94,6 +94,45 @@ void warp_store_kernel(
     WarpStoreT(temp_storage[warp_id]).Store(d_output + warp_id * tile_size, thread_data);
 }
 
+template<
+    class T,
+    unsigned BlockSize,
+    unsigned ItemsPerThread,
+    unsigned LogicalWarpSize,
+    ::hipcub::WarpStoreAlgorithm Algorithm
+>
+__global__
+__launch_bounds__(BlockSize)
+void warp_store_guarded_kernel(
+    T* d_input,
+    T* d_output,
+    int valid_items)
+{
+    T thread_data[ItemsPerThread];
+    for (unsigned i = 0; i < ItemsPerThread; ++i)
+    {
+        thread_data[i] = d_input[hipThreadIdx_x * ItemsPerThread + i];
+    }
+
+    using WarpStoreT = ::hipcub::WarpStore<
+        T,
+        ItemsPerThread,
+        Algorithm,
+        LogicalWarpSize
+    >;
+    constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
+    constexpr int tile_size = ItemsPerThread * LogicalWarpSize;
+
+    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    __shared__ typename WarpStoreT::TempStorage temp_storage[warps_in_block];
+
+    WarpStoreT(temp_storage[warp_id]).Store(
+        d_output + warp_id * tile_size,
+        thread_data,
+        valid_items
+    );
+}
+
 template<class T>
 std::vector<T> stripe_vector(const std::vector<T>& v, const size_t warp_size, const size_t items_per_thread)
 {
@@ -131,12 +170,13 @@ TYPED_TEST(HipcubWarpStoreTest, WarpStore)
 
     hipLaunchKernelGGL(
         HIP_KERNEL_NAME(
-            warp_store_kernel<T,
-                             block_size,
-                             items_per_thread,
-                             warp_size,
-                             algorithm
-                            >
+            warp_store_kernel<
+                T,
+                block_size,
+                items_per_thread,
+                warp_size,
+                algorithm
+            >
         ),
         dim3(1), dim3(block_size), 0, 0,
         d_input, d_output
@@ -154,6 +194,63 @@ TYPED_TEST(HipcubWarpStoreTest, WarpStore)
     if (algorithm == ::hipcub::WarpStoreAlgorithm::WARP_STORE_STRIPED)
     {
         expected = stripe_vector(input, warp_size, items_per_thread);
+    }
+
+    ASSERT_EQ(expected, output);
+}
+
+TYPED_TEST(HipcubWarpStoreTest, WarpStoreGuarded)
+{
+    using T = typename TestFixture::params::type;
+    constexpr unsigned warp_size = TestFixture::params::warp_size;
+    constexpr ::hipcub::WarpStoreAlgorithm algorithm = TestFixture::params::algorithm;
+    constexpr unsigned items_per_thread = 4;
+    constexpr unsigned block_size = 1024;
+    constexpr unsigned items_count = items_per_thread * block_size;
+    constexpr int valid_items = warp_size / 4;
+
+    std::vector<T> input(items_count);
+    std::iota(input.begin(), input.end(), static_cast<T>(0));
+
+    T* d_input{};
+    HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, items_count * sizeof(T)));
+    HIP_CHECK(hipMemcpy(d_input, input.data(), items_count * sizeof(T), hipMemcpyHostToDevice));
+    T* d_output{};
+    HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, items_count * sizeof(T)));
+    HIP_CHECK(hipMemset(d_output, 0, items_count * sizeof(T)));
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(
+            warp_store_guarded_kernel<
+                T,
+                block_size,
+                items_per_thread,
+                warp_size,
+                algorithm
+            >
+        ),
+        dim3(1), dim3(block_size), 0, 0,
+        d_input, d_output, valid_items
+    );
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    std::vector<T> output(items_count);
+    HIP_CHECK(hipMemcpy(output.data(), d_output, items_count * sizeof(T), hipMemcpyDeviceToHost));
+
+    HIP_CHECK(hipFree(d_input));
+    HIP_CHECK(hipFree(d_output));
+
+    auto expected = input;
+    if (algorithm == ::hipcub::WarpStoreAlgorithm::WARP_STORE_STRIPED)
+    {
+        expected = stripe_vector(expected, warp_size, items_per_thread);
+    }
+    for (size_t warp_idx = 0; warp_idx < block_size / warp_size; ++warp_idx)
+    {
+        auto segment_begin = std::next(expected.begin(), warp_idx * warp_size * items_per_thread);
+        auto segment_end = std::next(expected.begin(), (warp_idx + 1) * warp_size * items_per_thread);
+        std::fill(std::next(segment_begin, valid_items), segment_end, static_cast<T>(0));
     }
 
     ASSERT_EQ(expected, output);
