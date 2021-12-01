@@ -214,6 +214,17 @@ constexpr T get_min_warp_size(const T block_size, const T max_warp_size)
     return block_size >= max_warp_size ? max_warp_size : next_power_of_two(block_size);
 }
 
+#define SKIP_IF_UNSUPPORTED_WARP_SIZE(test_warp_size) { \
+    const auto host_warp_size = HIPCUB_HOST_WARP_THREADS; \
+    if (host_warp_size < (test_warp_size)) \
+    { \
+        GTEST_SKIP() << "Cannot run test of warp size " \
+            << (test_warp_size) \
+            << " on a device with warp size " \
+            << host_warp_size; \
+    } \
+}
+
 } // end test_util namespace
 
 // Need for hipcub::DeviceReduce::Min/Max etc.

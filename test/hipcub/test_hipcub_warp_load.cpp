@@ -57,7 +57,12 @@ using HipcubWarpLoadTestParams = ::testing::Types<
     Params<int, 32U, ::hipcub::WARP_LOAD_DIRECT>,
     Params<int, 32U, ::hipcub::WARP_LOAD_STRIPED>,
     Params<int, 32U, ::hipcub::WARP_LOAD_VECTORIZE>,
-    Params<int, 32U, ::hipcub::WARP_LOAD_TRANSPOSE>
+    Params<int, 32U, ::hipcub::WARP_LOAD_TRANSPOSE>,
+
+    Params<int, 64U, ::hipcub::WARP_LOAD_DIRECT>,
+    Params<int, 64U, ::hipcub::WARP_LOAD_STRIPED>,
+    Params<int, 64U, ::hipcub::WARP_LOAD_VECTORIZE>,
+    Params<int, 64U, ::hipcub::WARP_LOAD_TRANSPOSE>
 >;
 
 template<
@@ -161,6 +166,8 @@ TYPED_TEST(HipcubWarpLoadTest, WarpLoad)
     constexpr unsigned block_size = 1024;
     constexpr unsigned items_count = items_per_thread * block_size;
 
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
+
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));
 
@@ -211,6 +218,8 @@ TYPED_TEST(HipcubWarpLoadTest, WarpLoadGuarded)
     constexpr unsigned items_count = items_per_thread * block_size;
     constexpr int valid_items = warp_size / 4;
     constexpr T oob_default = std::numeric_limits<T>::max();
+
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
 
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));

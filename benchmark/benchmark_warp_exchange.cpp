@@ -35,18 +35,17 @@ template<
     unsigned BlockSize,
     unsigned ItemsPerThread,
     unsigned LogicalWarpSize,
-    unsigned Trials,
     template<class, unsigned, unsigned> class Op
 >
 __global__
 __launch_bounds__(BlockSize)
-void warp_exchange_kernel(T* d_input, T* d_output)
+void warp_exchange_kernel(T* d_output)
 {
-    const unsigned global_thread_idx = hipBlockIdx_x * BlockSize + hipThreadIdx_x;
     T thread_data[ItemsPerThread];
+    #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        thread_data[i] = d_input[global_thread_idx * ItemsPerThread + i];
+        thread_data[i] = static_cast<T>(i);
     }
 
     using WarpExchangeT = ::hipcub::WarpExchange<
@@ -58,16 +57,15 @@ void warp_exchange_kernel(T* d_input, T* d_output)
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
     const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
 
-    #pragma nounroll
-    for (unsigned i = 0; i < Trials; ++i)
-    {
-        WarpExchangeT warp_exchange(temp_storage[warp_id]);
-        Op<T, ItemsPerThread, LogicalWarpSize>{}(warp_exchange, thread_data);
-    }
+    WarpExchangeT warp_exchange(temp_storage[warp_id]);
+    Op<T, ItemsPerThread, LogicalWarpSize>{}(warp_exchange, thread_data);
     
+    #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        d_output[global_thread_idx * ItemsPerThread + i] = thread_data[i];
+        const unsigned global_idx =
+            (BlockSize * hipBlockIdx_x + hipThreadIdx_x) * ItemsPerThread + i;
+        d_output[global_idx] = thread_data[i];
     }
 }
 
@@ -76,20 +74,19 @@ template<
     class OffsetT,
     unsigned BlockSize,
     unsigned ItemsPerThread,
-    unsigned LogicalWarpSize,
-    unsigned Trials
+    unsigned LogicalWarpSize
 >
 __global__
 __launch_bounds__(BlockSize)
-void warp_exchange_scatter_to_striped_kernel(T* d_input, T* d_output, OffsetT* d_ranks)
+void warp_exchange_scatter_to_striped_kernel(T* d_output)
 {
-    const unsigned global_thread_idx = hipBlockIdx_x * BlockSize + hipThreadIdx_x;
     T thread_data[ItemsPerThread];
     OffsetT thread_ranks[ItemsPerThread];
+    #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        thread_data[i] = d_input[global_thread_idx * ItemsPerThread + i];
-        thread_ranks[i] = d_ranks[global_thread_idx * ItemsPerThread + i];
+        thread_data[i] = static_cast<T>(i);
+        thread_ranks[i] = static_cast<OffsetT>(hipThreadIdx_x * ItemsPerThread + i);
     }
 
     using WarpExchangeT = ::hipcub::WarpExchange<
@@ -101,15 +98,14 @@ void warp_exchange_scatter_to_striped_kernel(T* d_input, T* d_output, OffsetT* d
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
     const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
 
-    #pragma nounroll
-    for (unsigned i = 0; i < Trials; ++i)
-    {
-        WarpExchangeT(temp_storage[warp_id]).ScatterToStriped(thread_data, thread_ranks);
-    }
+    WarpExchangeT(temp_storage[warp_id]).ScatterToStriped(thread_data, thread_ranks);
 
+    #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        d_output[global_thread_idx * ItemsPerThread + i] = thread_data[i];
+        const unsigned striped_global_idx =
+            BlockSize * ItemsPerThread * hipBlockIdx_x + BlockSize * i + hipThreadIdx_x;
+        d_output[striped_global_idx] = thread_data[i];
     }
 }
 
@@ -123,38 +119,36 @@ template<
 >
 void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 {
+    if (!::benchmark_utils::is_warp_size_supported(LogicalWarpSize))
+    {
+        return;
+    }
     constexpr unsigned trials = 100;
     constexpr unsigned items_per_block = BlockSize * ItemsPerThread;
     const unsigned size = items_per_block * ((N + items_per_block - 1) / items_per_block);
 
-    std::vector<T> input = benchmark_utils::get_random_data<T>(size, T(0), T(10));
-    T * d_input;
     T * d_output;
-    HIP_CHECK(hipMalloc(&d_input, size * sizeof(T)));
     HIP_CHECK(hipMalloc(&d_output, size * sizeof(T)));
-    HIP_CHECK(
-        hipMemcpy(
-            d_input, input.data(),
-            size * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
 
     for (auto _ : state)
     {
         auto start = std::chrono::high_resolution_clock::now();
         
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(warp_exchange_kernel<
-                T,
-                BlockSize,
-                ItemsPerThread,
-                LogicalWarpSize,
-                trials,
-                Op
-            >),
-            dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_input, d_output
-        );
+        for (size_t i = 0; i < trials; ++i)
+        {
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(warp_exchange_kernel<
+                    T,
+                    BlockSize,
+                    ItemsPerThread,
+                    LogicalWarpSize,
+                    Op
+                    >
+                ),
+                dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_output
+            );
+        }
+        
         HIP_CHECK(hipPeekAtLastError())
         HIP_CHECK(hipDeviceSynchronize());
         auto end = std::chrono::high_resolution_clock::now();
@@ -165,7 +159,6 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
     state.SetBytesProcessed(state.iterations() * trials * size * sizeof(T));
     state.SetItemsProcessed(state.iterations() * trials * size);
 
-    HIP_CHECK(hipFree(d_input));
     HIP_CHECK(hipFree(d_output));
 }
 
@@ -178,55 +171,36 @@ template<
 >
 void run_benchmark_scatter_to_striped(benchmark::State& state, hipStream_t stream, size_t N)
 {
+    if (!::benchmark_utils::is_warp_size_supported(LogicalWarpSize))
+    {
+        return;
+    }
     constexpr unsigned trials = 100;
     constexpr unsigned items_per_block = BlockSize * ItemsPerThread;
     const unsigned size = items_per_block * ((N + items_per_block - 1) / items_per_block);
 
-    std::vector<T> input = benchmark_utils::get_random_data<T>(size, T(0), T(10));
-    std::vector<OffsetT> ranks(size);
-    for (size_t i = 0; i < size / items_per_block; ++i)
-    {
-        auto segment_begin = std::next(ranks.begin(), i * items_per_block);
-        auto segment_end = std::next(ranks.begin(), (i + 1) * items_per_block);
-        std::iota(segment_begin, segment_end, 0);
-    }
-    
-    T * d_input;
     T * d_output;
-    OffsetT * d_ranks;
-    HIP_CHECK(hipMalloc(&d_input, size * sizeof(T)));
     HIP_CHECK(hipMalloc(&d_output, size * sizeof(T)));
-    HIP_CHECK(hipMalloc(&d_ranks, size * sizeof(OffsetT)));
-    HIP_CHECK(
-        hipMemcpy(
-            d_input, input.data(),
-            size * sizeof(T),
-            hipMemcpyHostToDevice
-        )
-    );
-    HIP_CHECK(
-        hipMemcpy(
-            d_ranks, ranks.data(),
-            size * sizeof(OffsetT),
-            hipMemcpyHostToDevice
-        )
-    );
 
     for (auto _ : state)
     {
         auto start = std::chrono::high_resolution_clock::now();
         
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(warp_exchange_scatter_to_striped_kernel<
-                T,
-                OffsetT,
-                BlockSize,
-                ItemsPerThread,
-                LogicalWarpSize,
-                trials
-            >),
-            dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_input, d_output, d_ranks
-        );
+        for (size_t i = 0; i < trials; ++i)
+        {
+            hipLaunchKernelGGL(
+              HIP_KERNEL_NAME(warp_exchange_scatter_to_striped_kernel<
+                    T,
+                    OffsetT,
+                    BlockSize,
+                    ItemsPerThread,
+                    LogicalWarpSize
+                    >
+                ),
+                dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_output
+            );   
+        }
+        
         HIP_CHECK(hipPeekAtLastError())
         HIP_CHECK(hipDeviceSynchronize());
         auto end = std::chrono::high_resolution_clock::now();
@@ -237,9 +211,7 @@ void run_benchmark_scatter_to_striped(benchmark::State& state, hipStream_t strea
     state.SetBytesProcessed(state.iterations() * trials * size * sizeof(T));
     state.SetItemsProcessed(state.iterations() * trials * size);
 
-    HIP_CHECK(hipFree(d_input));
     HIP_CHECK(hipFree(d_output));
-    HIP_CHECK(hipFree(d_ranks));
 }
 
 template<
@@ -324,8 +296,26 @@ int main(int argc, char *argv[])
 
         CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32),
         CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32),
-        CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 32)
+        CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 32),
     };
+
+    if (::benchmark_utils::is_warp_size_supported(64))
+    {
+        std::vector<benchmark::internal::Benchmark*> additional_benchmarks{
+            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 64),
+            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 64),
+            CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 64),
+
+            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 64),
+            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 64),
+            CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 64)
+        };
+        benchmarks.insert(
+            benchmarks.end(),
+            additional_benchmarks.begin(),
+            additional_benchmarks.end()
+        );
+    }
 
     // Use manual timing
     for (auto& b : benchmarks)

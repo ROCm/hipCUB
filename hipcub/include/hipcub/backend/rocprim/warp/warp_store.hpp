@@ -186,7 +186,9 @@ private:
             T (&items)[ITEMS_PER_THREAD],
             int valid_items)
         {
-            ::rocprim::block_store_direct_blocked_vectorized(
+            // vectorized overload does not exist
+            // fall back to direct blocked
+            ::rocprim::block_store_direct_blocked(
                 static_cast<unsigned>(linear_tid),
                 block_itr,
                 items,

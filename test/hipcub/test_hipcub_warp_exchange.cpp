@@ -45,10 +45,44 @@ public:
 };
 
 using HipcubWarpExchangeTestParams = ::testing::Types<
-    Params<int, 4U, 16U>,
-    Params<int, 4U, 32U>,
+    Params<char, 1U, 8U>,
+    Params<char, 4U, 8U>,
+    Params<char, 5U, 8U>,
+    Params<char, 1U, 16U>,
+    Params<char, 4U, 16U>,
+    Params<char, 5U, 16U>,
+    Params<char, 1U, 32U>,
+    Params<char, 4U, 32U>,
+    Params<char, 5U, 32U>,
+    Params<char, 1U, 64U>,
+    Params<char, 4U, 64U>,
+    Params<char, 5U, 64U>,
+
+    Params<int, 1U, 8U>,
+    Params<int, 4U, 8U>,
+    Params<int, 5U, 8U>,
     Params<int, 1U, 16U>,
-    Params<int, 1U, 32U>
+    Params<int, 4U, 16U>,
+    Params<int, 5U, 16U>,
+    Params<int, 1U, 32U>,
+    Params<int, 4U, 32U>,
+    Params<int, 5U, 32U>,
+    Params<int, 1U, 64U>,
+    Params<int, 4U, 64U>,
+    Params<int, 5U, 64U>,
+
+    Params<double, 1U, 8U>,
+    Params<double, 4U, 8U>,
+    Params<double, 5U, 8U>,
+    Params<double, 1U, 16U>,
+    Params<double, 4U, 16U>,
+    Params<double, 5U, 16U>,
+    Params<double, 1U, 32U>,
+    Params<double, 4U, 32U>,
+    Params<double, 5U, 32U>,
+    Params<double, 1U, 64U>,
+    Params<double, 4U, 64U>,
+    Params<double, 5U, 64U>
 >;
 
 TYPED_TEST_SUITE(HipcubWarpExchangeTest, HipcubWarpExchangeTestParams);
@@ -213,6 +247,8 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeStripedToBlocked)
     constexpr unsigned block_size = 1024;
     constexpr unsigned items_count = items_per_thread * block_size;
 
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
+
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));
 
@@ -255,6 +291,8 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeBlockedToStriped)
     constexpr unsigned items_per_thread = 4;
     constexpr unsigned block_size = 1024;
     constexpr unsigned items_count = items_per_thread * block_size;
+
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
 
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));
@@ -304,6 +342,8 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeScatterToStriped)
     constexpr unsigned items_count = items_per_thread * block_size;
     constexpr unsigned items_per_warp = warp_size * items_per_thread;
     constexpr int random_seed = 347268;
+
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
 
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));

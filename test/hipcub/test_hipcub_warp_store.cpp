@@ -57,7 +57,12 @@ using HipcubWarpStoreTestParams = ::testing::Types<
     Params<int, 32U, ::hipcub::WARP_STORE_DIRECT>,
     Params<int, 32U, ::hipcub::WARP_STORE_STRIPED>,
     Params<int, 32U, ::hipcub::WARP_STORE_VECTORIZE>,
-    Params<int, 32U, ::hipcub::WARP_STORE_TRANSPOSE>
+    Params<int, 32U, ::hipcub::WARP_STORE_TRANSPOSE>,
+
+    Params<int, 64U, ::hipcub::WARP_STORE_DIRECT>,
+    Params<int, 64U, ::hipcub::WARP_STORE_STRIPED>,
+    Params<int, 64U, ::hipcub::WARP_STORE_VECTORIZE>,
+    Params<int, 64U, ::hipcub::WARP_STORE_TRANSPOSE>
 >;
 
 template<
@@ -159,6 +164,8 @@ TYPED_TEST(HipcubWarpStoreTest, WarpStore)
     constexpr unsigned block_size = 1024;
     constexpr unsigned items_count = items_per_thread * block_size;
 
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
+
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));
 
@@ -208,6 +215,8 @@ TYPED_TEST(HipcubWarpStoreTest, WarpStoreGuarded)
     constexpr unsigned block_size = 1024;
     constexpr unsigned items_count = items_per_thread * block_size;
     constexpr int valid_items = warp_size / 4;
+
+    SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
 
     std::vector<T> input(items_count);
     std::iota(input.begin(), input.end(), static_cast<T>(0));

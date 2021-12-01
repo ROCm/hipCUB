@@ -264,7 +264,9 @@ private:
             int valid_items,
             DefaultT oob_default)
         {
-            ::rocprim::block_load_direct_blocked_vectorized(
+            // vectorized overload does not exist
+            // fall back to direct blocked
+            ::rocprim::block_load_direct_blocked(
                 static_cast<unsigned>(linear_tid),
                 block_itr,
                 items,

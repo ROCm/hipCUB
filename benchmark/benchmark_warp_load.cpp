@@ -35,8 +35,7 @@ template<
     unsigned BlockSize,
     unsigned ItemsPerThread,
     unsigned LogicalWarpSize,
-    ::hipcub::WarpLoadAlgorithm Algorithm,
-    unsigned Trials
+    ::hipcub::WarpLoadAlgorithm Algorithm
 >
 __global__
 __launch_bounds__(BlockSize)
@@ -51,23 +50,19 @@ void warp_load_kernel(T* d_input, T* d_output)
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     constexpr int tile_size = ItemsPerThread * LogicalWarpSize;
 
-    unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    const unsigned global_warp_id = hipBlockIdx_x * warps_in_block + warp_id;
     __shared__ typename WarpLoadT::TempStorage temp_storage[warps_in_block];
-    int thread_data[ItemsPerThread];
+    T thread_data[ItemsPerThread];
 
-    #pragma nounroll
-    for (unsigned trial = 0; trial < Trials; ++trial)
-    {
-        WarpLoadT(temp_storage[warp_id]).Load(d_input + warp_id * tile_size, thread_data);
-    }
+    WarpLoadT(temp_storage[warp_id]).Load(d_input + global_warp_id * tile_size, thread_data);
 
+    #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        const unsigned global_idx =
-            hipBlockIdx_x * BlockSize
-            + hipThreadIdx_x * ItemsPerThread
-            + i;
-        d_output[global_idx] = thread_data[i];
+        const unsigned striped_global_idx =
+            BlockSize * ItemsPerThread * hipBlockIdx_x + BlockSize * i + hipThreadIdx_x;
+        d_output[striped_global_idx] = thread_data[i];
     }
 }
 
@@ -101,17 +96,19 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
     {
         auto start = std::chrono::high_resolution_clock::now();
         
-        hipLaunchKernelGGL(
-            HIP_KERNEL_NAME(warp_load_kernel<
-                T,
-                BlockSize,
-                ItemsPerThread,
-                LogicalWarpSize,
-                Algorithm,
-                Trials
-            >),
-            dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_input, d_output
-        );
+        for (size_t i = 0; i < Trials; i++)
+        {     
+            hipLaunchKernelGGL(
+                HIP_KERNEL_NAME(warp_load_kernel<
+                    T,
+                    BlockSize,
+                    ItemsPerThread,
+                    LogicalWarpSize,
+                    Algorithm
+                >),
+                dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_input, d_output
+            );
+        }
         HIP_CHECK(hipPeekAtLastError())
         HIP_CHECK(hipDeviceSynchronize());
         auto end = std::chrono::high_resolution_clock::now();
@@ -155,15 +152,101 @@ int main(int argc, char *argv[])
 
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks{
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_DIRECT),
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_STRIPED),
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_VECTORIZE),
-        CREATE_BENCHMARK(int, 128, 4, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
         CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_DIRECT),
         CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_STRIPED),
         CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_VECTORIZE),
-        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_TRANSPOSE)
+        CREATE_BENCHMARK(int, 256, 4, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(int, 256, 8, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(int, 256, 8, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(int, 256, 8, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(int, 256, 8, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(int, 256, 16, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(int, 256, 16, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(int, 256, 16, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(int, 256, 16, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(int, 256, 32, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(int, 256, 32, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(int, 256, 32, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(int, 256, 32, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(int, 256, 64, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(int, 256, 64, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(int, 256, 64, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(double, 256, 4, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(double, 256, 4, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(double, 256, 4, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(double, 256, 4, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(double, 256, 8, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(double, 256, 8, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(double, 256, 8, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(double, 256, 8, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(double, 256, 16, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(double, 256, 16, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(double, 256, 16, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        CREATE_BENCHMARK(double, 256, 16, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(double, 256, 32, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(double, 256, 32, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(double, 256, 32, 32, ::hipcub::WARP_LOAD_VECTORIZE),
+        // WARP_LOAD_TRANSPOSE removed because of shared memory limit
+        // CREATE_BENCHMARK(double, 256, 32, 32, ::hipcub::WARP_LOAD_TRANSPOSE),
+        CREATE_BENCHMARK(double, 256, 64, 32, ::hipcub::WARP_LOAD_DIRECT),
+        CREATE_BENCHMARK(double, 256, 64, 32, ::hipcub::WARP_LOAD_STRIPED),
+        CREATE_BENCHMARK(double, 256, 64, 32, ::hipcub::WARP_LOAD_VECTORIZE)
+        // WARP_LOAD_TRANSPOSE removed because of shared memory limit
+        // CREATE_BENCHMARK(double, 256, 64, 32, ::hipcub::WARP_LOAD_TRANSPOSE)
     };
+        
+    if (::benchmark_utils::is_warp_size_supported(64))
+    {
+        std::vector<benchmark::internal::Benchmark*> additional_benchmarks{
+            CREATE_BENCHMARK(int, 256, 4, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(int, 256, 4, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(int, 256, 4, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(int, 256, 4, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(int, 256, 8, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(int, 256, 8, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(int, 256, 8, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(int, 256, 8, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(int, 256, 16, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(int, 256, 16, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(int, 256, 16, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(int, 256, 16, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(int, 256, 32, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(int, 256, 32, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(int, 256, 32, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(int, 256, 32, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(int, 256, 64, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(int, 256, 64, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(int, 256, 64, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(double, 256, 4, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(double, 256, 4, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(double, 256, 4, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(double, 256, 4, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(double, 256, 8, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(double, 256, 8, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(double, 256, 8, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            CREATE_BENCHMARK(double, 256, 8, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(double, 256, 16, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(double, 256, 16, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(double, 256, 16, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            // WARP_LOAD_TRANSPOSE removed because of shared memory limit
+            // CREATE_BENCHMARK(double, 256, 16, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(double, 256, 32, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(double, 256, 32, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(double, 256, 32, 64, ::hipcub::WARP_LOAD_VECTORIZE),
+            // WARP_LOAD_TRANSPOSE removed because of shared memory limit
+            // CREATE_BENCHMARK(double, 256, 32, 64, ::hipcub::WARP_LOAD_TRANSPOSE),
+            CREATE_BENCHMARK(double, 256, 64, 64, ::hipcub::WARP_LOAD_DIRECT),
+            CREATE_BENCHMARK(double, 256, 64, 64, ::hipcub::WARP_LOAD_STRIPED),
+            CREATE_BENCHMARK(double, 256, 64, 64, ::hipcub::WARP_LOAD_VECTORIZE)
+            // WARP_LOAD_TRANSPOSE removed because of shared memory limit
+            // CREATE_BENCHMARK(double, 256, 64, 64, ::hipcub::WARP_LOAD_TRANSPOSE)
+        };
+        benchmarks.insert(
+            benchmarks.end(),
+            additional_benchmarks.begin(),
+            additional_benchmarks.end()
+        );
+    }
 
     // Use manual timing
     for (auto& b : benchmarks)
