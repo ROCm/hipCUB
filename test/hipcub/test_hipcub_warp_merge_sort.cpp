@@ -262,17 +262,6 @@ void sort_keys_values_segmented(Key* keys, Value* values, const unsigned int* se
     hipcub::StoreDirectBlocked(flat_tid, values + warp_offset, thread_values, segment_size);
 }
 
-// The overload for get_random_data requires the underlying value for custom_test_type
-template <typename T>
-struct unwrap_type {
-    using type = T;
-};
-
-template <typename T>
-struct unwrap_type<test_utils::custom_test_type<T>> {
-    using type = T;
-};
-
 TYPED_TEST(HipcubWarpMergeSort, SortKeysSegmented)
 {
     using params = typename TestFixture::params;
@@ -311,7 +300,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeysSegmented)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data, not const because sorted results are copied back to it
-        using wrapped_type = typename unwrap_type<key_type>::type;
+        using wrapped_type = typename test_utils::inner_type<key_type>::type;
         auto keys = std::is_floating_point<wrapped_type>::value ?
             test_utils::get_random_data<key_type>(size,
                                                   static_cast<wrapped_type>(-1000),
@@ -416,7 +405,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeysValuesSegmented)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data, not const because sorted results are copied back to it
-        using wrapped_type = typename unwrap_type<key_type>::type;
+        using wrapped_type = typename test_utils::inner_type<key_type>::type;
         auto keys = std::is_floating_point<wrapped_type>::value ?
             test_utils::get_random_data<key_type>(size,
                                                   static_cast<wrapped_type>(-1000),
@@ -427,7 +416,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeysValuesSegmented)
                                                   std::numeric_limits<wrapped_type>::max(),
                                                   seed_value);
 
-        using value_wrapped_type = typename unwrap_type<value_type>::type;
+        using value_wrapped_type = typename test_utils::inner_type<value_type>::type;
         auto values = std::is_floating_point<value_wrapped_type>::value ?
             test_utils::get_random_data<value_type>(size,
                                                     static_cast<value_wrapped_type>(-1000),
@@ -552,7 +541,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeys)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        using wrapped_type = typename unwrap_type<key_type>::type;
+        using wrapped_type = typename test_utils::inner_type<key_type>::type;
         auto keys = std::is_floating_point<wrapped_type>::value ?
             test_utils::get_random_data<key_type>(size,
                                                   static_cast<wrapped_type>(-1000),
@@ -645,7 +634,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeysValues)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        using wrapped_type = typename unwrap_type<key_type>::type;
+        using wrapped_type = typename test_utils::inner_type<key_type>::type;
         auto keys = std::is_floating_point<wrapped_type>::value ?
             test_utils::get_random_data<key_type>(size,
                                                   static_cast<wrapped_type>(-1000),
@@ -656,7 +645,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeysValues)
                                                   std::numeric_limits<wrapped_type>::max(),
                                                   seed_value);
 
-        using value_wrapped_type = typename unwrap_type<value_type>::type;
+        using value_wrapped_type = typename test_utils::inner_type<value_type>::type;
         auto values = std::is_floating_point<value_wrapped_type>::value ?
             test_utils::get_random_data<value_type>(size,
                                                     static_cast<value_wrapped_type>(-1000),

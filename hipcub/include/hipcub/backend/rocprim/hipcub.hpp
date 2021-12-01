@@ -62,6 +62,7 @@
 #include "thread/thread_reduce.hpp"
 #include "thread/thread_scan.hpp"
 #include "thread/thread_search.hpp"
+#include "thread/thread_sort.hpp"
 #include "thread/thread_store.hpp"
 
 // Block

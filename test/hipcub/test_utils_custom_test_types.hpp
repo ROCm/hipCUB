@@ -272,5 +272,15 @@ struct is_custom_test_type<custom_test_type<T>> : std::true_type
 {
 };
 
+template <typename T>
+struct inner_type {
+    using type = T;
+};
+
+template <typename T>
+struct inner_type<custom_test_type<T>> {
+    using type = T;
+};
+
 } // end of test_utils namespace
 #endif  // HIPCUB_TEST_HIPCUB_TEST_UTILS_CUSTOM_TEST_TYPES_HPP_
