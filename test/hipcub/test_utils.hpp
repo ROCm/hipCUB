@@ -225,6 +225,14 @@ constexpr T get_min_warp_size(const T block_size, const T max_warp_size)
     } \
 }
 
+template<unsigned LogicalWarpSize>
+struct DeviceSelectWarpSize
+{
+    static constexpr unsigned value = HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize
+        ? LogicalWarpSize
+        : HIPCUB_DEVICE_WARP_THREADS;
+};
+
 } // end test_util namespace
 
 // Need for hipcub::DeviceReduce::Min/Max etc.

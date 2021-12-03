@@ -141,14 +141,18 @@ void warp_exchange_kernel(T* d_input, T* d_output)
     using WarpExchangeT = ::hipcub::WarpExchange<
         T,
         ItemsPerThread,
-        LogicalWarpSize
+        ::test_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
     >;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
     const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
 
     WarpExchangeT warp_exchange(temp_storage[warp_id]);
-    Op<T, ItemsPerThread, LogicalWarpSize>{}(warp_exchange, thread_data);
+    Op<
+        T,
+        ItemsPerThread,
+        ::test_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
+    >{}(warp_exchange, thread_data);
 
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
@@ -178,7 +182,7 @@ void warp_exchange_scatter_to_striped_kernel(T* d_input, T* d_output, OffsetT* d
     using WarpExchangeT = ::hipcub::WarpExchange<
         T,
         ItemsPerThread,
-        LogicalWarpSize
+        ::test_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
     >;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];

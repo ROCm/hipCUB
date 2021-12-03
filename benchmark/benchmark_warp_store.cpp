@@ -52,7 +52,7 @@ void warp_store_kernel(T* d_output)
         T,
         ItemsPerThread,
         Algorithm,
-        LogicalWarpSize
+        ::benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
     >;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     constexpr int tile_size = ItemsPerThread * LogicalWarpSize;
