@@ -40,7 +40,7 @@ BEGIN_HIPCUB_NAMESPACE
 
 
 template <typename T>
-__device__ __forceinline__ void Swap(T &lhs, T &rhs)
+HIPCUB_DEVICE __forceinline__ void Swap(T &lhs, T &rhs)
 {
   T temp = lhs;
   lhs    = rhs;
@@ -81,7 +81,7 @@ template <typename KeyT,
           typename ValueT,
           typename CompareOp,
           int ITEMS_PER_THREAD>
-__device__ __forceinline__ void
+HIPCUB_DEVICE __forceinline__ void
 StableOddEvenSort(KeyT (&keys)[ITEMS_PER_THREAD],
                   ValueT (&items)[ITEMS_PER_THREAD],
                   CompareOp compare_op)

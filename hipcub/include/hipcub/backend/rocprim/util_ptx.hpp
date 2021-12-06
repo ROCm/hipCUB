@@ -82,7 +82,7 @@ unsigned int WarpId()
     return ::rocprim::warp_id();
 }
 
-template <int LOGICAL_WARP_THREADS>
+template <int LOGICAL_WARP_THREADS, int /* ARCH */ = 0>
 HIPCUB_DEVICE inline 
 uint64_t WarpMask(unsigned int warp_id) {
     constexpr bool is_pow_of_two = ::rocprim::detail::is_power_of_two(LOGICAL_WARP_THREADS);

@@ -1,3 +1,25 @@
+// MIT License
+//
+// Copyright (c) 2017-2021 Advanced Micro Devices, Inc. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include "common_test_header.hpp"
 
 #include "hipcub/block/block_load.hpp"
@@ -45,11 +67,11 @@ typedef ::testing::Types<
 
 TYPED_TEST_SUITE(HipcubThreadSort, Params);
 
-template <unsigned int ItemsPerThread, typename Key, typename Compare>
+template <unsigned int BlockSize, unsigned int ItemsPerThread, typename Key, typename Compare>
 __global__
-__launch_bounds__(256)
+__launch_bounds__(BlockSize)
 void sort_keys(Key* keys, Compare compare) {
-    constexpr unsigned int items_per_block = 256 * ItemsPerThread;
+    constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
     const unsigned int block_offset = blockIdx.x * items_per_block;
 
     Key thread_keys[ItemsPerThread];
@@ -61,11 +83,11 @@ void sort_keys(Key* keys, Compare compare) {
     hipcub::StoreDirectBlocked(threadIdx.x, keys + block_offset, thread_keys);
 }
 
-template <unsigned int ItemsPerThread, typename Key, typename Value, typename Compare>
+template <unsigned int BlockSize, unsigned int ItemsPerThread, typename Key, typename Value, typename Compare>
 __global__
-__launch_bounds__(256)
+__launch_bounds__(BlockSize)
 void sort_keys_values(Key* keys, Value* values, Compare compare) {
-    constexpr unsigned int items_per_block = 256 * ItemsPerThread;
+    constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
     const unsigned int block_offset = blockIdx.x * items_per_block;
 
     Key   thread_keys[ItemsPerThread];
@@ -84,15 +106,10 @@ TYPED_TEST(HipcubThreadSort, SortKeys)
     using params = typename TestFixture::params;
     using key_type = typename params::key_type;
 
-    constexpr auto block_size = 256;
-    constexpr auto items_per_thread = params::items_per_thread;
+    constexpr unsigned int block_size = 256;
+    constexpr auto items_per_thread   = params::items_per_thread;
 
     constexpr auto items_per_block = block_size * items_per_thread;
-    // Given block size not supported
-    if(block_size > test_utils::get_max_block_size())
-    {
-        return;
-    }
 
     constexpr auto num_blocks  = 337;
     constexpr auto num_threads = num_blocks * block_size;
@@ -134,7 +151,7 @@ TYPED_TEST(HipcubThreadSort, SortKeys)
                             keys.size() * sizeof(keys[0]),
                             hipMemcpyHostToDevice));
 
-        hipLaunchKernelGGL(sort_keys<items_per_thread>, dim3(num_blocks),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(sort_keys<block_size, items_per_thread>), dim3(num_blocks),
                            dim3(block_size), 0, 0, device_keys, compare);
         HIP_CHECK(hipGetLastError());
 
@@ -162,15 +179,10 @@ TYPED_TEST(HipcubThreadSort, SortKeysValues)
     using key_type = typename params::key_type;
     using value_type = typename params::value_type;
 
-    constexpr auto block_size = 256;
-    constexpr auto items_per_thread = params::items_per_thread;
+    constexpr unsigned int block_size = 256;
+    constexpr auto items_per_thread   = params::items_per_thread;
 
     constexpr auto items_per_block = block_size * items_per_thread;
-    // Given block size not supported
-    if(block_size > test_utils::get_max_block_size())
-    {
-        return;
-    }
 
     constexpr auto num_blocks  = 269;
     constexpr auto num_threads = num_blocks * block_size;
@@ -238,7 +250,7 @@ TYPED_TEST(HipcubThreadSort, SortKeysValues)
                             values.size() * sizeof(values[0]),
                             hipMemcpyHostToDevice));
 
-        hipLaunchKernelGGL(sort_keys_values<items_per_thread>, dim3(num_blocks),
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(sort_keys_values<block_size, items_per_thread>), dim3(num_blocks),
                            dim3(block_size), 0, 0, device_keys, device_values,
                            compare);
         HIP_CHECK(hipGetLastError());

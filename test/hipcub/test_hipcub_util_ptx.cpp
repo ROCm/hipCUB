@@ -730,15 +730,15 @@ std::ostream& operator<<(std::ostream& lhs, TestStatus rhs) {
         case TestStatus::Passed:
             return lhs << "P";
     }
-    return lhs << "Unkown(" << static_cast<int>(rhs) << ")";
+    return lhs << "Unknown(" << static_cast<int>(rhs) << ")";
 }
 
-__device__ bool is_lane_in_mask(const uint64_t mask, const unsigned int lane) {
+HIPCUB_DEVICE bool is_lane_in_mask(const uint64_t mask, const unsigned int lane) {
     return (uint64_t(1) << lane) & mask;
 }
 
 template <unsigned int LogicalWarpSize>
-__device__
+HIPCUB_DEVICE
 std::enable_if_t<(HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize), TestStatus>
 test_warp_mask_pow_two() {
     const unsigned int logical_warp_id = hipcub::LaneId() / LogicalWarpSize;
@@ -765,14 +765,14 @@ test_warp_mask_pow_two() {
 }
 
 template <unsigned int LogicalWarpSize>
-__device__
+HIPCUB_DEVICE
 std::enable_if_t<!(HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize), TestStatus>
 test_warp_mask_pow_two() {
     return TestStatus::Passed;
 }
 
 template <unsigned int LogicalWarpSize>
-__device__
+HIPCUB_DEVICE
 std::enable_if_t<(HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize), TestStatus>
 test_warp_mask_non_pow_two() {
     const unsigned int logical_warp_id = hipcub::LaneId() / LogicalWarpSize;
@@ -792,7 +792,7 @@ test_warp_mask_non_pow_two() {
 }
 
 template <unsigned int LogicalWarpSize>
-__device__
+HIPCUB_DEVICE
 std::enable_if_t<!(HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize), TestStatus>
 test_warp_mask_non_pow_two() {
     return TestStatus::Passed;

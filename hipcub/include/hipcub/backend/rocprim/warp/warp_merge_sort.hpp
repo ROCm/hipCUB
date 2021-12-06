@@ -148,7 +148,7 @@ private:
 public:
   WarpMergeSort() = delete;
 
-  __device__ __forceinline__
+  HIPCUB_DEVICE __forceinline__
   WarpMergeSort(typename BlockMergeSortStrategyT::TempStorage &temp_storage)
       : BlockMergeSortStrategyT(temp_storage,
                                 IS_ARCH_WARP
@@ -159,13 +159,13 @@ public:
   {
   }
 
-  __device__ __forceinline__ uint64_t get_member_mask() const
+  HIPCUB_DEVICE __forceinline__ uint64_t get_member_mask() const
   {
     return member_mask;
   }
 
 private:
-  __device__ __forceinline__ void SyncImplementation() const
+  HIPCUB_DEVICE __forceinline__ void SyncImplementation() const
   {
     WARP_SYNC(member_mask);
   }
