@@ -164,10 +164,7 @@ TYPED_TEST(HipcubThreadSort, SortKeys)
         );
 
         // Verifying results
-        for(size_t i = 0; i < size; i++)
-        {
-            ASSERT_EQ(keys[i], expected[i]);
-        }
+        ASSERT_EQ(keys, expected);
 
         HIP_CHECK(hipFree(device_keys));
     }

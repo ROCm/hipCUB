@@ -356,10 +356,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeysSegmented)
         );
 
         // Verifying results
-        for(size_t i = 0; i < size; i++)
-        {
-            ASSERT_EQ(keys[i], expected[i]);
-        }
+        ASSERT_EQ(keys, expected);
 
         HIP_CHECK(hipFree(device_keys));
         HIP_CHECK(hipFree(device_segment_sizes));
@@ -586,10 +583,7 @@ TYPED_TEST(HipcubWarpMergeSort, SortKeys)
         );
 
         // Verifying results
-        for(size_t i = 0; i < size; i++)
-        {
-            ASSERT_EQ(keys[i], expected[i]);
-        }
+        ASSERT_EQ(keys, expected);
 
         HIP_CHECK(hipFree(device_keys));
     }
