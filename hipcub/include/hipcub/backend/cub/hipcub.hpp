@@ -51,8 +51,11 @@
 #include <cub/thread/thread_store.cuh>
 
 // Warp
+#include <cub/warp/warp_exchange.cuh>
+#include <cub/warp/warp_load.cuh>
 #include <cub/warp/warp_reduce.cuh>
 #include <cub/warp/warp_scan.cuh>
+#include <cub/warp/warp_store.cuh>
 
 // Iterator
 #include <cub/iterator/arg_index_input_iterator.cuh>

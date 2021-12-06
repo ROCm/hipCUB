@@ -323,6 +323,19 @@ inline auto get_random_data(size_t size, T min, T max, size_t max_random_size = 
     return data;
 }
 
+bool is_warp_size_supported(const unsigned required_warp_size)
+{
+    return HIPCUB_HOST_WARP_THREADS >= required_warp_size;
+}
+
+template<unsigned LogicalWarpSize>
+struct DeviceSelectWarpSize
+{
+    static constexpr unsigned value = HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize
+        ? LogicalWarpSize
+        : HIPCUB_DEVICE_WARP_THREADS;
+};
+
 } // end benchmark_util namespace
 
 // Need for hipcub::DeviceReduce::Min/Max etc.

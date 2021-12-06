@@ -49,8 +49,11 @@
 #include "iterator/transform_input_iterator.hpp"
 
 // Warp
+#include "warp/warp_exchange.hpp"
+#include "warp/warp_load.hpp"
 #include "warp/warp_reduce.hpp"
 #include "warp/warp_scan.hpp"
+#include "warp/warp_store.hpp"
 
 // Thread
 #include "thread/thread_load.hpp"
