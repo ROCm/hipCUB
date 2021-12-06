@@ -62,7 +62,8 @@ void sort_keys(const T* input, T* output, Compare compare_op)
     constexpr unsigned int warps_per_block = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = hipThreadIdx_x / LogicalWarpSize;
 
-    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread, LogicalWarpSize>;
+    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread,
+        benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value>;
     __shared__ typename warp_merge_sort::TempStorage storage[warps_per_block];
 
     warp_merge_sort wsort{storage[warp_id]};
@@ -98,7 +99,8 @@ void sort_pairs(const T* input, T* output, Compare compare_op)
     constexpr unsigned int warps_per_block = BlockSize / LogicalWarpSize;
     const unsigned int warp_id = hipThreadIdx_x / LogicalWarpSize;
 
-    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread, LogicalWarpSize, T>;
+    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread,
+        benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value, T>;
     __shared__ typename warp_merge_sort::TempStorage storage[warps_per_block];
 
     warp_merge_sort wsort{storage[warp_id]};
@@ -130,7 +132,8 @@ void sort_keys_segmented(const T* input, T* output, const unsigned int* segment_
     constexpr unsigned int max_segment_size = LogicalWarpSize * ItemsPerThread;
     constexpr unsigned int segments_per_block = BlockSize / LogicalWarpSize;
 
-    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread, LogicalWarpSize>;
+    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread,
+        benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value>;
     __shared__ typename warp_merge_sort::TempStorage storage[segments_per_block];
 
     const unsigned int warp_id = hipThreadIdx_x / LogicalWarpSize;
@@ -164,7 +167,8 @@ void sort_pairs_segmented(const T* input, T* output, const unsigned int* segment
     constexpr unsigned int max_segment_size = LogicalWarpSize * ItemsPerThread;
     constexpr unsigned int segments_per_block = BlockSize / LogicalWarpSize;
 
-    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread, LogicalWarpSize, T>;
+    using warp_merge_sort = hipcub::WarpMergeSort<T, ItemsPerThread,
+        benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value, T>;
     __shared__ typename warp_merge_sort::TempStorage storage[segments_per_block];
 
     const unsigned int warp_id = hipThreadIdx_x / LogicalWarpSize;

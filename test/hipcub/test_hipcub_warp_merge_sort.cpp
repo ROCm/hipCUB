@@ -80,9 +80,9 @@ template <
     unsigned int ItemsPerThread,
     unsigned int LogicalWarpSize,
     typename Value = hipcub::NullType>
-using select_warp_merge_sort = std::conditional_t<(HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize),
-    hipcub::WarpMergeSort<Key, ItemsPerThread, LogicalWarpSize, Value>,
-    hipcub::WarpMergeSort<Key, ItemsPerThread, HIPCUB_DEVICE_WARP_THREADS, Value>>;
+using select_warp_merge_sort =
+    hipcub::WarpMergeSort<Key, ItemsPerThread,
+        test_utils::DeviceSelectWarpSize<LogicalWarpSize>::value, Value>;
 
 template<
     unsigned int BlockSize,
