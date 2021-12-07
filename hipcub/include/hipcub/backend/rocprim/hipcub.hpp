@@ -51,6 +51,7 @@
 // Warp
 #include "warp/warp_exchange.hpp"
 #include "warp/warp_load.hpp"
+#include "warp/warp_merge_sort.hpp"
 #include "warp/warp_reduce.hpp"
 #include "warp/warp_scan.hpp"
 #include "warp/warp_store.hpp"
@@ -61,6 +62,7 @@
 #include "thread/thread_reduce.hpp"
 #include "thread/thread_scan.hpp"
 #include "thread/thread_search.hpp"
+#include "thread/thread_sort.hpp"
 #include "thread/thread_store.hpp"
 
 // Block

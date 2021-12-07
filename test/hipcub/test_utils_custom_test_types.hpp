@@ -37,7 +37,7 @@ struct custom_test_type
     T y;
 
     HIPCUB_HOST_DEVICE inline
-        constexpr custom_test_type() {}
+        constexpr custom_test_type() : x{}, y{} {}
 
     HIPCUB_HOST_DEVICE inline
         constexpr custom_test_type(T x, T y) : x(x), y(y) {}
@@ -270,6 +270,16 @@ struct is_custom_test_type : std::false_type
 template<class T>
 struct is_custom_test_type<custom_test_type<T>> : std::true_type
 {
+};
+
+template <typename T>
+struct inner_type {
+    using type = T;
+};
+
+template <typename T>
+struct inner_type<custom_test_type<T>> {
+    using type = T;
 };
 
 } // end of test_utils namespace
