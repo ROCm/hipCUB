@@ -150,7 +150,7 @@ struct ArgMinSelector<test_utils::bfloat16> {
 
 TYPED_TEST_SUITE(HipcubDeviceReduceTests, HipcubDeviceReduceTestsParams);
 
-TYPED_TEST(HipcubDeviceReduceTests, Reduce)
+TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
 {
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
