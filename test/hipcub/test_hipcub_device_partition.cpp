@@ -215,8 +215,8 @@ TYPED_TEST(HipcubDevicePartitionTests, Flagged)
                 auto j = i + expected_selected.size();
                 output_rejected.push_back(output[j]);
             }
-            ASSERT_NO_FATAL_FAILURE(test_utils::custom_assert_eq(output, expected_selected, expected_selected.size()));
-            ASSERT_NO_FATAL_FAILURE(test_utils::custom_assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
 
             hipFree(d_input);
             hipFree(d_flags);
@@ -376,8 +376,8 @@ TYPED_TEST(HipcubDevicePartitionTests, If)
                 auto j = i + expected_selected.size();
                 output_rejected.push_back(output[j]);
             }
-            ASSERT_NO_FATAL_FAILURE(test_utils::custom_assert_eq(output, expected_selected, expected_selected.size()));
-            ASSERT_NO_FATAL_FAILURE(test_utils::custom_assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
 
             hipFree(d_input);
             hipFree(d_output);

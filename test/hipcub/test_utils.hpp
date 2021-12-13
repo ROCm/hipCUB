@@ -646,7 +646,7 @@ void assert_near(const std::vector<test_utils::half>& result, const std::vector<
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        auto diff = std::max<float>(std::abs(percent * static_cast<float>(expected[i])), percent);
+        auto diff = std::abs(percent * static_cast<float>(expected[i]));
         ASSERT_NEAR(static_cast<float>(result[i]), static_cast<float>(expected[i]), diff) << "where index = " << i;
     }
 }
@@ -656,8 +656,8 @@ void assert_near(const std::vector<custom_test_type<test_utils::half>>& result, 
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        auto diff1 = std::max<float>(std::abs(percent * static_cast<float>(expected[i].x)), percent);
-        auto diff2 = std::max<float>(std::abs(percent * static_cast<float>(expected[i].y)), percent);
+        auto diff1 = std::abs(percent * static_cast<float>(expected[i].x));
+        auto diff2 = std::abs(percent * static_cast<float>(expected[i].y));
         ASSERT_NEAR(static_cast<float>(result[i].x), static_cast<float>(expected[i].x), diff1) << "where index = " << i;
         ASSERT_NEAR(static_cast<float>(result[i].y), static_cast<float>(expected[i].y), diff2) << "where index = " << i;
     }
@@ -668,7 +668,7 @@ void assert_near(const std::vector<test_utils::bfloat16>& result, const std::vec
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        auto diff = std::max<float>(std::abs(percent * static_cast<float>(expected[i])), percent);
+        auto diff = std::abs(percent * static_cast<float>(expected[i]));
         ASSERT_NEAR(static_cast<float>(result[i]), static_cast<float>(expected[i]), diff) << "where index = " << i;
     }
 }
@@ -678,8 +678,8 @@ void assert_near(const std::vector<custom_test_type<test_utils::bfloat16>>& resu
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        auto diff1 = std::max<float>(std::abs(percent * static_cast<float>(expected[i].x)), percent);
-        auto diff2 = std::max<float>(std::abs(percent * static_cast<float>(expected[i].y)), percent);
+        auto diff1 = std::abs(percent * static_cast<float>(expected[i].x));
+        auto diff2 = std::abs(percent * static_cast<float>(expected[i].y));
         ASSERT_NEAR(static_cast<float>(result[i].x), static_cast<float>(expected[i].x), diff1) << "where index = " << i;
         ASSERT_NEAR(static_cast<float>(result[i].y), static_cast<float>(expected[i].y), diff2) << "where index = " << i;
     }
@@ -692,8 +692,8 @@ auto assert_near(const std::vector<custom_test_type<T>>& result, const std::vect
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        auto diff1 = std::max<T>(std::abs(percent * expected[i].x), T(percent));
-        auto diff2 = std::max<T>(std::abs(percent * expected[i].y), T(percent));
+        auto diff1 = std::abs(percent * expected[i].x);
+        auto diff2 = std::abs(percent * expected[i].y);
         ASSERT_NEAR(result[i].x, expected[i].x, diff1) << "where index = " << i;
         ASSERT_NEAR(result[i].y, expected[i].y, diff2) << "where index = " << i;
     }
@@ -703,7 +703,7 @@ template<class T>
 auto assert_near(const T& result, const T& expected, const float percent)
     -> typename std::enable_if<std::is_floating_point<T>::value>::type
 {
-    auto diff = std::max<T>(std::abs(percent * expected), T(percent));
+    auto diff = std::abs(percent * expected);
     ASSERT_NEAR(result, expected, diff);
 }
 
@@ -717,13 +717,13 @@ auto assert_near(const T& result, const T& expected, const float percent)
 
 void assert_near(const test_utils::half& result, const test_utils::half& expected, float percent)
 {
-    auto diff = std::max<float>(std::abs(percent * static_cast<float>(expected)), percent);
+    auto diff = std::abs(percent * static_cast<float>(expected));
     ASSERT_NEAR(static_cast<float>(result), static_cast<float>(expected), diff);
 }
 
 void assert_near(const test_utils::bfloat16& result, const test_utils::bfloat16& expected, float percent)
 {
-    auto diff = std::max<float>(std::abs(percent * static_cast<float>(expected)), percent);
+    auto diff = std::abs(percent * static_cast<float>(expected));
     ASSERT_NEAR(static_cast<float>(result), static_cast<float>(expected), diff);
 }
 
@@ -731,19 +731,44 @@ template<class T>
 auto assert_near(const custom_test_type<T>& result, const custom_test_type<T>& expected, const float percent)
     -> typename std::enable_if<std::is_floating_point<T>::value>::type
 {
-    auto diff1 = std::max<T>(std::abs(percent * expected.x), T(percent));
-    auto diff2 = std::max<T>(std::abs(percent * expected.y), T(percent));
+    auto diff1 = std::abs(percent * expected.x);
+    auto diff2 = std::abs(percent * expected.y);
     ASSERT_NEAR(result.x, expected.x, diff1);
     ASSERT_NEAR(result.y, expected.y, diff2);
 }
 
+/// Checks if `vector<T> result` matches `vector<T> expected`.
+/// If max_length is given, equality of `result.size()` and `expected.size()`
+/// is ignored and checks only the first max_length elements.
+/// \tparam T
+/// \param result
+/// \param expected
+/// \param max_length
 template<class T>
-void assert_eq(const std::vector<T>& result, const std::vector<T>& expected)
+void assert_eq(const std::vector<T>& result, const std::vector<T>& expected, const size_t max_length = SIZE_MAX)
 {
-    ASSERT_EQ(result.size(), expected.size());
-    for(size_t i = 0; i < result.size(); i++)
+    if(max_length == SIZE_MAX || max_length > expected.size()) ASSERT_EQ(result.size(), expected.size());
+    for(size_t i = 0; i < std::min(result.size(), max_length); i++)
     {
         ASSERT_EQ(result[i], expected[i]) << "where index = " << i;
+    }
+}
+
+void assert_eq(const std::vector<test_utils::half>& result, const std::vector<test_utils::half>& expected, const size_t max_length = SIZE_MAX)
+{
+    if(max_length == SIZE_MAX || max_length > expected.size()) ASSERT_EQ(result.size(), expected.size());
+    for(size_t i = 0; i < std::min(result.size(), max_length); i++)
+    {
+        ASSERT_EQ(test_utils::native_half(result[i]), test_utils::native_half(expected[i])) << "where index = " << i;
+    }
+}
+
+void assert_eq(const std::vector<test_utils::bfloat16>& result, const std::vector<test_utils::bfloat16>& expected, const size_t max_length = SIZE_MAX)
+{
+    if(max_length == SIZE_MAX || max_length > expected.size()) ASSERT_EQ(result.size(), expected.size());
+    for(size_t i = 0; i < std::min(result.size(), max_length); i++)
+    {
+        ASSERT_EQ(test_utils::native_bfloat16(result[i]), test_utils::native_bfloat16(expected[i])) << "where index = " << i;
     }
 }
 
@@ -759,50 +784,6 @@ void assert_bit_eq(const std::vector<T>& result, const std::vector<T>& expected)
         ASSERT_EQ(true, the_same) << "where index = " << i;
     }
 }
-
-void assert_eq(const std::vector<test_utils::half>& result, const std::vector<test_utils::half>& expected)
-{
-    ASSERT_EQ(result.size(), expected.size());
-    for(size_t i = 0; i < result.size(); i++)
-    {
-        ASSERT_EQ(test_utils::native_half(result[i]), test_utils::native_half(expected[i])) << "where index = " << i;
-    }
-}
-
-void assert_eq(const std::vector<test_utils::bfloat16>& result, const std::vector<test_utils::bfloat16>& expected)
-{
-    ASSERT_EQ(result.size(), expected.size());
-    for(size_t i = 0; i < result.size(); i++)
-    {
-        ASSERT_EQ(test_utils::native_bfloat16(result[i]), test_utils::native_bfloat16(expected[i])) << "where index = " << i;
-    }
-}
-
-template<class T>
-void custom_assert_eq(const std::vector<T>& result, const std::vector<T>& expected, size_t size)
-{
-    for(size_t i = 0; i < size; i++)
-    {
-        ASSERT_EQ(result[i], expected[i]) << "where index = " << i;
-    }
-}
-
-void custom_assert_eq(const std::vector<test_utils::half>& result, const std::vector<test_utils::half>& expected, size_t size)
-{
-    for(size_t i = 0; i < size; i++)
-    {
-        ASSERT_EQ(test_utils::native_half(result[i]), test_utils::native_half(expected[i])) << "where index = " << i;
-    }
-}
-
-void custom_assert_eq(const std::vector<test_utils::bfloat16>& result, const std::vector<test_utils::bfloat16>& expected, size_t size)
-{
-    for(size_t i = 0; i < size; i++)
-    {
-        ASSERT_EQ(test_utils::native_bfloat16(result[i]), test_utils::native_bfloat16(expected[i])) << "where index = " << i;
-    }
-}
-
 
 template<class T>
 void assert_eq(const T& result, const T& expected)
