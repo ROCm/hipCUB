@@ -119,7 +119,16 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
                 std::numeric_limits<key_type>::max(),
                 seed_value + seed_value_addition
             );
-            key_type *d_keys_input;
+                if(size < 80){
+                    for(key_type item : keys_input)
+                    {
+                        std::cout << static_cast<int>(item) << " ";
+                    }
+                    std::cout << "size:" << size << " size2: " << keys_input.size() << std::endl;
+                    std::cout << "size:" << size*sizeof(key_type) << std::endl;
+                }
+
+            key_type * d_keys_input;
             key_type * d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));

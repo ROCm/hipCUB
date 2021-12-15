@@ -50,6 +50,44 @@ std::ostream& operator<<(std::ostream& stream, const test_utils::half& value)
 namespace test_utils
 {
 
+// helpers to produce special values for floating-point types, also compile for integrals.
+#define special_values_methods(T) \
+static T pNaN(){ return *reinterpret_cast<const T*>(&s[0]); } \
+static T nNaN(){ return *reinterpret_cast<const T*>(&s[1]); } \
+static T pInf(){ return *reinterpret_cast<const T*>(&s[2]); } \
+static T nInf(){ return *reinterpret_cast<const T*>(&s[3]); } \
+static T p0(){ return *reinterpret_cast<const T*>(&s[4]); } \
+static T n0(){ return *reinterpret_cast<const T*>(&s[5]); } \
+static std::vector<T> vector(){ std::vector<T> r = { pNaN(), nNaN(), pInf(), nInf(), p0(), n0() }; return r; }
+
+template<class T>
+struct special_values {
+    static constexpr T s[] = {0, 0, 0, 0, 0, 0};
+    special_values_methods(T);
+};
+
+template<>
+struct special_values<float>{         // +NaN,           -NaN,           +Inf,           -Inf,           +0.0,           -0.0
+    static constexpr uint32_t s[] = {0x7fffffff, 0xffffffff, 0x7F800000, 0xFF800000, 0x00000000, 0x80000000}; // float
+    special_values_methods(float);
+};
+template<>
+struct special_values<test_utils::bfloat16>{
+    static constexpr uint16_t s[] = {0x7fff, 0xffff, 0x7F80, 0xFF80, 0x0000, 0x8000}; // bfloat16
+    special_values_methods(test_utils::bfloat16);
+};
+template<>
+struct special_values<test_utils::half>{
+    static constexpr uint16_t s[] = {0x7fff, 0xffff, 0x7C00, 0xFC00, 0x0000, 0x8000}; // half
+    special_values_methods(test_utils::half);
+};
+template<>
+struct special_values<double>{
+    static constexpr uint64_t s[] = {0x7fffffffffffffff, 0xffffffffffffffff, 0x7FF0000000000000, 0xFFF0000000000000, 0x0000000000000000, 0x8000000000000000}; // double
+    special_values_methods(double);
+};
+// end of special_values helpers
+
 template<class T>
 struct precision_threshold
 {
@@ -95,6 +133,11 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value)
         data.end(),
         [&]() { return static_cast<T>(distribution(gen)); }
     );
+    /*if(use_special_values && size > 8){
+        int start = gen() % (size-6);
+        std::vector<T> vals = test_utils::special_values<T>::vector();
+        std::copy(vals.begin(), vals.end(), data.begin());
+    }*/
     return data;
 }
 
@@ -137,7 +180,7 @@ inline std::vector<char> get_random_data(size_t size, char min, char max, int se
 #endif
 
 template<class T>
-inline auto get_random_data(size_t size, T min, T max, int seed_value)
+inline auto get_random_data(size_t size, T min, T max, int seed_value, bool use_special_values = true)
     -> typename std::enable_if<std::is_same<test_utils::half, T>::value, std::vector<T>>::type
 {
     std::random_device rd;
@@ -150,11 +193,16 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value)
         data.end(),
         [&]() { return static_cast<T>(distribution(gen)); }
     );
+    if(use_special_values && size > 8){
+        size_t start = gen() % (size-6);
+        std::vector<T> vals = test_utils::special_values<T>::vector();
+        std::copy(vals.begin(), vals.end(), data.begin()+start);
+    }
     return data;
 }
 
 template<class T>
-inline auto get_random_data(size_t size, float min, float max, int seed_value)
+inline auto get_random_data(size_t size, float min, float max, int seed_value, bool use_special_values = true)
     -> typename std::enable_if<std::is_same<test_utils::bfloat16, T>::value, std::vector<T>>::type
 {
     std::random_device rd;
@@ -167,6 +215,11 @@ inline auto get_random_data(size_t size, float min, float max, int seed_value)
         data.end(),
         [&]() { return static_cast<T>(distribution(gen)); }
         );
+    if(use_special_values && size > 8){
+        size_t start = gen() % (size-6);
+        std::vector<T> vals = test_utils::special_values<T>::vector();
+        std::copy(vals.begin(), vals.end(), data.begin()+start);
+    }
     return data;
 }
 
@@ -801,7 +854,6 @@ void assert_eq(const test_utils::bfloat16& result, const test_utils::bfloat16& e
     ASSERT_EQ(test_utils::native_bfloat16(result), test_utils::native_bfloat16(expected));
 }
 
-
 } // end test_util namespace
 
 // Need for hipcub::DeviceReduce::Min/Max etc.
@@ -855,15 +907,15 @@ namespace std
     public:
 
         static inline T max() {
-            return test_utils::half(65504.0f);
+            return T(65504.0f);
         }
 
         static inline T min() {
-            return test_utils::half(0.0f);
+            return T(0.0f);
         }
 
         static inline T lowest() {
-            return test_utils::half(-65504.0f);
+            return T(-65504.0f);
         }
     };
 
@@ -874,15 +926,15 @@ namespace std
     public:
 
         static inline T max() {
-            return test_utils::bfloat16(std::numeric_limits<float>::max()*0.998);
+            return T(std::numeric_limits<float>::max()*0.998);
         }
 
         static inline T min() {
-            return test_utils::bfloat16(std::numeric_limits<float>::min());
+            return T(std::numeric_limits<float>::min());
         }
 
         static inline T lowest() {
-            return test_utils::bfloat16(std::numeric_limits<float>::lowest()*0.998);
+            return T(std::numeric_limits<float>::lowest()*0.998);
         }
     };
 }
