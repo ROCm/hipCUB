@@ -25,7 +25,7 @@
 // hipcub API
 #include "hipcub/device/device_radix_sort.hpp"
 
-// Ordinary numbers test
+#include "test_utils_sort_comparator.hpp"
 
 template<
     class Key,
@@ -73,6 +73,11 @@ typedef ::testing::Types<
     params<unsigned int, short, true, 0, 15>,
     params<unsigned long long, char, false, 8, 20>,
     params<unsigned short, double, false, 8, 11>,
+    // some params used by PyTorch's Randperm()
+    params<int64_t, int64_t, false, 0, 34>,
+    params<int64_t, float, true, 0, 34>,
+    params<int64_t, test_utils::half, true, 0, 34>,
+    params<int64_t, int64_t, false, 0, 34, true>,
 
     // huge sizes to check correctness of more than 1 block per batch
     params<float, char, true, 0, 32, true>
@@ -117,16 +122,9 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition
+                seed_value + seed_value_addition,
+                true
             );
-                if(size < 80){
-                    for(key_type item : keys_input)
-                    {
-                        std::cout << static_cast<int>(item) << " ";
-                    }
-                    std::cout << "size:" << size << " size2: " << keys_input.size() << std::endl;
-                    std::cout << "size:" << size*sizeof(key_type) << std::endl;
-                }
 
             key_type * d_keys_input;
             key_type * d_keys_output;
@@ -195,7 +193,7 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
 
             HIP_CHECK(hipFree(d_keys_output));
 
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, expected));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output, expected));
         }
     }
 }
@@ -230,7 +228,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairs)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition
+                seed_value + seed_value_addition,
+                true
             );
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
@@ -342,8 +341,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairs)
                 values_expected[i] = expected[i].second;
             }
 
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, keys_expected));
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(values_output, values_expected));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output, keys_expected));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(values_output, values_expected));
         }
     }
 }
@@ -377,7 +376,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeysDoubleBuffer)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition
+                seed_value + seed_value_addition,
+                true
             );
             key_type * d_keys_input;
             key_type * d_keys_output;
@@ -448,7 +448,7 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeysDoubleBuffer)
             HIP_CHECK(hipFree(d_keys_input));
             HIP_CHECK(hipFree(d_keys_output));
 
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, expected));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output, expected));
         }
     }
 }
@@ -483,7 +483,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairsDoubleBuffer)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition
+                seed_value + seed_value_addition,
+                true
             );
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
@@ -598,8 +599,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairsDoubleBuffer)
                 values_expected[i] = expected[i].second;
             }
 
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, keys_expected));
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(values_output, values_expected));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(keys_output, keys_expected));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(values_output, values_expected));
         }
     }
 }
