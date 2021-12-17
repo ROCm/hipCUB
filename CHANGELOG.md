@@ -12,6 +12,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 - Device segmented sort
 - API update to CUB 1.14.0
 - Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
+- Device three way partition
 ### Changed
 - The SetupNVCC.cmake automatic target selector select all of the capabalities of all available card for NVIDIA backend.
 - Device_scan and device_segmented_scan: inclusive_scan now uses the input-type as accumulator-type, exclusive_scan uses initial-value-type.
