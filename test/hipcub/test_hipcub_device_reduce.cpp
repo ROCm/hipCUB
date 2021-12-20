@@ -55,6 +55,7 @@ typedef ::testing::Types<
     DeviceReduceParams<short>,
     DeviceReduceParams<short, float>,
     DeviceReduceParams<int, double>,
+    DeviceReduceParams<test_utils::half, float>,
     DeviceReduceParams<test_utils::bfloat16, float>
     #ifdef __HIP_PLATFORM_AMD__
     ,
@@ -86,12 +87,13 @@ std::vector<size_t> get_sizes()
  * \brief Arg max functor - Because NVIDIA's hipcub::ArgMax doesn't work with bfloat16 (HOST-SIDE)
  */
 struct ArgMax {
-    template<typename OffsetT>
-    __host__ __device__ __forceinline__ hipcub::KeyValuePair <OffsetT, test_utils::bfloat16> operator()(
-        const hipcub::KeyValuePair <OffsetT, test_utils::bfloat16> &a,
-        const hipcub::KeyValuePair <OffsetT, test_utils::bfloat16> &b) const {
-        const hipcub::KeyValuePair <OffsetT, test_utils::native_bfloat16> native_a(a.key,a.value);
-        const hipcub::KeyValuePair <OffsetT, test_utils::native_bfloat16> native_b(b.key,b.value);
+    template<typename OffsetT, class T, std::enable_if_t<std::is_same<T, test_utils::half>::value ||
+                                                         std::is_same<T, test_utils::bfloat16>::value, bool> = true>
+    __host__ __device__ __forceinline__ hipcub::KeyValuePair <OffsetT, T> operator()(
+        const hipcub::KeyValuePair <OffsetT, T> &a,
+        const hipcub::KeyValuePair <OffsetT, T> &b) const {
+        const hipcub::KeyValuePair <OffsetT, float> native_a(a.key,a.value);
+        const hipcub::KeyValuePair <OffsetT, float> native_b(b.key,b.value);
 
         if ((native_b.value > native_a.value) || ((native_a.value == native_b.value) && (native_b.key < native_a.key)))
             return b;
@@ -102,12 +104,13 @@ struct ArgMax {
  * \brief Arg min functor - Because NVIDIA's hipcub::ArgMax doesn't work with bfloat16 (HOST-SIDE)
  */
 struct ArgMin {
-    template<typename OffsetT>
-    __host__ __device__ __forceinline__ hipcub::KeyValuePair <OffsetT, test_utils::bfloat16> operator()(
-        const hipcub::KeyValuePair <OffsetT, test_utils::bfloat16> &a,
-        const hipcub::KeyValuePair <OffsetT, test_utils::bfloat16> &b) const {
-        const hipcub::KeyValuePair <OffsetT, test_utils::native_bfloat16> native_a(a.key,a.value);
-        const hipcub::KeyValuePair <OffsetT, test_utils::native_bfloat16> native_b(b.key,b.value);
+    template<typename OffsetT, class T, std::enable_if_t<std::is_same<T, test_utils::half>::value ||
+                                                         std::is_same<T, test_utils::bfloat16>::value, bool> = true>
+    __host__ __device__ __forceinline__ hipcub::KeyValuePair <OffsetT, T> operator()(
+        const hipcub::KeyValuePair <OffsetT, T> &a,
+        const hipcub::KeyValuePair <OffsetT, T> &b) const {
+        const hipcub::KeyValuePair <OffsetT, float> native_a(a.key,a.value);
+        const hipcub::KeyValuePair <OffsetT, float> native_b(b.key,b.value);
 
         if ((native_b.value < native_a.value) || ((native_a.value == native_b.value) && (native_b.key < native_a.key)))
             return b;
@@ -378,7 +381,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMinimum)
 
             // Calculate expected results on host
             Iterator x(input.data());
-            const key_value max(1, std::numeric_limits<T>::max());
+            const key_value max(1, test_utils::numeric_limits<T>::max());
             using ArgMin = typename ArgMinSelector<T>::type; // Because NVIDIA's hipcub::ArgMin doesn't work with bfloat16 (HOST-SIDE)
             key_value expected = std::accumulate(x, x + size, max, ArgMin());
 
@@ -470,7 +473,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceArgMaximum)
 
             // Calculate expected results on host
             Iterator x(input.data());
-            const key_value min(1, std::numeric_limits<T>::lowest());
+            const key_value min(1, test_utils::numeric_limits<T>::lowest());
             using ArgMax = typename ArgMaxSelector<T>::type; // Because NVIDIA's hipcub::ArgMax doesn't work with bfloat16 (HOST-SIDE)
             key_value expected = std::accumulate(x, x + size, min, ArgMax());
 

@@ -26,6 +26,10 @@
 // Std::memcpy and std::memcmp
 #include <cstring>
 
+#include "test_utils_half.hpp"
+#include "test_utils_bfloat16.hpp"
+#include "test_utils_custom_test_types.hpp"
+
 namespace test_utils{
 
 template<class T>
@@ -80,11 +84,13 @@ void assert_eq(const T& result, const T& expected)
 
 void assert_eq(const test_utils::half& result, const test_utils::half& expected)
 {
+    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
     ASSERT_EQ(test_utils::native_half(result), test_utils::native_half(expected));
 }
 
 void assert_eq(const test_utils::bfloat16& result, const test_utils::bfloat16& expected)
 {
+    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
     ASSERT_EQ(test_utils::native_bfloat16(result), test_utils::native_bfloat16(expected));
 }
 // end assert_eq
@@ -223,10 +229,12 @@ void assert_bit_eq(const std::vector<T>& result, const std::vector<T>& expected)
     for(size_t i = 0; i < result.size(); i++)
     {
         if(!bit_equal(result[i], expected[i]))
+        {
             FAIL() << "Expected strict/bitwise equality of these values: " << std::endl
                    << "     result[i]: " << result[i] << std::endl
                    << "     expected[i]: " << expected[i] << std::endl
                    << "where index = " << i;
+        }
     }
 }
 

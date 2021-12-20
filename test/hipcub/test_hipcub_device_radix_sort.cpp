@@ -122,9 +122,9 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition,
-                true
+                seed_value + seed_value_addition
             );
+            test_utils::add_special_values(keys_input, seed_value);
 
             key_type * d_keys_input;
             key_type * d_keys_output;
@@ -228,9 +228,9 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairs)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition,
-                true
+                seed_value + seed_value_addition
             );
+            test_utils::add_special_values(keys_input, seed_value);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
@@ -376,9 +376,9 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeysDoubleBuffer)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition,
-                true
+                seed_value + seed_value_addition
             );
+            test_utils::add_special_values(keys_input, seed_value);
             key_type * d_keys_input;
             key_type * d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
@@ -483,9 +483,9 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairsDoubleBuffer)
                 size,
                 std::numeric_limits<key_type>::min(),
                 std::numeric_limits<key_type>::max(),
-                seed_value + seed_value_addition,
-                true
+                seed_value + seed_value_addition
             );
+            test_utils::add_special_values(keys_input, seed_value);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 

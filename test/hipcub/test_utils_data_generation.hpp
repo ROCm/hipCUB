@@ -26,49 +26,116 @@
 // Std::memcpy and std::memcmp
 #include <cstring>
 
+#include "test_utils_half.hpp"
+#include "test_utils_bfloat16.hpp"
+#include "test_utils_custom_test_types.hpp"
+
 namespace test_utils
 {
 
-// helpers to produce special values for floating-point types, also compile for integrals.
-#define special_values_methods(T) \
-static T pNaN(){ T r; std::memcpy(&r, &s[0], sizeof(T)); return r; } \
-static T nNaN(){ T r; std::memcpy(&r, &s[1], sizeof(T)); return r; } \
-static T pInf(){ T r; std::memcpy(&r, &s[2], sizeof(T)); return r; } \
-static T nInf(){ T r; std::memcpy(&r, &s[3], sizeof(T)); return r; } \
-static T p0(){ T r; std::memcpy(&r, &s[4], sizeof(T)); return r; } \
-static T n0(){ T r; std::memcpy(&r, &s[5], sizeof(T)); return r; } \
-static std::vector<T> vector(){ std::vector<T> r = { pNaN(), pInf(), nInf(), p0(), n0() }; return r; }
+// Numeric limits which also supports custom_test_type<U> classes
+template<class T>
+struct numeric_limits : std::numeric_limits<T>
+{
+};
 
+template<> struct numeric_limits<test_utils::half> : public std::numeric_limits<test_utils::half> {
+    public:
+    using T = test_utils::half;
+    static inline T min() {
+        return T(0.00006104f);
+    };
+    static inline T max() {
+        return T(65504.0f);
+    };
+    static inline T lowest() {
+        return T(-65504.0f);
+    };
+    static inline T infinity() {
+        return T(std::numeric_limits<float>::infinity());
+    };
+    static inline T quiet_NaN() {
+        return T(std::numeric_limits<float>::quiet_NaN());
+    };
+    static inline T signaling_NaN() {
+        return T(std::numeric_limits<float>::signaling_NaN());
+    };
+};
+
+template<> class numeric_limits<test_utils::bfloat16> : public std::numeric_limits<test_utils::bfloat16> {
+    public:
+    using T = test_utils::bfloat16;
+
+    static inline T max() {
+        return T(std::numeric_limits<float>::max()*0.998);
+    };
+    static inline T min() {
+        return T(std::numeric_limits<float>::min());
+    };
+    static inline T lowest() {
+        return T(std::numeric_limits<float>::lowest()*0.998);
+    };
+    static inline T infinity() {
+        return T(std::numeric_limits<float>::infinity());
+    };
+    static inline T quiet_NaN() {
+        return T(std::numeric_limits<float>::quiet_NaN());
+    };
+    static inline T signaling_NaN() {
+        return T(std::numeric_limits<float>::signaling_NaN());
+    };
+};
+// End of extended numeric_limits
+
+// Helper class to generate a vector of special values for any type
 template<class T>
 struct special_values {
-    static constexpr T s[] = {0, 0, 0, 0, 0, 0};
-    special_values_methods(T);
-};
+    private:
+    // sign_bit_flip needed because host-side operators for __half are missing. (e.g. -__half unary operator or (-1*) __half*__half binary operator
+    static T sign_bit_flip(T value){
+        uint8_t* data = reinterpret_cast<uint8_t*>(&value);
+        data[sizeof(T)-1] ^= 0x80;
+        return value;
+    }
 
-template<>
-struct special_values<float>{         // +NaN,           -NaN,           +Inf,           -Inf,           +0.0,           -0.0
-    static constexpr uint32_t s[] = {0x7fffffff, 0xffffffff, 0x7F800000, 0xFF800000, 0x00000000, 0x80000000}; // float
-    special_values_methods(float);
-};
-template<>
-struct special_values<test_utils::bfloat16>{
-    static constexpr uint16_t s[] = {0x7fff, 0xffff, 0x7F80, 0xFF80, 0x0000, 0x8000}; // bfloat16
-    special_values_methods(test_utils::bfloat16);
-};
-template<>
-struct special_values<test_utils::half>{
-    static constexpr uint16_t s[] = {0x7fff, 0xffff, 0x7C00, 0xFC00, 0x0000, 0x8000}; // half
-    special_values_methods(test_utils::half);
-};
-template<>
-struct special_values<double>{
-    static constexpr uint64_t s[] = {0x7fffffffffffffff, 0xffffffffffffffff, 0x7FF0000000000000, 0xFFF0000000000000, 0x0000000000000000, 0x8000000000000000}; // double
-    special_values_methods(double);
+    public:
+    static std::vector<T> vector(){
+        if(std::is_integral<T>::value){
+            return std::vector<T>();
+        }else {
+            std::vector<T> r = {test_utils::numeric_limits<T>::quiet_NaN(),
+                                //sign_bit_flip(test_utils::numeric_limits<T>::quiet_NaN()), // TODO: fix AMD issue with -NaN
+                                //test_utils::numeric_limits<T>::signaling_NaN(), // signaling_NaN not supported on NVIDIA yet
+                                //sign_bit_flip(test_utils::numeric_limits<T>::signaling_NaN()),
+                                test_utils::numeric_limits<T>::infinity(),
+                                sign_bit_flip(test_utils::numeric_limits<T>::infinity()),
+                                T(0.0),
+                                T(-0.0)};
+            return r;
+        }
+    }
 };
 // end of special_values helpers
 
+/// Insert special values of type T at a random place in the source vector
+/// \tparam T
+/// \param source The source vector<T> to modify
 template<class T>
-inline auto get_random_data(size_t size, T min, T max, int seed_value, bool = false)
+void add_special_values(std::vector<T>& source, int seed_value)
+{
+    std::random_device rd;
+    std::default_random_engine gen(rd());
+    gen.seed(seed_value);
+    std::vector<T> special_values = test_utils::special_values<T>::vector();
+    if(source.size() > special_values.size())
+    {
+        unsigned int start = gen() % (source.size() - special_values.size());
+        std::copy(special_values.begin(), special_values.end(), source.begin() + start);
+    }
+}
+
+template<class T>
+inline auto get_random_data(size_t size, T min, T max, int seed_value)
     -> typename std::enable_if<std::is_integral<T>::value, std::vector<T>>::type
 {
     std::random_device rd;
@@ -81,7 +148,7 @@ inline auto get_random_data(size_t size, T min, T max, int seed_value, bool = fa
 }
 
 template<class T, class S, class U>
-inline auto get_random_data(size_t size, S min, U max, int seed_value, bool use_special_values = false)
+inline auto get_random_data(size_t size, S min, U max, int seed_value)
     -> typename std::enable_if<!std::is_integral<T>::value && !is_custom_test_type<T>::value, std::vector<T>>::type
 {
     std::random_device rd;
@@ -95,11 +162,6 @@ inline auto get_random_data(size_t size, S min, U max, int seed_value, bool use_
         data.end(),
         [&]() { return static_cast<T>(distribution(gen)); }
     );
-    if(use_special_values && size > 6){
-        int start = gen() % (size-6);
-        std::vector<T> vals = test_utils::special_values<T>::vector();
-        std::copy(vals.begin(), vals.end(), data.begin()+start);
-    }
     return data;
 }
 
@@ -142,7 +204,7 @@ inline std::vector<char> get_random_data(size_t size, char min, char max, int se
 #endif
 
 template<class T>
-inline auto get_random_data(size_t size, typename T::value_type min, typename T::value_type max, int seed_value, bool = false)
+inline auto get_random_data(size_t size, typename T::value_type min, typename T::value_type max, int seed_value)
     -> typename std::enable_if<
         is_custom_test_type<T>::value && std::is_integral<typename T::value_type>::value,
         std::vector<T>
@@ -158,7 +220,7 @@ inline auto get_random_data(size_t size, typename T::value_type min, typename T:
 }
 
 template<class T>
-inline auto get_random_data(size_t size, typename T::value_type min, typename T::value_type max, int seed_value, bool = false)
+inline auto get_random_data(size_t size, typename T::value_type min, typename T::value_type max, int seed_value)
     -> typename std::enable_if<
         is_custom_test_type<T>::value && std::is_floating_point<typename T::value_type>::value,
         std::vector<T>

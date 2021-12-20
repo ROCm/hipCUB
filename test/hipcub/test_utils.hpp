@@ -32,12 +32,11 @@
     #include "hipcub/config.hpp"
     #include <cub/util_ptx.cuh>
 #endif
-// First load datatypes
+
 #include "test_utils_half.hpp"
 #include "test_utils_bfloat16.hpp"
 #include "test_utils_sort_comparator.hpp"
 #include "test_utils_custom_test_types.hpp"
-// Then load special tools
 #include "test_utils_data_generation.hpp"
 #include "test_utils_assertions.hpp"
 
@@ -263,44 +262,6 @@ namespace std
         static constexpr inline T lowest()
         {
             return std::numeric_limits<typename T::value_type>::lowest();
-        }
-    };
-
-    template<>
-    class numeric_limits<test_utils::half> {
-        using T = typename test_utils::half;
-
-    public:
-
-        static inline T max() {
-            return T(65504.0f);
-        }
-
-        static inline T min() {
-            return T(0.00006104f);
-        }
-
-        static inline T lowest() {
-            return T(-65504.0f);
-        }
-    };
-
-    template<>
-    class numeric_limits<test_utils::bfloat16> {
-        using T = typename test_utils::bfloat16;
-
-    public:
-
-        static inline T max() {
-            return T(std::numeric_limits<float>::max()*0.998);
-        }
-
-        static inline T min() {
-            return T(std::numeric_limits<float>::min());
-        }
-
-        static inline T lowest() {
-            return T(std::numeric_limits<float>::lowest()*0.998);
         }
     };
 }

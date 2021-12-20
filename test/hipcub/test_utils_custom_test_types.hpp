@@ -23,6 +23,9 @@
 #ifndef HIPCUB_TEST_HIPCUB_TEST_UTILS_CUSTOM_TEST_TYPES_HPP_
 #define HIPCUB_TEST_HIPCUB_TEST_UTILS_CUSTOM_TEST_TYPES_HPP_
 
+#include "test_utils_half.hpp"
+#include "test_utils_bfloat16.hpp"
+
 namespace test_utils {
 
 template<class T>

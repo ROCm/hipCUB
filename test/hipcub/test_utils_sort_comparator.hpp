@@ -27,13 +27,11 @@
 #include <rocprim/type_traits.hpp>
 #endif
 
+#include "test_utils_half.hpp"
+#include "test_utils_bfloat16.hpp"
+
 namespace test_utils
 {
-
-// Original code with ISO-conforming overload control
-//
-// NOTE: ShiftLess helper is needed, because partial specializations cannot refer to the free template args.
-//       See: https://stackoverflow.com/questions/2615905/c-template-nontype-parameter-arithmetic
 
 template<class T>
 constexpr auto is_floating_nan_host(const T& a)
@@ -84,6 +82,9 @@ struct key_comparator<Key, Descending, StartBit, EndBit, true, typename std::ena
 {
     bool operator()(const Key& lhs, const Key& rhs)
     {
+        if(is_floating_nan_host(lhs) && is_floating_nan_host(rhs) && std::signbit(lhs) == std::signbit(rhs)){
+            return false;
+        }
         if(Descending){
             if(is_floating_nan_host(lhs)) return !std::signbit(lhs);
             if(is_floating_nan_host(rhs)) return std::signbit(rhs);
