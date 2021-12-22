@@ -117,6 +117,40 @@ OutputIt host_exclusive_scan(InputIt first, InputIt last,
     return ++d_first;
 }
 
+template<class InputIt, class KeyIt, class OutputIt, class BinaryOperation, class KeyCompare>
+OutputIt host_inclusive_scan_by_key(InputIt first, InputIt last, KeyIt k_first,
+                                    OutputIt d_first, BinaryOperation op, KeyCompare key_compare_op)
+{
+    using input_type = typename std::iterator_traits<InputIt>::value_type;
+    using output_type = typename std::iterator_traits<OutputIt>::value_type;
+    using result_type =
+        typename std::conditional<
+            std::is_void<output_type>::value, input_type, output_type
+        >::type;
+
+    if (first == last)
+    {
+        return d_first;
+    }
+
+    result_type sum = *first;
+    *d_first = sum;
+
+    while (++first != last)
+    {
+        if (key_compare_op(*k_first, *++k_first))
+        {
+            sum = op(sum, static_cast<result_type>(*first));
+        }
+        else
+        {
+            sum = *first;
+        }
+        *++d_first = sum;
+    }
+    return ++d_first;
+}
+
 template<class InputIt, class KeyIt, class T, class OutputIt, class BinaryOperation, class KeyCompare>
 OutputIt host_exclusive_scan_by_key(InputIt first, InputIt last, KeyIt k_first,
                                     T initial_value, OutputIt d_first,

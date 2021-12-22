@@ -30,13 +30,18 @@
 template<
     class InputType,
     class OutputType = InputType,
-    class ScanOp = hipcub::Sum
+    class ScanOp = hipcub::Sum,
+    class KeyType = int
 >
 struct DeviceScanParams
 {
     using input_type = InputType;
     using output_type = OutputType;
     using scan_op_type = ScanOp;
+
+    static_assert(std::is_integral<KeyType>::value,
+        "Keys must be integral");
+    using key_type = KeyType;
 };
 
 // ---------------------------------------------------------
@@ -50,6 +55,7 @@ public:
     using input_type = typename Params::input_type;
     using output_type = typename Params::output_type;
     using scan_op_type = typename Params::scan_op_type;
+    using key_type = typename Params::key_type;
     const bool debug_synchronous = false;
 };
 
@@ -75,6 +81,37 @@ std::vector<size_t> get_sizes()
 }
 
 TYPED_TEST_SUITE(HipcubDeviceScanTests, HipcubDeviceScanTestsParams);
+
+namespace
+{
+template<typename T>
+std::vector<T> generate_segments(const size_t size,
+                                 const size_t max_segment_length,
+                                 const int seed_value)
+{
+    static_assert(std::is_integral<T>::value, "Key type must be integral");
+
+    std::default_random_engine prng(seed_value);
+    std::uniform_int_distribution<size_t> segment_length_distribution(max_segment_length);
+    std::uniform_int_distribution<T> key_distribution(std::numeric_limits<T>::max());
+    std::vector<T> keys(size);
+
+    size_t keys_start_index = 0;
+    while (keys_start_index < size)
+    {
+        const size_t new_segment_length = segment_length_distribution(prng);
+        const size_t new_segment_end = std::min(size, keys_start_index + new_segment_length);
+        const T key = key_distribution(prng);
+        std::fill(
+            std::next(keys.begin(), keys_start_index),
+            std::next(keys.begin(), new_segment_end),
+            key
+        );
+        keys_start_index += new_segment_length;
+    }
+    return keys;
+}
+}
 
 TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
 {
@@ -198,6 +235,148 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             hipFree(d_input);
             hipFree(d_output);
             hipFree(d_temp_storage);
+        }
+    }
+}
+
+TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
+{
+    using T = typename TestFixture::input_type;
+    using U = typename TestFixture::output_type;
+    using K = typename TestFixture::key_type;
+    using scan_op_type = typename TestFixture::scan_op_type;
+    constexpr size_t max_segment_length = 100;
+    const bool debug_synchronous = TestFixture::debug_synchronous;
+
+    const std::vector<size_t> sizes = get_sizes();
+    for (auto size : sizes)
+    {
+        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        {
+            const unsigned int seed_value = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            const hipStream_t stream = 0; // default
+
+            // Generate data
+            const std::vector<K> keys = generate_segments<K>(size, max_segment_length, seed_value);
+            const std::vector<T> input = test_utils::get_random_data<T>(size, 1, 10, seed_value);
+            std::vector<U> output(input.size(), 0);
+
+            T *d_input;
+            U *d_output;
+            K *d_keys;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys, keys.size() * sizeof(K)));
+            HIP_CHECK(
+                hipMemcpy(
+                    d_input, input.data(),
+                    input.size() * sizeof(T),
+                    hipMemcpyHostToDevice
+                )
+            );
+            HIP_CHECK(
+                hipMemcpy(
+                    d_keys, keys.data(),
+                    keys.size() * sizeof(K),
+                    hipMemcpyHostToDevice
+                )
+            );
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // scan function
+            scan_op_type scan_op;
+
+            // Calculate expected results on host
+            std::vector<U> expected(input.size());
+            test_utils::host_inclusive_scan_by_key(
+                input.begin(), input.end(), keys.begin(),
+                expected.begin(), scan_op, hipcub::Equality()
+            );
+
+            // temp storage
+            size_t temp_storage_size_bytes{};
+            void *d_temp_storage = nullptr;
+            // Get size of d_temp_storage
+            if (std::is_same<scan_op_type, hipcub::Sum>::value)
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::InclusiveSumByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, static_cast<int>(input.size()),
+                        hipcub::Equality(), stream, debug_synchronous
+                    )
+                );
+            }
+            else
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::InclusiveScanByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, scan_op, static_cast<int>(input.size()),
+                        hipcub::Equality(), stream, debug_synchronous
+                    )
+                );
+            }
+
+            // temp_storage_size_bytes must be >0
+            ASSERT_GT(temp_storage_size_bytes, 0U);
+
+            // allocate temporary storage
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Run
+            if (std::is_same<scan_op_type, hipcub::Sum>::value)
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::InclusiveSumByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, static_cast<int>(input.size()),
+                        hipcub::Equality(), stream, debug_synchronous
+                    )
+                );
+            }
+            else
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::InclusiveScanByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, scan_op, static_cast<int>(input.size()),
+                        hipcub::Equality(), stream, debug_synchronous
+                    )
+                );
+            }
+            HIP_CHECK(hipPeekAtLastError());
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Copy output to host
+            HIP_CHECK(
+                hipMemcpy(
+                    output.data(), d_output,
+                    output.size() * sizeof(U),
+                    hipMemcpyDeviceToHost
+                )
+            );
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Check if output values are as expected
+            for (size_t i = 0; i < output.size(); i++)
+            {
+                auto diff = std::max<U>(std::abs(0.01f * expected[i]), U(0.01f));
+                if (std::is_integral<U>::value)
+                {
+                    diff = 0;
+                }
+                ASSERT_NEAR(output[i], expected[i], diff) << "where index = " << i;
+            }
+
+            HIP_CHECK(hipFree(d_keys));
+            HIP_CHECK(hipFree(d_input));
+            HIP_CHECK(hipFree(d_output));
+            HIP_CHECK(hipFree(d_temp_storage));
         }
     }
 }
@@ -329,6 +508,157 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
             hipFree(d_input);
             hipFree(d_output);
             hipFree(d_temp_storage);
+        }
+    }
+}
+
+TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
+{
+    using T = typename TestFixture::input_type;
+    using U = typename TestFixture::output_type;
+    using K = typename TestFixture::key_type;
+    using scan_op_type = typename TestFixture::scan_op_type;
+    constexpr size_t max_segment_length = 100;
+    const bool debug_synchronous = TestFixture::debug_synchronous;
+
+    const std::vector<size_t> sizes = get_sizes();
+    for (auto size : sizes)
+    {
+        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        {
+            const unsigned int seed_value = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            const hipStream_t stream = 0; // default
+
+            // Generate data
+            const std::vector<K> keys = generate_segments<K>(size, max_segment_length, seed_value);
+            const std::vector<T> input = test_utils::get_random_data<T>(size, 1, 10, seed_value);
+            std::vector<U> output(input.size(), 0);
+
+            std::vector<T> initial_value_vector = test_utils::get_random_data<T>(1, 1, 10, seed_value);
+            T initial_value = initial_value_vector.front();
+            if (std::is_same<scan_op_type, hipcub::Sum>::value)
+            {
+                initial_value = static_cast<T>(0);
+            }
+
+            T *d_input;
+            U *d_output;
+            K *d_keys;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys, keys.size() * sizeof(K)));
+            HIP_CHECK(
+                hipMemcpy(
+                    d_input, input.data(),
+                    input.size() * sizeof(T),
+                    hipMemcpyHostToDevice
+                )
+            );
+            HIP_CHECK(
+                hipMemcpy(
+                    d_keys, keys.data(),
+                    keys.size() * sizeof(K),
+                    hipMemcpyHostToDevice
+                )
+            );
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // scan function
+            scan_op_type scan_op;
+
+            // Calculate expected results on host
+            std::vector<U> expected(input.size());
+            test_utils::host_exclusive_scan_by_key(
+                input.begin(), input.end(), keys.begin(), initial_value,
+                expected.begin(), scan_op, hipcub::Equality()
+            );
+
+            // temp storage
+            size_t temp_storage_size_bytes;
+            void *d_temp_storage = nullptr;
+            // Get size of d_temp_storage
+            if (std::is_same<scan_op_type, hipcub::Sum>::value)
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::ExclusiveSumByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, static_cast<int>(input.size()),
+                        hipcub::Equality(), stream, debug_synchronous
+                    )
+                );
+            }
+            else
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::ExclusiveScanByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, scan_op, initial_value,
+                        static_cast<int>(input.size()), hipcub::Equality(),
+                        stream, debug_synchronous
+                    )
+                );
+            }
+
+            // temp_storage_size_bytes must be >0
+            ASSERT_GT(temp_storage_size_bytes, 0U);
+
+            // allocate temporary storage
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Run
+            if (std::is_same<scan_op_type, hipcub::Sum>::value)
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::ExclusiveSumByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, static_cast<int>(input.size()),
+                        hipcub::Equality(), stream, debug_synchronous
+                    )
+                );
+            }
+            else
+            {
+                HIP_CHECK(
+                    hipcub::DeviceScan::ExclusiveScanByKey(
+                        d_temp_storage, temp_storage_size_bytes,
+                        d_keys, d_input, d_output, scan_op, initial_value,
+                        static_cast<int>(input.size()), hipcub::Equality(),
+                        stream, debug_synchronous
+                    )
+                );
+            }
+            HIP_CHECK(hipPeekAtLastError());
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Copy output to host
+            HIP_CHECK(
+                hipMemcpy(
+                    output.data(), d_output,
+                    output.size() * sizeof(U),
+                    hipMemcpyDeviceToHost
+                )
+            );
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Check if output values are as expected
+            for (size_t i = 0; i < output.size(); i++)
+            {
+                auto diff = std::max<U>(std::abs(0.01f * expected[i]), U(0.01f));
+                if (std::is_integral<U>::value)
+                {
+                    diff = 0;
+                }
+                ASSERT_NEAR(output[i], expected[i], diff) << "where index = " << i;
+            }
+
+            HIP_CHECK(hipFree(d_keys));
+            HIP_CHECK(hipFree(d_input));
+            HIP_CHECK(hipFree(d_output));
+            HIP_CHECK(hipFree(d_temp_storage));
         }
     }
 }
