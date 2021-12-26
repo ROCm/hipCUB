@@ -34,7 +34,7 @@
 #include <iterator>
 
 #include <hip/hip_fp16.h> // __half
-#include <hip/hip_bfloat16.h> // __bfloat16
+#include <hip/hip_bfloat16.h> // hip_bfloat16
 
 #include "../../../config.hpp"
 #include "../iterator/arg_index_input_iterator.hpp"

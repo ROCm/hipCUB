@@ -123,9 +123,7 @@ struct special_values {
 template<class T>
 void add_special_values(std::vector<T>& source, int seed_value)
 {
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
+    std::default_random_engine gen(seed_value);
     std::vector<T> special_values = test_utils::special_values<T>::vector();
     if(source.size() > special_values.size())
     {
@@ -134,14 +132,35 @@ void add_special_values(std::vector<T>& source, int seed_value)
     }
 }
 
+// std::uniform_int_distribution is undefined for anything other than
+// short, int, long, long long, unsigned short, unsigned int, unsigned long, or unsigned long long.
+// Actually causes problems with signed/unsigned char on Windows using clang.
+template <typename T>
+struct is_valid_for_int_distribution :
+    std::integral_constant<bool,
+                           std::is_same<short, T>::value ||
+                               std::is_same<unsigned short, T>::value ||
+                               std::is_same<int, T>::value ||
+                               std::is_same<unsigned int, T>::value ||
+                               std::is_same<long, T>::value ||
+                               std::is_same<unsigned long, T>::value ||
+                               std::is_same<long long, T>::value ||
+                               std::is_same<unsigned long long, T>::value
+                           > {};
+
 template<class T>
 inline auto get_random_data(size_t size, T min, T max, int seed_value)
     -> typename std::enable_if<std::is_integral<T>::value, std::vector<T>>::type
 {
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
-    std::uniform_int_distribution<T> distribution(min, max);
+    std::default_random_engine gen(seed_value);
+    using dis_type = typename std::conditional<
+        is_valid_for_int_distribution<T>::value,
+        T,
+        typename std::conditional<std::is_signed<T>::value,
+                                  int,
+                                  unsigned int>::type
+        >::type;
+    std::uniform_int_distribution<dis_type> distribution(static_cast<dis_type>(min), static_cast<dis_type>(max));
     std::vector<T> data(size);
     std::generate(data.begin(), data.end(), [&]() { return distribution(gen); });
     return data;
@@ -151,9 +170,7 @@ template<class T, class S, class U>
 inline auto get_random_data(size_t size, S min, U max, int seed_value)
     -> typename std::enable_if<!std::is_integral<T>::value && !is_custom_test_type<T>::value, std::vector<T>>::type
 {
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
+    std::default_random_engine gen(seed_value);
     using dis_type = typename std::conditional<std::is_same<test_utils::half, T>::value || std::is_same<test_utils::bfloat16, T>::value, float, T>::type;
     std::uniform_real_distribution<dis_type> distribution(static_cast<dis_type>(min), static_cast<dis_type>(max));
     std::vector<T> data(size);
@@ -165,44 +182,6 @@ inline auto get_random_data(size_t size, S min, U max, int seed_value)
     return data;
 }
 
-#if defined(_WIN32) && defined(__clang__)
-template<>
-inline std::vector<unsigned char> get_random_data(size_t size, unsigned char min, unsigned char max, int seed_value)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
-    std::uniform_int_distribution<int> distribution(static_cast<int>(min), static_cast<int>(max));
-    std::vector<unsigned char> data(size);
-    std::generate(data.begin(), data.end(), [&]() { return static_cast<unsigned char>(distribution(gen)); });
-    return data;
-}
-
-template<>
-inline std::vector<signed char> get_random_data(size_t size, signed char min, signed char max, int seed_value)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
-    std::uniform_int_distribution<int> distribution(static_cast<int>(min), static_cast<int>(max));
-    std::vector<signed char> data(size);
-    std::generate(data.begin(), data.end(), [&]() { return static_cast<signed char>(distribution(gen)); });
-    return data;
-}
-
-template<>
-inline std::vector<char> get_random_data(size_t size, char min, char max, int seed_value)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
-    std::uniform_int_distribution<int> distribution(static_cast<int>(min), static_cast<int>(max));
-    std::vector<char> data(size);
-    std::generate(data.begin(), data.end(), [&]() { return static_cast<char>(distribution(gen)); });
-    return data;
-}
-#endif
-
 template<class T>
 inline auto get_random_data(size_t size, typename T::value_type min, typename T::value_type max, int seed_value)
     -> typename std::enable_if<
@@ -210,10 +189,15 @@ inline auto get_random_data(size_t size, typename T::value_type min, typename T:
         std::vector<T>
         >::type
 {
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
-    std::uniform_int_distribution<typename T::value_type> distribution(min, max);
+    std::default_random_engine gen(seed_value);
+    using dis_type = typename std::conditional<
+        is_valid_for_int_distribution<typename T::value_type>::value,
+        typename T::value_type,
+        typename std::conditional<std::is_signed<typename T::value_type>::value,
+                                  int,
+                                  unsigned int>::type
+        >::type;
+    std::uniform_int_distribution<dis_type> distribution(static_cast<dis_type>(min), static_cast<dis_type>(max));
     std::vector<T> data(size);
     std::generate(data.begin(), data.end(), [&]() { return T(distribution(gen), distribution(gen)); });
     return data;
@@ -226,9 +210,7 @@ inline auto get_random_data(size_t size, typename T::value_type min, typename T:
         std::vector<T>
         >::type
 {
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
+    std::default_random_engine gen(seed_value);
     std::uniform_real_distribution<typename T::value_type> distribution(min, max);
     std::vector<T> data(size);
     std::generate(data.begin(), data.end(), [&]() { return T(distribution(gen), distribution(gen)); });
@@ -246,9 +228,7 @@ template<class T>
 inline std::vector<T> get_random_data01(size_t size, float p, int seed_value)
 {
     const size_t max_random_size = 1024 * 1024;
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    gen.seed(seed_value);
+    std::default_random_engine gen(seed_value);
     std::bernoulli_distribution distribution(p);
     std::vector<T> data(size);
     std::generate(
