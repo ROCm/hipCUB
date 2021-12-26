@@ -67,13 +67,13 @@ template<> class numeric_limits<test_utils::bfloat16> : public std::numeric_limi
     using T = test_utils::bfloat16;
 
     static inline T max() {
-        return T(std::numeric_limits<float>::max()*0.998);
+        return T(3.38953138925e+38f);
     };
     static inline T min() {
         return T(std::numeric_limits<float>::min());
     };
     static inline T lowest() {
-        return T(std::numeric_limits<float>::lowest()*0.998);
+        return T(-3.38953138925e+38f);
     };
     static inline T infinity() {
         return T(std::numeric_limits<float>::infinity());

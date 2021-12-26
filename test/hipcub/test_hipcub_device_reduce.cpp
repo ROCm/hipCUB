@@ -24,6 +24,7 @@
 
 // hipcub API
 #include "hipcub/device/device_reduce.hpp"
+#include <bitset>
 
 // Params for tests
 template<
@@ -89,7 +90,7 @@ std::vector<size_t> get_sizes()
 struct ArgMax {
     template<typename OffsetT, class T, std::enable_if_t<std::is_same<T, test_utils::half>::value ||
                                                          std::is_same<T, test_utils::bfloat16>::value, bool> = true>
-    __host__ __device__ __forceinline__ hipcub::KeyValuePair <OffsetT, T> operator()(
+    HIPCUB_HOST_DEVICE __forceinline__ hipcub::KeyValuePair <OffsetT, T> operator()(
         const hipcub::KeyValuePair <OffsetT, T> &a,
         const hipcub::KeyValuePair <OffsetT, T> &b) const {
         const hipcub::KeyValuePair <OffsetT, float> native_a(a.key,a.value);
@@ -106,7 +107,7 @@ struct ArgMax {
 struct ArgMin {
     template<typename OffsetT, class T, std::enable_if_t<std::is_same<T, test_utils::half>::value ||
                                                          std::is_same<T, test_utils::bfloat16>::value, bool> = true>
-    __host__ __device__ __forceinline__ hipcub::KeyValuePair <OffsetT, T> operator()(
+    HIPCUB_HOST_DEVICE __forceinline__ hipcub::KeyValuePair <OffsetT, T> operator()(
         const hipcub::KeyValuePair <OffsetT, T> &a,
         const hipcub::KeyValuePair <OffsetT, T> &b) const {
         const hipcub::KeyValuePair <OffsetT, float> native_a(a.key,a.value);
@@ -140,6 +141,7 @@ struct ArgMinSelector {
     typedef hipcub::ArgMin type;
 };
 
+#ifdef __HIP_PLATFORM_NVIDIA__
 template<>
 struct ArgMinSelector<test_utils::half> {
     typedef ArgMin type;
@@ -149,6 +151,7 @@ template<>
 struct ArgMinSelector<test_utils::bfloat16> {
     typedef ArgMin type;
 };
+#endif
 // END - Code has been added because NVIDIA's hipcub::ArgMax doesn't work with bfloat16 (HOST-SIDE)
 
 TYPED_TEST_SUITE(HipcubDeviceReduceTests, HipcubDeviceReduceTestsParams);
@@ -271,7 +274,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 
             // Generate data
             std::vector<T> input = test_utils::get_random_data<T>(size, 1.0f, 100.0f, seed_value);
-            std::vector<U> output(1, (U) 0.0f);
+            std::vector<U> output(1, U(0.0f));
 
             T * d_input;
             U * d_output;
@@ -288,7 +291,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 
             hipcub::Min min_op;
             // Calculate expected results on host
-            U expected = U(std::numeric_limits<U>::max());
+            U expected = U(test_utils::numeric_limits<U>::max());
             for(unsigned int i = 0; i < input.size(); i++)
             {
                 expected = min_op(expected, U(input[i]));

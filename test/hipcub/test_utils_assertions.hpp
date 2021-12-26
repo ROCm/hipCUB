@@ -50,7 +50,7 @@ void assert_eq(const std::vector<T>& result, const std::vector<T>& expected, con
     if(max_length == SIZE_MAX || max_length > expected.size()) ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < std::min(result.size(), max_length); i++)
     {
-        if(bit_equal(result[i], expected[i])) continue; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+        if(bit_equal(result[i], expected[i])) continue; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
         ASSERT_EQ(result[i], expected[i]) << "where index = " << i;
     }
 }
@@ -60,7 +60,7 @@ void assert_eq(const std::vector<test_utils::half>& result, const std::vector<te
     if(max_length == SIZE_MAX || max_length > expected.size()) ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < std::min(result.size(), max_length); i++)
     {
-        if(bit_equal(result[i], expected[i])) continue; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+        if(bit_equal(result[i], expected[i])) continue; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
         ASSERT_EQ(test_utils::native_half(result[i]), test_utils::native_half(expected[i])) << "where index = " << i;
     }
 }
@@ -70,7 +70,7 @@ void assert_eq(const std::vector<test_utils::bfloat16>& result, const std::vecto
     if(max_length == SIZE_MAX || max_length > expected.size()) ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < std::min(result.size(), max_length); i++)
     {
-        if(bit_equal(result[i], expected[i])) continue; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+        if(bit_equal(result[i], expected[i])) continue; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
         ASSERT_EQ(test_utils::native_bfloat16(result[i]), test_utils::native_bfloat16(expected[i])) << "where index = " << i;
     }
 }
@@ -78,19 +78,19 @@ void assert_eq(const std::vector<test_utils::bfloat16>& result, const std::vecto
 template<class T>
 void assert_eq(const T& result, const T& expected)
 {
-    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+    if(bit_equal(result, expected)) return; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
     ASSERT_EQ(result, expected);
 }
 
 void assert_eq(const test_utils::half& result, const test_utils::half& expected)
 {
-    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+    if(bit_equal(result, expected)) return; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
     ASSERT_EQ(test_utils::native_half(result), test_utils::native_half(expected));
 }
 
 void assert_eq(const test_utils::bfloat16& result, const test_utils::bfloat16& expected)
 {
-    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+    if(bit_equal(result, expected)) return; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
     ASSERT_EQ(test_utils::native_bfloat16(result), test_utils::native_bfloat16(expected));
 }
 // end assert_eq
@@ -103,7 +103,7 @@ auto assert_near(const std::vector<T>& result, const std::vector<T>& expected, c
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        if(bit_equal(result[i], expected[i])) continue; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+        if(bit_equal(result[i], expected[i])) continue; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
         auto diff = std::abs(percent * expected[i]);
         ASSERT_NEAR(result[i], expected[i], diff) << "where index = " << i;
     }
@@ -128,7 +128,7 @@ void assert_near(const std::vector<T>& result, const std::vector<T>& expected, c
     ASSERT_EQ(result.size(), expected.size());
     for(size_t i = 0; i < result.size(); i++)
     {
-        if(bit_equal(result[i], expected[i])) continue; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+        if(bit_equal(result[i], expected[i])) continue; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
         auto diff = std::abs(percent * static_cast<float>(expected[i]));
         ASSERT_NEAR(static_cast<float>(result[i]), static_cast<float>(expected[i]), diff) << "where index = " << i;
     }
@@ -169,7 +169,7 @@ void assert_near(const std::vector<custom_test_type<T>>& result, const std::vect
     {
         auto diff1 = std::abs(percent * static_cast<float>(expected[i].x));
         auto diff2 = std::abs(percent * static_cast<float>(expected[i].y));
-        // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+        // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
         if(!bit_equal(result[i].x, expected[i].x))
             ASSERT_NEAR(static_cast<float>(result[i].x), static_cast<float>(expected[i].x), diff1) << "where index = " << i;
         if(!bit_equal(result[i].y, expected[i].y))
@@ -181,7 +181,7 @@ template<class T>
 auto assert_near(const T& result, const T& expected, const float percent)
     -> typename std::enable_if<std::is_floating_point<T>::value>::type
 {
-    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+    if(bit_equal(result, expected)) return; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
     auto diff = std::abs(percent * expected);
     ASSERT_NEAR(result, expected, diff);
 }
@@ -197,7 +197,7 @@ template<class T, std::enable_if_t<std::is_same<T, test_utils::bfloat16>::value 
                                        std::is_same<T, test_utils::half>::value, bool> = true>
 void assert_near(const T& result, const T& expected, const float percent)
 {
-    if(bit_equal(result, expected)) return; // Check bitwise equality for +NaN, -NaN, +0.0, -0.0, +inf, -inf.
+    if(bit_equal(result, expected)) return; // Check to also regard equality of NaN's, -NaN, +inf, -inf as correct.
     auto diff = std::abs(percent * static_cast<float>(expected));
     ASSERT_NEAR(static_cast<float>(result), static_cast<float>(expected), diff);
 }
