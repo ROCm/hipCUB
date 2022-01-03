@@ -215,37 +215,6 @@ void run_benchmark(benchmark::State& state,
     HIP_CHECK(hipFree(d_temp_storage));
 }
 
-namespace
-{
-template<typename T>
-std::vector<T> generate_segments(const size_t size,
-                                 const size_t max_segment_length,
-                                 const int seed_value)
-{
-    static_assert(std::is_integral<T>::value, "Key type must be integral");
-
-    std::default_random_engine prng(seed_value);
-    std::uniform_int_distribution<size_t> segment_length_distribution(max_segment_length);
-    std::uniform_int_distribution<T> key_distribution(std::numeric_limits<T>::max());
-    std::vector<T> keys(size);
-
-    size_t keys_start_index = 0;
-    while (keys_start_index < size)
-    {
-        const size_t new_segment_length = segment_length_distribution(prng);
-        const size_t new_segment_end = std::min(size, keys_start_index + new_segment_length);
-        const T key = key_distribution(prng);
-        std::fill(
-            std::next(keys.begin(), keys_start_index),
-            std::next(keys.begin(), new_segment_end),
-            key
-        );
-        keys_start_index += new_segment_length;
-    }
-    return keys;
-}
-}
-
 template<
     bool Exclusive,
     class T,
@@ -259,7 +228,9 @@ void run_benchmark_by_key(benchmark::State& state,
     using key_type = int;
     constexpr size_t max_segment_length = 100;
 
-    const std::vector<key_type> keys = generate_segments<key_type>(size, max_segment_length, std::random_device{}());
+    const std::vector<key_type> keys = benchmark_utils::get_random_segments<key_type>(
+        size, max_segment_length, std::random_device{}()
+    );
     const std::vector<T> input = benchmark_utils::get_random_data<T>(size, T(0), T(1000));
     const T initial_value = T(123);
     key_type * d_keys;
