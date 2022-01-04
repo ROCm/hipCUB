@@ -159,6 +159,116 @@ public:
             )
         );
     }
+
+    template <
+        typename KeysInputIteratorT,
+        typename ValuesInputIteratorT,
+        typename ValuesOutputIteratorT,
+        typename EqualityOpT = ::hipcub::Equality
+    >
+    HIPCUB_RUNTIME_FUNCTION static
+    hipError_t ExclusiveSumByKey(void *d_temp_storage,
+                                 size_t &temp_storage_bytes,
+                                 KeysInputIteratorT d_keys_in,
+                                 ValuesInputIteratorT d_values_in,
+                                 ValuesOutputIteratorT d_values_out,
+                                 int num_items,
+                                 EqualityOpT equality_op = EqualityOpT(),
+                                 hipStream_t stream = 0,
+                                 bool debug_synchronous = false)
+    {
+        return hipCUDAErrorTohipError(
+            ::cub::DeviceScan::ExclusiveSumByKey(
+                d_temp_storage, temp_storage_bytes,
+                d_keys_in, d_values_in, d_values_out, num_items,
+                equality_op, stream, debug_synchronous
+            )
+        );
+    }
+
+    template <
+        typename KeysInputIteratorT,
+        typename ValuesInputIteratorT,
+        typename ValuesOutputIteratorT,
+        typename ScanOpT,
+        typename InitValueT,
+        typename EqualityOpT = ::hipcub::Equality
+    >
+    HIPCUB_RUNTIME_FUNCTION static
+    hipError_t ExclusiveScanByKey(void *d_temp_storage,
+                                  size_t &temp_storage_bytes,
+                                  KeysInputIteratorT d_keys_in,
+                                  ValuesInputIteratorT d_values_in,
+                                  ValuesOutputIteratorT d_values_out,
+                                  ScanOpT scan_op,
+                                  InitValueT init_value,
+                                  int num_items,
+                                  EqualityOpT equality_op = EqualityOpT(),
+                                  hipStream_t stream = 0,
+                                  bool debug_synchronous = false)
+    {
+        return hipCUDAErrorTohipError(
+            ::cub::DeviceScan::ExclusiveScanByKey(
+                d_temp_storage, temp_storage_bytes,
+                d_keys_in, d_values_in, d_values_out, scan_op, init_value,
+                num_items, equality_op, stream, debug_synchronous
+            )
+        );
+    }
+
+    template <
+        typename KeysInputIteratorT,
+        typename ValuesInputIteratorT,
+        typename ValuesOutputIteratorT,
+        typename EqualityOpT = ::hipcub::Equality
+    >
+    HIPCUB_RUNTIME_FUNCTION static
+    hipError_t InclusiveSumByKey(void *d_temp_storage,
+                                 size_t &temp_storage_bytes,
+                                 KeysInputIteratorT d_keys_in,
+                                 ValuesInputIteratorT d_values_in,
+                                 ValuesOutputIteratorT d_values_out,
+                                 int num_items,
+                                 EqualityOpT equality_op = EqualityOpT(),
+                                 hipStream_t stream = 0,
+                                 bool debug_synchronous = false)
+    {
+        return hipCUDAErrorTohipError(
+            ::cub::DeviceScan::InclusiveSumByKey(
+                d_temp_storage, temp_storage_bytes,
+                d_keys_in, d_values_in, d_values_out, num_items,
+                equality_op, stream, debug_synchronous
+            )
+        );
+    }
+
+    template <
+        typename KeysInputIteratorT,
+        typename ValuesInputIteratorT,
+        typename ValuesOutputIteratorT,
+        typename ScanOpT,
+        typename EqualityOpT = ::hipcub::Equality
+    >
+    HIPCUB_RUNTIME_FUNCTION static
+    hipError_t InclusiveScanByKey(void *d_temp_storage,
+                                  size_t &temp_storage_bytes,
+                                  KeysInputIteratorT d_keys_in,
+                                  ValuesInputIteratorT d_values_in,
+                                  ValuesOutputIteratorT d_values_out,
+                                  ScanOpT scan_op,
+                                  int num_items,
+                                  EqualityOpT equality_op = EqualityOpT(),
+                                  hipStream_t stream = 0,
+                                  bool debug_synchronous = false)
+    {
+        return hipCUDAErrorTohipError(
+            ::cub::DeviceScan::InclusiveScanByKey(
+                d_temp_storage, temp_storage_bytes,
+                d_keys_in, d_values_in, d_values_out, scan_op,
+                num_items, equality_op, stream, debug_synchronous
+            )
+        );
+    }
 };
 
 END_HIPCUB_NAMESPACE
