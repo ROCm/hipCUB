@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased)  hipCUB-2.10.13 for ROCm 5.0
+## hipCUB-2.10.13 for ROCm 5.0.0
 ### Fixed
 - Added missing includes to hipcub.hpp
 ### Added
@@ -13,7 +13,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 ### Changed
 - The SetupNVCC.cmake automatic target selector select all of the capabalities of all available card for NVIDIA backend.
 
-## (Unreleased) hipCUB-2.10.12 for ROCm 4.5.0
+## hipCUB-2.10.12 for ROCm 4.5.0
 ### Added
 - Initial HIP on Windows support. See README for instructions on how to build and install.
 ### Changed
