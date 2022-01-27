@@ -43,21 +43,22 @@ template <
     int LOGICAL_WARP_THREADS = HIPCUB_DEVICE_WARP_THREADS,
     int ARCH = HIPCUB_ARCH
 >
-class WarpExchange : private ::rocprim::warp_exchange<InputT, ITEMS_PER_THREAD, LOGICAL_WARP_THREADS>
+class WarpExchange
 {
     using base_type = typename rocprim::warp_exchange<InputT, ITEMS_PER_THREAD, LOGICAL_WARP_THREADS>;
-    using _TempStorage = typename base_type::storage_type;
-
-    _TempStorage &temp_storage;
 
 public:
-    struct TempStorage : Uninitialized<_TempStorage> {};
+    using TempStorage = typename base_type::storage_type;
 
+private:
+    TempStorage &temp_storage;
+
+public:
     WarpExchange() = delete;
 
     explicit HIPCUB_DEVICE __forceinline__
     WarpExchange(TempStorage &temp_storage) :
-        temp_storage(temp_storage.Alias())
+        temp_storage(temp_storage)
     {
     }
 
@@ -67,7 +68,8 @@ public:
         const InputT (&input_items)[ITEMS_PER_THREAD],
         OutputT (&output_items)[ITEMS_PER_THREAD])
     {
-        base_type::blocked_to_striped(input_items, output_items, temp_storage);
+        base_type rocprim_warp_exchange;
+        rocprim_warp_exchange.blocked_to_striped(input_items, output_items, temp_storage);
     }
 
     template <typename OutputT>
@@ -76,7 +78,8 @@ public:
         const InputT (&input_items)[ITEMS_PER_THREAD],
         OutputT (&output_items)[ITEMS_PER_THREAD])
     {
-        base_type::striped_to_blocked(input_items, output_items, temp_storage);
+        base_type rocprim_warp_exchange;
+        rocprim_warp_exchange.striped_to_blocked(input_items, output_items, temp_storage);
     }
 
     template <typename OffsetT>
@@ -96,7 +99,8 @@ public:
         OutputT (&output_items)[ITEMS_PER_THREAD],
         OffsetT (&ranks)[ITEMS_PER_THREAD])
     {
-        base_type::scatter_to_striped(input_items, output_items, ranks, temp_storage);
+        base_type rocprim_warp_exchange;
+        rocprim_warp_exchange.scatter_to_striped(input_items, output_items, ranks, temp_storage);
     }
 };
 
