@@ -120,8 +120,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeys)
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(
                 size,
-                std::numeric_limits<key_type>::min(),
-                std::numeric_limits<key_type>::max(),
+                test_utils::numeric_limits<key_type>::min(),
+                test_utils::numeric_limits<key_type>::max(),
                 seed_value + seed_value_addition
             );
             test_utils::add_special_values(keys_input, seed_value);
@@ -226,8 +226,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairs)
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(
                 size,
-                std::numeric_limits<key_type>::min(),
-                std::numeric_limits<key_type>::max(),
+                test_utils::numeric_limits<key_type>::min(),
+                test_utils::numeric_limits<key_type>::max(),
                 seed_value + seed_value_addition
             );
             test_utils::add_special_values(keys_input, seed_value);
@@ -374,8 +374,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortKeysDoubleBuffer)
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(
                 size,
-                std::numeric_limits<key_type>::min(),
-                std::numeric_limits<key_type>::max(),
+                test_utils::numeric_limits<key_type>::min(),
+                test_utils::numeric_limits<key_type>::max(),
                 seed_value + seed_value_addition
             );
             test_utils::add_special_values(keys_input, seed_value);
@@ -481,8 +481,8 @@ TYPED_TEST(HipcubDeviceRadixSort, SortPairsDoubleBuffer)
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(
                 size,
-                std::numeric_limits<key_type>::min(),
-                std::numeric_limits<key_type>::max(),
+                test_utils::numeric_limits<key_type>::min(),
+                test_utils::numeric_limits<key_type>::max(),
                 seed_value + seed_value_addition
             );
             test_utils::add_special_values(keys_input, seed_value);
