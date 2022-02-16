@@ -44,7 +44,7 @@ struct LessOp {
     }
 
     HIPCUB_HOST_DEVICE bool operator()(const T& val) const {
-        return val < pivot_; 
+        return val < pivot_;
     }
 private:
     T pivot_;
@@ -161,7 +161,7 @@ void run_threeway(benchmark::State& state,
 
 #define CREATE_BENCHMARK(T, SMALL_T, LARGE_T)                                        \
 benchmark::RegisterBenchmark(                                                        \
-    "parition_three_way<" #T ">(" #SMALL_T "%, " #LARGE_T "%)",                       \
+    "parition_three_way<Datatype:" #T ">(Small Threshold:" #SMALL_T "%,Large Threshold:" #LARGE_T "%)",                       \
     &run_threeway<T>, stream, static_cast<T>(SMALL_T), static_cast<T>(LARGE_T), size \
 )
 
@@ -201,6 +201,8 @@ int main(int argc, char *argv[])
     benchmark::Initialize(&argc, argv);
     const size_t size = parser.get<size_t>("size");
     const int trials = parser.get<int>("trials");
+
+    std::cout << "benchmark_device_partition" << std::endl;
 
     // HIP
     const hipStream_t stream = 0; // default

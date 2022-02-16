@@ -245,7 +245,7 @@ void run_non_trivial_runs_benchmark(benchmark::State& state, size_t max_length, 
 
 #define CREATE_ENCODE_BENCHMARK(T) \
 benchmark::RegisterBenchmark( \
-    (std::string("run_length_encode") + "<" #T ">" + \
+    (std::string("run_length_encode") + "<Datatype:" #T ">" + \
         "([1, " + std::to_string(max_length) + "])" \
     ).c_str(), \
     &run_encode_benchmark<T>, \
@@ -277,7 +277,7 @@ void add_encode_benchmarks(size_t max_length,
 
 #define CREATE_NON_TRIVIAL_RUNS_BENCHMARK(T) \
 benchmark::RegisterBenchmark( \
-    (std::string("run_length_encode_non_trivial_runs") + "<" #T ">" + \
+    (std::string("run_length_encode_non_trivial_runs") + "<Datatype:" #T ">" + \
         "([1, " + std::to_string(max_length) + "])" \
     ).c_str(), \
     &run_non_trivial_runs_benchmark<T>, \
@@ -318,6 +318,8 @@ int main(int argc, char *argv[])
     benchmark::Initialize(&argc, argv);
     const size_t size = parser.get<size_t>("size");
     const int trials = parser.get<int>("trials");
+
+    std::cout << "benchmark_device_run_length_encode" << std::endl;
 
     // HIP
     hipStream_t stream = 0; // default

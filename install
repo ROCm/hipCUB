@@ -14,6 +14,7 @@ function display_help()
     echo "    [-r]--relocatable] create a package to support relocatable ROCm"
     #Not implemented yet
     #    echo "    [-d|--dependencies] install build dependencies"
+    echo "    [-b|--benchmark] builds and runs benchmark"
     echo "    [-c|--clients] build library clients too (combines with -i & -d)"
     echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
     echo "    [--hip-clang] build library for amdgpu backend using hip-clang"
@@ -33,6 +34,7 @@ run_tests=false
 rocm_path=/opt/rocm
 build_relocatable=false
 build_address_sanitizer=false
+build_benchmark=false
 
 # #################################################
 # Parameter parsing
@@ -41,7 +43,7 @@ build_address_sanitizer=false
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,package,relocatable,address-sanitizer --options hicdtpr -- "$@")
+    GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,debug,hip-clang,test,benchmarkpackage,relocatable,address-sanitizer --options hicdtbpr -- "$@")
 else
     echo "Need a new version of getopt"
     exit 1
@@ -85,6 +87,9 @@ while true; do
 	-t|--test)
 	    run_tests=true
 	    shift ;;
+    -b|--benchmark)
+        build_benchmark=true
+        shift ;;
 	--hip-clang)
 	    build_hip_clang=true
 	    shift ;;
@@ -134,6 +139,10 @@ cmake_executable="cmake"
 
 cmake_common_options=""
 
+if [[ "${build_benchmark}" == true ]]; then
+    build_benchmarks="-DBUILD_BENCHMARK=ON"
+fi
+
 if [[ "${build_clients}" == true ]]; then
     build_tests="-DBUILD_TEST=ON"
 else
@@ -152,9 +161,9 @@ if [[ "${build_relocatable}" == true ]]; then
         -DCMAKE_MODULE_PATH="${rocm_path}/hip/cmake" \
         -Drocprim_DIR=${rocm_path}/rocprim \
         ${cmake_common_options} \
-        ${build_tests} ${build_type} ../../. # or cmake-gui ../.
+        ${build_tests} ${build_benchmarks} ${build_type} ../../. # or cmake-gui ../.
 else
-    CXX=$rocm_path/bin/${compiler} ${cmake_executable} ${build_tests} ${build_type} ${cmake_common_options} ../../. # or cmake-gui ../.
+    CXX=$rocm_path/bin/${compiler} ${cmake_executable} ${build_tests} ${build_benchmarks} ${build_type} ${cmake_common_options} ../../. # or cmake-gui ../.
 fi
 check_exit_code "$?"
 

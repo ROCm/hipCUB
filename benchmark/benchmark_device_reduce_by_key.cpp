@@ -165,7 +165,7 @@ void run_benchmark(benchmark::State& state, size_t max_length, hipStream_t strea
 
 #define CREATE_BENCHMARK(Key, Value) \
 benchmark::RegisterBenchmark( \
-    (std::string("reduce_by_key") + "<" #Key ", " #Value ">" + \
+    (std::string("reduce_by_key") + "<Key Type:" #Key ",Value: Type" #Value ">" + \
         "([1, " + std::to_string(max_length) + "])" \
     ).c_str(), \
     &run_benchmark<Key, Value>, \
@@ -210,6 +210,8 @@ int main(int argc, char *argv[])
     benchmark::Initialize(&argc, argv);
     const size_t size = parser.get<size_t>("size");
     const int trials = parser.get<int>("trials");
+
+    std::cout << "benchmark_device_reduce_by_key" << std::endl;
 
     // HIP
     hipStream_t stream = 0; // default

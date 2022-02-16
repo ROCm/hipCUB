@@ -65,7 +65,7 @@ void run_benchmark(benchmark::State& state,
         hipcub::DeviceReduce::Reduce(
             d_temp_storage, temp_storage_size_bytes,
             d_input, d_output, size,
-            reduce_op, T(), 
+            reduce_op, T(),
             stream
         )
     );
@@ -116,7 +116,7 @@ void run_benchmark(benchmark::State& state,
 
 #define CREATE_BENCHMARK(T, REDUCE_OP) \
 benchmark::RegisterBenchmark( \
-    ("reduce<" #T ", " #REDUCE_OP ">"), \
+    ("reduce<Datatype:" #T ",Op:" #REDUCE_OP ">"), \
     &run_benchmark<T, REDUCE_OP>, size, stream, REDUCE_OP() \
 )
 
@@ -131,6 +131,8 @@ int main(int argc, char *argv[])
     benchmark::Initialize(&argc, argv);
     const size_t size = parser.get<size_t>("size");
     const int trials = parser.get<int>("trials");
+
+    std::cout << "benchmark_device_reduce" << std::endl;
 
     // HIP
     hipStream_t stream = 0; // default
@@ -154,7 +156,7 @@ int main(int argc, char *argv[])
 
         CREATE_BENCHMARK(int8_t, hipcub::Sum),
         CREATE_BENCHMARK(uint8_t, hipcub::Sum),
-        
+
         CREATE_BENCHMARK(custom_float2, hipcub::Sum),
         CREATE_BENCHMARK(custom_double2, hipcub::Sum),
     };
