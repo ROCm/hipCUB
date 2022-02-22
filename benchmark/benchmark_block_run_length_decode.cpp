@@ -186,7 +186,7 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 
 #define CREATE_BENCHMARK(IT, OT, MINRL, MAXRL, BS, RPT, DIPT) \
     benchmark::RegisterBenchmark( \
-        "block_run_length_decode<Item Type:"#IT",Offset Type:"#OT",Min RunLength"#MINRL",Max RunLength"#MAXRL",BlockSize: "#BS",Runs Per Thread:"#RPT",Decoded Items Per Thread:"#DIPT">", \
+        "block_run_length_decode<Item Type:"#IT",Offset Type:"#OT",Min RunLength:"#MINRL",Max RunLength:"#MAXRL",BlockSize: "#BS",Runs Per Thread:"#RPT",Decoded Items Per Thread:"#DIPT">", \
         &run_benchmark<IT, OT, MINRL, MAXRL, BS, RPT, DIPT>, \
         stream, size \
     )

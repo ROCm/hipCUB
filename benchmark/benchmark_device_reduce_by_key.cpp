@@ -166,7 +166,7 @@ void run_benchmark(benchmark::State& state, size_t max_length, hipStream_t strea
 #define CREATE_BENCHMARK(Key, Value) \
 benchmark::RegisterBenchmark( \
     (std::string("reduce_by_key") + "<Key Type:" #Key ",Value: Type" #Value ">" + \
-        "([1, " + std::to_string(max_length) + "])" \
+        "(Random Number Range:[1, " + std::to_string(max_length) + "])" \
     ).c_str(), \
     &run_benchmark<Key, Value>, \
     max_length, stream, size \

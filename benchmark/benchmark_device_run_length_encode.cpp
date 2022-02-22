@@ -246,7 +246,7 @@ void run_non_trivial_runs_benchmark(benchmark::State& state, size_t max_length, 
 #define CREATE_ENCODE_BENCHMARK(T) \
 benchmark::RegisterBenchmark( \
     (std::string("run_length_encode") + "<Datatype:" #T ">" + \
-        "([1, " + std::to_string(max_length) + "])" \
+        "(Random Number Range:[1, " + std::to_string(max_length) + "])" \
     ).c_str(), \
     &run_encode_benchmark<T>, \
     max_length, stream, size \
@@ -278,7 +278,7 @@ void add_encode_benchmarks(size_t max_length,
 #define CREATE_NON_TRIVIAL_RUNS_BENCHMARK(T) \
 benchmark::RegisterBenchmark( \
     (std::string("run_length_encode_non_trivial_runs") + "<Datatype:" #T ">" + \
-        "([1, " + std::to_string(max_length) + "])" \
+        "(Random Number Range:[1, " + std::to_string(max_length) + "])" \
     ).c_str(), \
     &run_non_trivial_runs_benchmark<T>, \
     max_length, stream, size \

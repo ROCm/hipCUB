@@ -310,7 +310,7 @@ void run_sort_pairs_benchmark(benchmark::State &state,
 #define CREATE_SORT_KEYS_BENCHMARK(Key, SEGMENTS)        \
     benchmark::RegisterBenchmark(                        \
         (std::string("sort_keys") + "<Key Type:" #Key ">" +       \
-         "(Number of segments~" + std::to_string(SEGMENTS) + " segments)") \
+         "(Number of segments:~" + std::to_string(SEGMENTS) + " segments)") \
             .c_str(),                                    \
         [=](benchmark::State &state) { run_sort_keys_benchmark<Key>(state, SEGMENTS, stream, size); })
 
