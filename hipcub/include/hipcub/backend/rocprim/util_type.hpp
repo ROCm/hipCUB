@@ -284,28 +284,28 @@ struct UnitWord
     };
 
     /// Biggest shuffle word that T is a whole multiple of and is not larger than the alignment of T
-    typedef typename If<IsMultiple<int>::IS_MULTIPLE,
+    typedef typename std::conditional<IsMultiple<int>::IS_MULTIPLE,
         unsigned int,
-        typename If<IsMultiple<short>::IS_MULTIPLE,
+        typename std::conditional<IsMultiple<short>::IS_MULTIPLE,
             unsigned short,
-            unsigned char>::Type>::Type         ShuffleWord;
+            unsigned char>::type>::type         ShuffleWord;
 
     /// Biggest volatile word that T is a whole multiple of and is not larger than the alignment of T
-    typedef typename If<IsMultiple<long long>::IS_MULTIPLE,
+    typedef typename std::conditional<IsMultiple<long long>::IS_MULTIPLE,
         unsigned long long,
-        ShuffleWord>::Type                      VolatileWord;
+        ShuffleWord>::type                      VolatileWord;
 
     /// Biggest memory-access word that T is a whole multiple of and is not larger than the alignment of T
-    typedef typename If<IsMultiple<longlong2>::IS_MULTIPLE,
+    typedef typename std::conditional<IsMultiple<longlong2>::IS_MULTIPLE,
         ulonglong2,
-        VolatileWord>::Type                     DeviceWord;
+        VolatileWord>::type                     DeviceWord;
 
     /// Biggest texture reference word that T is a whole multiple of and is not larger than the alignment of T
-    typedef typename If<IsMultiple<int4>::IS_MULTIPLE,
+    typedef typename std::conditional<IsMultiple<int4>::IS_MULTIPLE,
         uint4,
-        typename If<IsMultiple<int2>::IS_MULTIPLE,
+        typename std::conditional<IsMultiple<int2>::IS_MULTIPLE,
             uint2,
-            ShuffleWord>::Type>::Type           TextureWord;
+            ShuffleWord>::type>::type           TextureWord;
 };
 
 
@@ -636,7 +636,7 @@ template <> struct NumericTraits<bool> :                BaseTraits<UNSIGNED_INTE
  * \brief Type traits
  */
 template <typename T>
-struct Traits : NumericTraits<typename RemoveQualifiers<T>::Type> {};
+struct Traits : NumericTraits<typename std::remove_cv<T>::type> {};
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
