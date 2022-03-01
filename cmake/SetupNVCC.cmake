@@ -97,7 +97,7 @@ set(NVGPU_TARGETS "${DEFAULT_NVGPU_TARGETS}"
     CACHE STRING "List of NVIDIA GPU targets (compute capabilities), for example \"35;50\""
 )
 set(CMAKE_CUDA_ARCHITECTURES ${NVGPU_TARGETS})
-# Generate compiler flags based on targeted CUDA architectures if CMake doesn't have policy CP0104
+# Generate compiler flags based on targeted CUDA architectures if CMake doesn't. (Controlled by policy CP0104, on by default after 3.18)
 if(CMAKE_VERSION VERSION_LESS "3.18")
     foreach(CUDA_ARCH ${NVGPU_TARGETS})
         list(APPEND HIP_NVCC_FLAGS "--generate-code arch=compute_${CUDA_ARCH},code=sm_${CUDA_ARCH} ")
