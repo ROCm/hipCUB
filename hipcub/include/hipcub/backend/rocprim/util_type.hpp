@@ -189,7 +189,7 @@ using is_integral_or_enum =
 }
 
 template <typename NumeratorT, typename DenominatorT>
-__host__ __device__ __forceinline__ constexpr NumeratorT
+HIPCUB_HOST_DEVICE __forceinline__ constexpr NumeratorT
 DivideAndRoundUp(NumeratorT n, DenominatorT d)
 {
   static_assert(hipcub::detail::is_integral_or_enum<NumeratorT>::value &&
@@ -372,7 +372,7 @@ struct Uninitialized
     DeviceWord storage[WORDS];
 
     /// Alias
-    __host__ __device__ __forceinline__ T& Alias()
+    HIPCUB_HOST_DEVICE __forceinline__ T& Alias()
     {
         return reinterpret_cast<T&>(*this);
     }
@@ -439,17 +439,17 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
     };
 
 
-    static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
+    static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
         return key;
     }
 
-    static __host__ __device__ __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
+    static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
         return key;
     }
 
-    static __host__ __device__ __forceinline__ T Max()
+    static HIPCUB_HOST_DEVICE __forceinline__ T Max()
     {
         UnsignedBits retval_bits = MAX_KEY;
         T retval;
@@ -457,7 +457,7 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
         return retval;
     }
 
-    static __host__ __device__ __forceinline__ T Lowest()
+    static HIPCUB_HOST_DEVICE __forceinline__ T Lowest()
     {
         UnsignedBits retval_bits = LOWEST_KEY;
         T retval;
@@ -486,23 +486,23 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
         NULL_TYPE       = false,
     };
 
-    static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
+    static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
         return key ^ HIGH_BIT;
     };
 
-    static __host__ __device__ __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
+    static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
         return key ^ HIGH_BIT;
     };
 
-    static __host__ __device__ __forceinline__ T Max()
+    static HIPCUB_HOST_DEVICE __forceinline__ T Max()
     {
         UnsignedBits retval = MAX_KEY;
         return reinterpret_cast<T&>(retval);
     }
 
-    static __host__ __device__ __forceinline__ T Lowest()
+    static HIPCUB_HOST_DEVICE __forceinline__ T Lowest()
     {
         UnsignedBits retval = LOWEST_KEY;
         return reinterpret_cast<T&>(retval);
@@ -515,11 +515,11 @@ struct FpLimits;
 template <>
 struct FpLimits<float>
 {
-    static __host__ __device__ __forceinline__ float Max() {
+    static HIPCUB_HOST_DEVICE __forceinline__ float Max() {
         return std::numeric_limits<float>::max();
     }
 
-    static __host__ __device__ __forceinline__ float Lowest() {
+    static HIPCUB_HOST_DEVICE __forceinline__ float Lowest() {
         return std::numeric_limits<float>::max() * float(-1);
     }
 };
@@ -527,11 +527,11 @@ struct FpLimits<float>
 template <>
 struct FpLimits<double>
 {
-    static __host__ __device__ __forceinline__ double Max() {
+    static HIPCUB_HOST_DEVICE __forceinline__ double Max() {
         return std::numeric_limits<double>::max();
     }
 
-    static __host__ __device__ __forceinline__ double Lowest() {
+    static HIPCUB_HOST_DEVICE __forceinline__ double Lowest() {
         return std::numeric_limits<double>::max()  * double(-1);
     }
 };
@@ -539,12 +539,12 @@ struct FpLimits<double>
 template <>
 struct FpLimits<__half>
 {
-    static __host__ __device__ __forceinline__ __half Max() {
+    static HIPCUB_HOST_DEVICE __forceinline__ __half Max() {
         unsigned short max_word = 0x7BFF;
         return reinterpret_cast<__half&>(max_word);
     }
 
-    static __host__ __device__ __forceinline__ __half Lowest() {
+    static HIPCUB_HOST_DEVICE __forceinline__ __half Lowest() {
         unsigned short lowest_word = 0xFBFF;
         return reinterpret_cast<__half&>(lowest_word);
     }
@@ -553,12 +553,12 @@ struct FpLimits<__half>
 template <>
 struct FpLimits<hip_bfloat16>
 {
-    static __host__ __device__ __forceinline__ hip_bfloat16  Max() {
+    static HIPCUB_HOST_DEVICE __forceinline__ hip_bfloat16  Max() {
         unsigned short max_word = 0x7F7F;
         return reinterpret_cast<hip_bfloat16 &>(max_word);
     }
 
-    static __host__ __device__ __forceinline__ hip_bfloat16  Lowest() {
+    static HIPCUB_HOST_DEVICE __forceinline__ hip_bfloat16  Lowest() {
         unsigned short lowest_word = 0xFF7F;
         return reinterpret_cast<hip_bfloat16 &>(lowest_word);
     }
@@ -583,23 +583,23 @@ struct BaseTraits<FLOATING_POINT, true, false, _UnsignedBits, T>
         NULL_TYPE       = false,
     };
 
-    static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
+    static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
         UnsignedBits mask = (key & HIGH_BIT) ? UnsignedBits(-1) : HIGH_BIT;
         return key ^ mask;
     };
 
-    static __host__ __device__ __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
+    static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
         UnsignedBits mask = (key & HIGH_BIT) ? HIGH_BIT : UnsignedBits(-1);
         return key ^ mask;
     };
 
-    static __host__ __device__ __forceinline__ T Max() {
+    static HIPCUB_HOST_DEVICE __forceinline__ T Max() {
         return FpLimits<T>::Max();
     }
 
-    static __host__ __device__ __forceinline__ T Lowest() {
+    static HIPCUB_HOST_DEVICE __forceinline__ T Lowest() {
         return FpLimits<T>::Lowest();
     }
 };
