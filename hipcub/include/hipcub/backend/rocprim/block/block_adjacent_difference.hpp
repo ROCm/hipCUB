@@ -174,6 +174,96 @@ public:
         );
     }
 
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractLeft(T (&input)[ITEMS_PER_THREAD],
+                      OutputT (&output)[ITEMS_PER_THREAD],
+                      BinaryFunctionT op,
+                      typename base_type::storage_type& storage)
+    {
+        base_type::subtract_left(
+            input, output, op, storage
+        );
+    }
+
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractLeft(T (&input)[ITEMS_PER_THREAD],
+                      OutputT (&output)[ITEMS_PER_THREAD],
+                      BinaryFunctionT op,
+                      typename base_type::storage_type& storage,
+                      T tile_predecessor_item)
+    {
+        base_type::subtract_left(
+            input, output, op, tile_predecessor_item, storage.get().left
+        );
+    }
+
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractLeftPartial(T (&input)[ITEMS_PER_THREAD],
+                                OutputT (&output)[ITEMS_PER_THREAD],
+                                BinaryFunctionT op,
+                                const unsigned int valid_items,
+                                typename base_type::storage_type& storage)
+    {
+        base_type::subtract_left_partial(
+            input, output, op, valid_items, storage.get().left
+        );
+    }
+
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractLeftPartial(T (&input)[ITEMS_PER_THREAD],
+                                OutputT (&output)[ITEMS_PER_THREAD],
+                                BinaryFunctionT op,
+                                const unsigned int valid_items,
+                                typename base_type::storage_type& storage,
+                                T tile_predecessor_item)
+    {
+        base_type::subtract_left_partial(
+            input, output, op, tile_predecessor_item, valid_items, storage.get().left
+        );
+    }
+
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractRight(T (&input)[ITEMS_PER_THREAD],
+                      OutputT (&output)[ITEMS_PER_THREAD],
+                      BinaryFunctionT op,
+                      typename base_type::storage_type& storage)
+    {
+        base_type::subtract_right(
+            input, output, op, storage.get().right
+        );
+    }
+
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractRight(T (&input)[ITEMS_PER_THREAD],
+                      OutputT (&output)[ITEMS_PER_THREAD],
+                      BinaryFunctionT op,
+                      typename base_type::storage_type& storage,
+                      T tile_successor_item)
+    {
+        base_type::subtract_right(
+            input, output, op, tile_successor_item, storage.get().right
+        );
+    }
+
+    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    HIPCUB_DEVICE inline
+    void SubtractRightPartial(T (&input)[ITEMS_PER_THREAD],
+                      OutputT (&output)[ITEMS_PER_THREAD],
+                      BinaryFunctionT op,
+                      const unsigned int valid_items,
+                      typename base_type::storage_type& storage)
+    {
+        base_type::subtract_right(
+            input, output, op, valid_items, storage.get().right
+        );
+    }
+
 private:
     HIPCUB_DEVICE inline
     TempStorage& private_storage()
