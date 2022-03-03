@@ -34,6 +34,21 @@
 
 #include <rocprim/block/block_adjacent_difference.hpp>
 
+// Helper macros to siavle warnings in clang
+#ifdef __clang__
+#define HIPCUB_PRAGMA_TO_STR(x) _Pragma(#x)
+#define HIPCUB_CLANG_SUPPRESS_WARNING_PUSH _Pragma("clang diagnostic push")
+#define HIPCUB_CLANG_SUPPRESS_WARNING(w) HIPCUB_PRAGMA_TO_STR(clang diagnostic ignored w)
+#define HIPCUB_CLANG_SUPPRESS_WARNING_POP _Pragma("clang diagnostic pop")
+#define HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH(w) \
+    HIPCUB_CLANG_SUPPRESS_WARNING_PUSH HIPCUB_CLANG_SUPPRESS_WARNING(w)
+#else // __clang__
+#define HIPCUB_CLANG_SUPPRESS_WARNING_PUSH
+#define HIPCUB_CLANG_SUPPRESS_WARNING(w)
+#define HIPCUB_CLANG_SUPPRESS_WARNING_POP
+#define HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH(w)
+#endif // __clang__
+
 BEGIN_HIPCUB_NAMESPACE
 
 template<
@@ -86,7 +101,9 @@ public:
                    T (&input)[ITEMS_PER_THREAD],
                    FlagOp flag_op)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_heads(head_flags, input, flag_op, temp_storage_);
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -96,7 +113,9 @@ public:
                    FlagOp flag_op,
                    T tile_predecessor_item)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_heads(head_flags, tile_predecessor_item, input, flag_op, temp_storage_);
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -105,7 +124,9 @@ public:
                    T (&input)[ITEMS_PER_THREAD],
                    FlagOp flag_op)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_tails(tail_flags, input, flag_op, temp_storage_);
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -115,7 +136,9 @@ public:
                    FlagOp flag_op,
                    T tile_successor_item)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_tails(tail_flags, tile_successor_item, input, flag_op, temp_storage_);
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -125,10 +148,12 @@ public:
                            T (&input)[ITEMS_PER_THREAD],
                            FlagOp flag_op)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_heads_and_tails(
             head_flags, tail_flags, input,
             flag_op, temp_storage_
         );
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -139,10 +164,12 @@ public:
                            T (&input)[ITEMS_PER_THREAD],
                            FlagOp flag_op)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_heads_and_tails(
             head_flags, tail_flags, tile_successor_item, input,
             flag_op, temp_storage_
         );
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -153,10 +180,12 @@ public:
                            T (&input)[ITEMS_PER_THREAD],
                            FlagOp flag_op)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_heads_and_tails(
             head_flags, tile_predecessor_item, tail_flags, input,
             flag_op, temp_storage_
         );
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
@@ -168,10 +197,12 @@ public:
                            T (&input)[ITEMS_PER_THREAD],
                            FlagOp flag_op)
     {
+        HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated")
         base_type::flag_heads_and_tails(
             head_flags, tile_predecessor_item, tail_flags, tile_successor_item, input,
             flag_op, temp_storage_
         );
+        HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
     template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
