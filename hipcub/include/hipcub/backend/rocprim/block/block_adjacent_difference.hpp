@@ -96,6 +96,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagHeads(FlagT (&head_flags)[ITEMS_PER_THREAD],
                    T (&input)[ITEMS_PER_THREAD],
@@ -107,6 +108,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagHeads(FlagT (&head_flags)[ITEMS_PER_THREAD],
                    T (&input)[ITEMS_PER_THREAD],
@@ -119,6 +121,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagTails(FlagT (&tail_flags)[ITEMS_PER_THREAD],
                    T (&input)[ITEMS_PER_THREAD],
@@ -130,6 +133,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagTails(FlagT (&tail_flags)[ITEMS_PER_THREAD],
                    T (&input)[ITEMS_PER_THREAD],
@@ -142,6 +146,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagHeadsAndTails(FlagT (&head_flags)[ITEMS_PER_THREAD],
                            FlagT (&tail_flags)[ITEMS_PER_THREAD],
@@ -157,6 +162,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagHeadsAndTails(FlagT (&head_flags)[ITEMS_PER_THREAD],
                            FlagT (&tail_flags)[ITEMS_PER_THREAD],
@@ -173,6 +179,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagHeadsAndTails(FlagT (&head_flags)[ITEMS_PER_THREAD],
                            T tile_predecessor_item,
@@ -189,6 +196,7 @@ public:
     }
 
     template<int ITEMS_PER_THREAD, typename FlagT, typename FlagOp>
+    [[deprecated("The Flags API of BlockAdjacentDifference is deprecated.")]]
     HIPCUB_DEVICE inline
     void FlagHeadsAndTails(FlagT (&head_flags)[ITEMS_PER_THREAD],
                            T tile_predecessor_item,
