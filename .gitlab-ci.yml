@@ -206,6 +206,7 @@ test:rocm_install:
 .nvcc:
   extends:
     - .deps:nvcc
+    - .gpus:nvcc-gpus
     - .deps:cmake-minimum
   before_script:
     - !reference [".deps:nvcc", before_script]
