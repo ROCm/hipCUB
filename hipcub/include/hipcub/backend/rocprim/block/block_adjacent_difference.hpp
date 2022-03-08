@@ -234,7 +234,7 @@ public:
                       T tile_predecessor_item)
     {
         base_type::subtract_left(
-            input, output, op, tile_predecessor_item, storage.get().left
+            input, output, op, tile_predecessor_item, storage
         );
     }
 
@@ -247,7 +247,7 @@ public:
                                 typename base_type::storage_type& storage)
     {
         base_type::subtract_left_partial(
-            input, output, op, valid_items, storage.get().left
+            input, output, op, valid_items, storage
         );
     }
 
@@ -261,7 +261,7 @@ public:
                                 T tile_predecessor_item)
     {
         base_type::subtract_left_partial(
-            input, output, op, tile_predecessor_item, valid_items, storage.get().left
+            input, output, op, tile_predecessor_item, valid_items, storage
         );
     }
 
@@ -273,7 +273,7 @@ public:
                       typename base_type::storage_type& storage)
     {
         base_type::subtract_right(
-            input, output, op, storage.get().right
+            input, output, op, storage
         );
     }
 
@@ -286,7 +286,7 @@ public:
                       T tile_successor_item)
     {
         base_type::subtract_right(
-            input, output, op, tile_successor_item, storage.get().right
+            input, output, op, tile_successor_item, storage
         );
     }
 
@@ -299,7 +299,7 @@ public:
                       typename base_type::storage_type& storage)
     {
         base_type::subtract_right(
-            input, output, op, valid_items, storage.get().right
+            input, output, op, valid_items, storage
         );
     }
 
