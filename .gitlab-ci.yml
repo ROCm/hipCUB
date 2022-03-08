@@ -219,7 +219,6 @@ build:nvcc:
     - cmake
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
-      -D DOWNLOAD_CUB=ON
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D NVGPU_TARGETS="$GPU_TARGETS"
@@ -251,7 +250,6 @@ build:nvcc-benchmark:
     - cmake
       -G Ninja
       -D CMAKE_BUILD_TYPE=Release
-      -D DOWNLOAD_CUB=ON
       -D BUILD_BENCHMARK=ON
       -D CMAKE_CXX_COMPILER=g++-8
       -D CMAKE_C_COMPILER=gcc-8
