@@ -2,6 +2,19 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
+## (Unreleased) hipCUB-2.11.0 for ROCm 5.1.0
+### Added
+- Device segmented sort
+- Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
+- Device three way partition
+### Changed
+- Device_scan and device_segmented_scan: inclusive_scan now uses the input-type as accumulator-type, exclusive_scan uses initial-value-type.
+  - This particularly changes behaviour of small-size input types with large-size output types (e.g. short input, int output).
+  - And low-res input with high-res output (e.g. float input, double output)
+  - Block merge sort no longer supports non power of two blocksizes
+### Known Issues
+  - grid unit test hanging on HIP on Windows
+
 ## hipCUB-2.10.13 for ROCm 5.0.0
 ### Fixed
 - Added missing includes to hipcub.hpp
