@@ -298,7 +298,7 @@ public:
                       const unsigned int valid_items,
                       typename base_type::storage_type& storage)
     {
-        base_type::subtract_right(
+        base_type::subtract_right_partial(
             input, output, op, valid_items, storage
         );
     }
