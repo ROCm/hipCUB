@@ -390,7 +390,7 @@ void run_unique_by_key_benchmark(benchmark::State& state,
     }
 
     const auto input_values = benchmark_utils::get_random_data<ValueT>(size, ValueT(-1000), ValueT(1000));
-    std::vector<unsigned int> selected_count_output(1);
+    unsigned int selected_count_output = 0;
 
     KeyT* d_keys_input;
     ValueT* d_values_input;
@@ -402,7 +402,7 @@ void run_unique_by_key_benchmark(benchmark::State& state,
     HIP_CHECK(hipMalloc(&d_values_input, input_values.size() * sizeof(input_values[0])));
     HIP_CHECK(hipMalloc(&d_keys_output, input_keys.size() * sizeof(input_keys[0])));
     HIP_CHECK(hipMalloc(&d_values_output, input_values.size() * sizeof(input_values[0])));
-    HIP_CHECK(hipMalloc(&d_selected_count_output, sizeof(selected_count_output[0])));
+    HIP_CHECK(hipMalloc(&d_selected_count_output, sizeof(selected_count_output)));
 
     HIP_CHECK(
         hipMemcpy(
