@@ -43,7 +43,7 @@
 // Seed values
 #include "test_seed.hpp"
 
-// Helper macros to siavle warnings in clang
+// Helper macros to disable warnings in clang
 #ifdef __clang__
 #define HIPCUB_PRAGMA_TO_STR(x) _Pragma(#x)
 #define HIPCUB_CLANG_SUPPRESS_WARNING_PUSH _Pragma("clang diagnostic push")
