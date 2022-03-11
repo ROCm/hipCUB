@@ -33,7 +33,7 @@ list(APPEND CMAKE_MODULE_PATH
   ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
 )
 
-# Verify that hcc compiler is used on ROCM platform
+# Verify that hip-clang is used on ROCM platform
 include(VerifyCompiler)
 
 # Download CUB

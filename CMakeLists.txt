@@ -81,7 +81,7 @@ if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQ
   endif()
 endif()
 
-# Verify that hcc compiler is used on ROCM platform
+# Verify that hip-clang is used on ROCM platform
 if (NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 endif()
