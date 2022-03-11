@@ -617,6 +617,7 @@ TEST(HipcubDeviceRadixSort, SortKeysOver4G)
     assert(std::is_unsigned<key_type>::value);
     std::vector<size_t> histogram(number_of_possible_keys, 0);
     const int seed_value = rand();
+    SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
     std::vector<key_type> keys_input = test_utils::get_random_data<key_type>(
         size,
