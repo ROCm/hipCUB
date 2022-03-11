@@ -328,18 +328,17 @@ void subtract_left_kernel(const T* input, StorageType* output)
     hipcub::LoadDirectBlocked(lid, input + block_offset, thread_items);
 
     hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-    __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
     Output thread_output[ItemsPerThread];
 
     if (blockIdx.x % 2 == 1)
     {
         const T tile_predecessor_item = input[block_offset - 1];
-        adjacent_difference.SubtractLeft(thread_items, thread_output, BinaryFunction{}, storage, tile_predecessor_item);
+        adjacent_difference.SubtractLeft(thread_items, thread_output, BinaryFunction{}, tile_predecessor_item);
     }
     else
     {
-        adjacent_difference.SubtractLeft(thread_items, thread_output, BinaryFunction{}, storage);
+        adjacent_difference.SubtractLeft(thread_items, thread_output, BinaryFunction{});
     }
 
     hipcub::StoreDirectBlocked(lid, output + block_offset, thread_output);
@@ -355,7 +354,7 @@ template<
 >
 __global__
 __launch_bounds__(BlockSize)
-void subtract_left_partial_kernel(const T* input, unsigned int* tile_sizes, StorageType* output)
+void subtract_left_partial_tile_kernel(const T* input, int* tile_sizes, StorageType* output)
 {
     const unsigned int lid = threadIdx.x;
     const unsigned int items_per_block = BlockSize * ItemsPerThread;
@@ -365,20 +364,12 @@ void subtract_left_partial_kernel(const T* input, unsigned int* tile_sizes, Stor
     hipcub::LoadDirectBlocked(lid, input + block_offset, thread_items);
 
     hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-    __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
     Output thread_output[ItemsPerThread];
 
-    const unsigned int tile_size = tile_sizes[blockIdx.x];
-    if (blockIdx.x % 2 == 1)
-    {
-        const T tile_predecessor_item = input[block_offset - 1];
-        adjacent_difference.SubtractLeftPartial(thread_items, thread_output, BinaryFunction{}, tile_size, storage, tile_predecessor_item);
-    }
-    else
-    {
-        adjacent_difference.SubtractLeftPartial(thread_items, thread_output, BinaryFunction{}, tile_size, storage);
-    }
+    int tile_size = tile_sizes[blockIdx.x];
+    
+    adjacent_difference.SubtractLeftPartialTile(thread_items, thread_output, BinaryFunction{}, tile_size);
 
     hipcub::StoreDirectBlocked(lid, output + block_offset, thread_output);
 }
@@ -403,18 +394,17 @@ void subtract_right_kernel(const T* input, StorageType* output)
     hipcub::LoadDirectBlocked(lid, input + block_offset, thread_items);
 
     hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-    __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
     Output thread_output[ItemsPerThread];
 
     if (blockIdx.x % 2 == 0)
     {
         const T tile_successor_item = input[block_offset + items_per_block];
-        adjacent_difference.SubtractRight(thread_items, thread_output, BinaryFunction{}, storage, tile_successor_item);
+        adjacent_difference.SubtractRight(thread_items, thread_output, BinaryFunction{}, tile_successor_item);
     }
     else
     {
-        adjacent_difference.SubtractRight(thread_items, thread_output, BinaryFunction{}, storage);
+        adjacent_difference.SubtractRight(thread_items, thread_output, BinaryFunction{});
     }
 
     hipcub::StoreDirectBlocked(lid, output + block_offset, thread_output);
@@ -430,7 +420,7 @@ template<
 >
 __global__
 __launch_bounds__(BlockSize)
-void subtract_right_partial_kernel(const T* input, unsigned int* tile_sizes, StorageType* output)
+void subtract_right_partial_tile_kernel(const T* input, int* tile_sizes, StorageType* output)
 {
     const unsigned int lid = threadIdx.x;
     const unsigned int items_per_block = BlockSize * ItemsPerThread;
@@ -440,13 +430,12 @@ void subtract_right_partial_kernel(const T* input, unsigned int* tile_sizes, Sto
     hipcub::LoadDirectBlocked(lid, input + block_offset, thread_items);
 
     hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-    __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
     Output thread_output[ItemsPerThread];
 
-    const unsigned int tile_size = tile_sizes[blockIdx.x];
+    int tile_size = tile_sizes[blockIdx.x];
     
-    adjacent_difference.SubtractRightPartial(thread_items, thread_output, BinaryFunction{}, tile_size, storage);
+    adjacent_difference.SubtractRightPartialTile(thread_items, thread_output, BinaryFunction{}, tile_size);
 
     hipcub::StoreDirectBlocked(lid, output + block_offset, thread_output);
 }
@@ -876,7 +865,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeft)
     }
 }
 
-TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartial)
+TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
 {
     using type = typename TestFixture::params_subtract::type;
     using binary_function = typename TestFixture::params_subtract::binary_function;
@@ -907,8 +896,8 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartial)
         const std::vector<type> input = test_utils::get_random_data<type>(size, 0, 10, seed_value);
         std::vector<stored_type> output(size);
 
-        const std::vector<unsigned int> tile_sizes 
-            = test_utils::get_random_data<unsigned int>(grid_size, 0, items_per_block, seed_value);
+        const std::vector<int> tile_sizes 
+            = test_utils::get_random_data<int>(grid_size, 0, items_per_block, seed_value);
 
         // Calculate expected results on host
         std::vector<stored_type> expected(size);
@@ -923,8 +912,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartial)
                 {
                     if(item == 0) 
                     {
-                        expected[i]
-                            = static_cast<output_type>(block_index % 2 == 1 ? op(input[i], input[i - 1]) : input[i]);
+                        expected[i] = static_cast<output_type>(input[i]);
                     } 
                     else 
                     {
@@ -940,7 +928,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartial)
 
         // Preparing Device
         type* d_input;
-        unsigned int* d_tile_sizes;
+        int* d_tile_sizes;
         stored_type* d_output;
         HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(input[0])));
         HIP_CHECK(hipMalloc(&d_tile_sizes, tile_sizes.size() * sizeof(tile_sizes[0])));
@@ -963,9 +951,9 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartial)
         // Running kernel
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(
-                subtract_left_partial_kernel<type, output_type, stored_type, 
-                                             binary_function, block_size,
-                                             items_per_thread
+                subtract_left_partial_tile_kernel<type, output_type, stored_type, 
+                                                  binary_function, block_size,
+                                                  items_per_thread
                 >
             ),
             dim3(grid_size), dim3(block_size), 0, 0,
@@ -1086,7 +1074,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
     }
 }
 
-TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartial)
+TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartialTile)
 {
     using type = typename TestFixture::params_subtract::type;
     using binary_function = typename TestFixture::params_subtract::binary_function;
@@ -1117,8 +1105,8 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartial)
         const std::vector<type>     input = test_utils::get_random_data<type>(size, 0, 10, seed_value);
         std::vector<stored_type> output(size);
 
-        const std::vector<unsigned int> tile_sizes 
-            = test_utils::get_random_data<unsigned int>(grid_size, 0, items_per_block, seed_value);
+        const std::vector<int> tile_sizes 
+            = test_utils::get_random_data<int>(grid_size, 0, items_per_block, seed_value);
 
         // Calculate expected results on host
         std::vector<stored_type> expected(size);
@@ -1149,7 +1137,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartial)
 
         // Preparing Device
         type* d_input;
-        unsigned int* d_tile_sizes;
+        int* d_tile_sizes;
         stored_type* d_output;
         HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(input[0])));
         HIP_CHECK(hipMalloc(&d_tile_sizes, tile_sizes.size() * sizeof(tile_sizes[0])));
@@ -1172,9 +1160,9 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartial)
         // Running kernel
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(
-                subtract_right_partial_kernel<type, output_type, stored_type, 
-                                             binary_function, block_size,
-                                             items_per_thread
+                subtract_right_partial_tile_kernel<type, output_type, stored_type, 
+                                                   binary_function, block_size,
+                                                   items_per_thread
                 >
             ),
             dim3(grid_size), dim3(block_size), 0, 0,

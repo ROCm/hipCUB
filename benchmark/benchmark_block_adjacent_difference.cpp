@@ -68,7 +68,6 @@ struct subtract_left
         hipcub::LoadDirectStriped<BlockSize>(lid, d_input + block_offset, input);
 
         hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-        __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
         #pragma nounroll
         for(unsigned int trial = 0; trial < trials; trial++)
@@ -76,11 +75,11 @@ struct subtract_left
             T output[ItemsPerThread];
             if(WithTile)
             {
-                adjacent_difference.SubtractLeft(input, output, minus<T>{}, storage, T(123));
+                adjacent_difference.SubtractLeft(input, output, minus<T>{}, T(123));
             }
             else
             {
-                adjacent_difference.SubtractLeft(input, output, minus<T>{}, storage);
+                adjacent_difference.SubtractLeft(input, output, minus<T>{});
             }
 
             for(unsigned int i = 0; i < ItemsPerThread; ++i)
@@ -95,10 +94,10 @@ struct subtract_left
     }
 };
 
-struct subtract_left_partial
+struct subtract_left_partial_tile
 {
     template <unsigned int BlockSize, unsigned int ItemsPerThread, bool WithTile, typename T>
-    __device__ static void run(const T* d_input, const unsigned int* tile_sizes, T* d_output, unsigned int trials)
+    __device__ static void run(const T* d_input, int* tile_sizes, T* d_output, unsigned int trials)
     {
         const unsigned int lid = threadIdx.x;
         const unsigned int block_offset = blockIdx.x * ItemsPerThread * BlockSize;
@@ -107,9 +106,8 @@ struct subtract_left_partial
         hipcub::LoadDirectStriped<BlockSize>(lid, d_input + block_offset, input);
 
         hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-        __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
-        unsigned int tile_size = tile_sizes[blockIdx.x];
+        int tile_size = tile_sizes[blockIdx.x];
 
         // Try to evenly distribute the length of tile_sizes between all the trials
         const auto tile_size_diff = (BlockSize * ItemsPerThread) / trials + 1;
@@ -118,14 +116,8 @@ struct subtract_left_partial
         for(unsigned int trial = 0; trial < trials; trial++)
         {
             T output[ItemsPerThread];
-            if(WithTile)
-            {
-                adjacent_difference.SubtractLeftPartial(input, output, minus<T>{}, tile_size, storage, T(123));
-            }
-            else
-            {
-                adjacent_difference.SubtractLeftPartial(input, output, minus<T>{}, tile_size, storage);
-            }
+            
+            adjacent_difference.SubtractLeftPartialTile(input, output, minus<T>{}, tile_size);
 
             for(unsigned int i = 0; i < ItemsPerThread; ++i)
             {
@@ -153,7 +145,6 @@ struct subtract_right
         hipcub::LoadDirectStriped<BlockSize>(lid, d_input + block_offset, input);
 
         hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-        __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
         #pragma nounroll
         for(unsigned int trial = 0; trial < trials; trial++)
@@ -161,11 +152,11 @@ struct subtract_right
             T output[ItemsPerThread];
             if(WithTile)
             {
-                adjacent_difference.SubtractRight(input, output, minus<T>{}, storage, T(123));
+                adjacent_difference.SubtractRight(input, output, minus<T>{}, T(123));
             }
             else
             {
-                adjacent_difference.SubtractRight(input, output, minus<T>{}, storage);
+                adjacent_difference.SubtractRight(input, output, minus<T>{});
             }
 
             for(unsigned int i = 0; i < ItemsPerThread; ++i)
@@ -180,10 +171,10 @@ struct subtract_right
     }
 };
 
-struct subtract_right_partial
+struct subtract_right_partial_tile
 {
     template <unsigned int BlockSize, unsigned int ItemsPerThread, bool WithTile, typename T>
-    __device__ static void run(const T* d_input, const unsigned int* tile_sizes, T* d_output, unsigned int trials)
+    __device__ static void run(const T* d_input, int* tile_sizes, T* d_output, unsigned int trials)
     {
         const unsigned int lid = threadIdx.x;
         const unsigned int block_offset = blockIdx.x * ItemsPerThread * BlockSize;
@@ -192,9 +183,8 @@ struct subtract_right_partial
         hipcub::LoadDirectStriped<BlockSize>(lid, d_input + block_offset, input);
 
         hipcub::BlockAdjacentDifference<T, BlockSize> adjacent_difference;
-        __shared__ typename decltype(adjacent_difference)::TempStorage storage;
 
-        unsigned int tile_size = tile_sizes[blockIdx.x];
+        int tile_size = tile_sizes[blockIdx.x];
 
         // Try to evenly distribute the length of tile_sizes between all the trials
         const auto tile_size_diff = (BlockSize * ItemsPerThread) / trials + 1;
@@ -204,7 +194,7 @@ struct subtract_right_partial
         {
             T output[ItemsPerThread];
 
-            adjacent_difference.SubtractRightPartial(input, output, minus<T>{}, tile_size, storage);
+            adjacent_difference.SubtractRightPartialTile(input, output, minus<T>{}, tile_size);
 
             for(unsigned int i = 0; i < ItemsPerThread; ++i)
             {
@@ -227,8 +217,8 @@ template <class Benchmark,
           bool         WithTile,
           unsigned int Trials = 100>
 auto run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
-    -> std::enable_if_t<!std::is_same<Benchmark, subtract_left_partial>::value
-                        && !std::is_same<Benchmark, subtract_right_partial>::value>
+    -> std::enable_if_t<!std::is_same<Benchmark, subtract_left_partial_tile>::value
+                        && !std::is_same<Benchmark, subtract_right_partial_tile>::value>
 {
     constexpr auto items_per_block = BlockSize * ItemsPerThread;
     const auto num_blocks = (N + items_per_block - 1) / items_per_block;
@@ -279,8 +269,8 @@ template <class Benchmark,
           bool         WithTile,
           unsigned int Trials = 100>
 auto run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
-    -> std::enable_if_t<std::is_same<Benchmark, subtract_left_partial>::value
-                        || std::is_same<Benchmark, subtract_right_partial>::value>
+    -> std::enable_if_t<std::is_same<Benchmark, subtract_left_partial_tile>::value
+                        || std::is_same<Benchmark, subtract_right_partial_tile>::value>
 {
     constexpr auto items_per_block = BlockSize * ItemsPerThread;
     const auto num_blocks = (N + items_per_block - 1) / items_per_block;
@@ -288,11 +278,11 @@ auto run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
     const auto size = num_blocks * items_per_block;
 
     const std::vector<T> input = benchmark_utils::get_random_data<T>(size, T(0), T(10));
-    const std::vector<unsigned int> tile_sizes
-        = benchmark_utils::get_random_data<unsigned int>(num_blocks, 0, items_per_block);
+    const std::vector<int> tile_sizes
+        = benchmark_utils::get_random_data<int>(num_blocks, 0, items_per_block);
     
     T* d_input;
-    unsigned int* d_tile_sizes;
+    int* d_tile_sizes;
     T* d_output;
     HIP_CHECK(hipMalloc(&d_input, input.size() * sizeof(input[0])));
     HIP_CHECK(hipMalloc(&d_tile_sizes, tile_sizes.size() * sizeof(tile_sizes[0])));
@@ -340,7 +330,7 @@ auto run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 #define CREATE_BENCHMARK(T, BS, IPT, WITH_TILE) \
 benchmark::RegisterBenchmark( \
     (std::string("block_adjacent_difference<" #T ", " #BS ">.") + name + ("<" #IPT ", " #WITH_TILE ">")).c_str(), \
-    run_benchmark<Benchmark, T, BS, IPT, WITH_TILE>, \
+    &run_benchmark<Benchmark, T, BS, IPT, WITH_TILE>, \
     stream, size \
 )
 
@@ -367,7 +357,8 @@ void add_benchmarks(const std::string& name,
         BENCHMARK_TYPE(double, 256, false)
     };
 
-    if(!std::is_same<Benchmark, subtract_right_partial>::value) {
+    if(!std::is_same<Benchmark, subtract_right_partial_tile>::value
+        && !std::is_same<Benchmark, subtract_left_partial_tile>::value) {
         bs.insert(bs.end(), {
             BENCHMARK_TYPE(int, 256, true),
             BENCHMARK_TYPE(float, 256, true),
@@ -404,8 +395,8 @@ int main(int argc, char *argv[])
     std::vector<benchmark::internal::Benchmark*> benchmarks;
     add_benchmarks<subtract_left>("SubtractLeft", benchmarks, stream, size);
     add_benchmarks<subtract_right>("SubtractRight", benchmarks, stream, size);
-    add_benchmarks<subtract_left_partial>("SubtractLeftPartial", benchmarks, stream, size);
-    add_benchmarks<subtract_right_partial>("SubtractRightPartial", benchmarks, stream, size);
+    add_benchmarks<subtract_left_partial_tile>("SubtractLeftPartialTile", benchmarks, stream, size);
+    add_benchmarks<subtract_right_partial_tile>("SubtractRightPartialTile", benchmarks, stream, size);
 
     // Use manual timing
     for(auto& b : benchmarks)
