@@ -49,7 +49,7 @@ void kernel(Args ...args)
 template<class T>
 struct minus
 {
-    __host__ __device__ inline
+    HIPCUB_HOST_DEVICE inline
     constexpr T operator()(const T& a, const T& b) const
     {
         return a - b;
