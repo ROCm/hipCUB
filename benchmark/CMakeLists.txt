@@ -25,7 +25,7 @@ function(add_hipcub_benchmark BENCHMARK_SOURCE)
   add_executable(${BENCHMARK_TARGET} ${BENCHMARK_SOURCE})
   target_include_directories(${BENCHMARK_TARGET} SYSTEM BEFORE
     PUBLIC
-      "${GOOGLEBENCHMARK_ROOT}/include"
+      "$<BUILD_INTERFACE:${GOOGLEBENCHMARK_ROOT}/include>"
   )
   target_link_libraries(${BENCHMARK_TARGET}
     PRIVATE
