@@ -34,7 +34,7 @@
 
 #include <rocprim/block/block_adjacent_difference.hpp>
 
-// Helper macros to siavle warnings in clang
+// Helper macros to disable warnings in clang
 #ifdef __clang__
 #define HIPCUB_PRAGMA_TO_STR(x) _Pragma(#x)
 #define HIPCUB_CLANG_SUPPRESS_WARNING_PUSH _Pragma("clang diagnostic push")
@@ -213,93 +213,73 @@ public:
         HIPCUB_CLANG_SUPPRESS_WARNING_POP
     }
 
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    template <int ITEMS_PER_THREAD, typename OutputType, typename DifferenceOpT>
     HIPCUB_DEVICE inline
     void SubtractLeft(T (&input)[ITEMS_PER_THREAD],
-                      OutputT (&output)[ITEMS_PER_THREAD],
-                      BinaryFunctionT op,
-                      typename base_type::storage_type& storage)
+                      OutputType (&output)[ITEMS_PER_THREAD],
+                      DifferenceOpT difference_op)
     {
         base_type::subtract_left(
-            input, output, op, storage
+            input, output, op, OutputT
         );
     }
 
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    template <int ITEMS_PER_THREAD, typename OutputT, typename DifferenceOpT>
     HIPCUB_DEVICE inline
     void SubtractLeft(T (&input)[ITEMS_PER_THREAD],
                       OutputT (&output)[ITEMS_PER_THREAD],
-                      BinaryFunctionT op,
-                      typename base_type::storage_type& storage,
+                      DifferenceOpT difference_op,
                       T tile_predecessor_item)
     {
         base_type::subtract_left(
-            input, output, op, tile_predecessor_item, storage
+            input, output, op, tile_predecessor_item
         );
     }
 
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    template <int ITEMS_PER_THREAD, typename OutputType, typename DifferenceOpT>
     HIPCUB_DEVICE inline
-    void SubtractLeftPartial(T (&input)[ITEMS_PER_THREAD],
-                                OutputT (&output)[ITEMS_PER_THREAD],
-                                BinaryFunctionT op,
-                                const unsigned int valid_items,
-                                typename base_type::storage_type& storage)
+    void SubtractLeftPartialTile(T (&input)[ITEMS_PER_THREAD],
+                                OutputType (&output)[ITEMS_PER_THREAD],
+                                DifferenceOpT difference_op,
+                                int valid_items)
     {
         base_type::subtract_left_partial(
-            input, output, op, valid_items, storage
+            input, output, op, valid_items
         );
     }
 
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
-    HIPCUB_DEVICE inline
-    void SubtractLeftPartial(T (&input)[ITEMS_PER_THREAD],
-                                OutputT (&output)[ITEMS_PER_THREAD],
-                                BinaryFunctionT op,
-                                const unsigned int valid_items,
-                                typename base_type::storage_type& storage,
-                                T tile_predecessor_item)
-    {
-        base_type::subtract_left_partial(
-            input, output, op, tile_predecessor_item, valid_items, storage
-        );
-    }
-
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    template <int ITEMS_PER_THREAD, typename OutputT, typename DifferenceOpT>
     HIPCUB_DEVICE inline
     void SubtractRight(T (&input)[ITEMS_PER_THREAD],
                       OutputT (&output)[ITEMS_PER_THREAD],
-                      BinaryFunctionT op,
-                      typename base_type::storage_type& storage)
+                      DifferenceOpT difference_op)
     {
         base_type::subtract_right(
-            input, output, op, storage
+            input, output, op
         );
     }
 
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    template <int ITEMS_PER_THREAD, typename OutputT, typename DifferenceOpT>
     HIPCUB_DEVICE inline
     void SubtractRight(T (&input)[ITEMS_PER_THREAD],
                       OutputT (&output)[ITEMS_PER_THREAD],
-                      BinaryFunctionT op,
-                      typename base_type::storage_type& storage,
+                      DifferenceOpT difference_op,
                       T tile_successor_item)
     {
         base_type::subtract_right(
-            input, output, op, tile_successor_item, storage
+            input, output, op, tile_successor_item
         );
     }
 
-    template <typename OutputT, unsigned int ITEMS_PER_THREAD, typename BinaryFunctionT>
+    template <int ITEMS_PER_THREAD, typename OutputT, typename DifferenceOpT>
     HIPCUB_DEVICE inline
     void SubtractRightPartial(T (&input)[ITEMS_PER_THREAD],
                       OutputT (&output)[ITEMS_PER_THREAD],
-                      BinaryFunctionT op,
-                      const unsigned int valid_items,
-                      typename base_type::storage_type& storage)
+                      DifferenceOpT difference_op,
+                      int valid_items)
     {
         base_type::subtract_right_partial(
-            input, output, op, valid_items, storage
+            input, output, op, valid_items
         );
     }
 
