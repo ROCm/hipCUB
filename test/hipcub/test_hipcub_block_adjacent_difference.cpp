@@ -781,9 +781,9 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeft)
 
     constexpr size_t block_size = TestFixture::params_subtract::block_size;
     constexpr size_t items_per_thread = TestFixture::params_subtract::items_per_thread;
-    static constexpr auto items_per_block = block_size * items_per_thread;
-    static constexpr auto size = items_per_block * 20;
-    static constexpr auto grid_size = size / items_per_block;
+    static constexpr int items_per_block = block_size * items_per_thread;
+    static constexpr int size = items_per_block * 20;
+    static constexpr int grid_size = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
@@ -876,9 +876,9 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
 
     constexpr size_t block_size = TestFixture::params_subtract::block_size;
     constexpr size_t items_per_thread = TestFixture::params_subtract::items_per_thread;
-    static constexpr auto items_per_block = block_size * items_per_thread;
-    static constexpr auto size = items_per_block * 20;
-    static constexpr auto grid_size = size / items_per_block;
+    static constexpr int items_per_block = block_size * items_per_thread;
+    static constexpr int size = items_per_block * 20;
+    static constexpr int grid_size = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
@@ -905,7 +905,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
         
         for(size_t block_index = 0; block_index < grid_size; ++block_index)
         {
-            for(unsigned int item = 0; item < items_per_block; ++item)
+            for(int item = 0; item < items_per_block; ++item)
             {
                 const size_t i = block_index * items_per_block + item;
                 if (item < tile_sizes[block_index]) 
@@ -990,9 +990,9 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
 
     constexpr size_t block_size = TestFixture::params_subtract::block_size;
     constexpr size_t items_per_thread = TestFixture::params_subtract::items_per_thread;
-    static constexpr auto items_per_block = block_size * items_per_thread;
-    static constexpr auto size = items_per_block * 20;
-    static constexpr auto grid_size = size / items_per_block;
+    static constexpr int items_per_block = block_size * items_per_thread;
+    static constexpr int size = items_per_block * 20;
+    static constexpr int grid_size = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
@@ -1016,7 +1016,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
         
         for(size_t block_index = 0; block_index < grid_size; ++block_index)
         {
-            for(unsigned int item = 0; item < items_per_block; ++item)
+            for(int item = 0; item < items_per_block; ++item)
             {
                 const size_t i = block_index * items_per_block + item;
                 if(item == items_per_block - 1) 
@@ -1085,9 +1085,9 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartialTile)
 
     constexpr size_t block_size = TestFixture::params_subtract::block_size;
     constexpr size_t items_per_thread = TestFixture::params_subtract::items_per_thread;
-    static constexpr auto items_per_block = block_size * items_per_thread;
-    static constexpr auto size = items_per_block * 20;
-    static constexpr auto grid_size = size / items_per_block;
+    static constexpr int items_per_block = block_size * items_per_thread;
+    static constexpr int size = items_per_block * 20;
+    static constexpr int grid_size = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
@@ -1114,7 +1114,7 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartialTile)
         
         for(size_t block_index = 0; block_index < grid_size; ++block_index)
         {
-            for(unsigned int item = 0; item < items_per_block; ++item)
+            for(int item = 0; item < items_per_block; ++item)
             {
                 const size_t i = block_index * items_per_block + item;
                 if (item < tile_sizes[block_index]) 
