@@ -82,6 +82,26 @@ struct Sum
     }
 };
 
+struct Difference
+{
+    template <class T>
+    HIPCUB_HOST_DEVICE inline
+    constexpr T operator()(const T &a, const T &b) const
+    {
+        return a - b;
+    }
+};
+
+struct Division
+{
+    template <class T>
+    HIPCUB_HOST_DEVICE inline
+    constexpr T operator()(const T &a, const T &b) const
+    {
+        return a / b;
+    }
+};
+
 struct Max
 {
     template<class T>
