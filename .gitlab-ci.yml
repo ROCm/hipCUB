@@ -97,15 +97,18 @@ build:rocm:
       - build/hipcub*.zip
     expire_in: 2 weeks
 
+.main_or_manual:
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "develop_stream" || $CI_COMMIT_REF_NAME == "develop"
+           || $CI_COMMIT_REF_NAME == "master"'
+    - when: manual
+
 build:rocm-benchmark:
   extends:
     - .rocm
     - .gpus:rocm-gpus
+    - .main_or_manual
   stage: build
-  only:
-    - develop_stream
-    - develop
-    - master
   script:
     - cmake
       -G Ninja
@@ -120,7 +123,7 @@ build:rocm-benchmark:
   artifacts:
     paths:
       - build/benchmark/*
-      - build/googlebenchmark/
+      - build/deps/googlebenchmark/
     expire_in: 2 weeks
 
 test:rocm:
@@ -137,14 +140,15 @@ test:rocm:
 .benchmark:
   stage: benchmark
   when: manual
-  only:
-    - develop_stream
-    - develop
-    - master
   script:
-    - cmake
-      -D BENCHMARK_BINARY_DIR=build/benchmark
-      -P ${CI_PROJECT_DIR}/.gitlab/cmake-run-benchmarks.txt
+    - python3 ${CI_PROJECT_DIR}/.gitlab/run_and_upload_benchmarks.py
+        --api_endpoint ${BENCHMARK_API_ENDPOINT}
+        --api_base_folder_id ${BENCHMARK_API_FOLDER_ID}
+        --api_auth_token ${BENCHMARK_API_AUTH_TOKEN}
+        --benchmark_dir ${CI_PROJECT_DIR}/build/benchmark
+        --benchmark_datetime ${CI_PIPELINE_CREATED_AT}
+        --benchmark_commit_sha ${CI_COMMIT_SHORT_SHA}
+        --benchmark_gpu_name "${GPU}"
 
 benchmark:rocm:
   extends:
@@ -255,11 +259,9 @@ build:nvcc:
 
 build:nvcc-benchmark:
   stage: build
-  extends: .nvcc
-  only:
-    - develop_stream
-    - develop
-    - master
+  extends:
+    - .nvcc
+    - .main_or_manual
   script:
     - cmake
       -G Ninja
@@ -275,7 +277,7 @@ build:nvcc-benchmark:
   artifacts:
     paths:
       - build/benchmark/*
-      - build/googlebenchmark/
+      - build/deps/googlebenchmark/
     expire_in: 2 weeks
 
 test:nvcc:
