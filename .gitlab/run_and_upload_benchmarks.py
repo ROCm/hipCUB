@@ -21,7 +21,8 @@ def run_benchmarks(benchmark_context, benchmark_search_prefix='benchmark'):
         st_mode = os.stat(path).st_mode
 
         # we are not interested in permissions, just whether there is any execution flag set
-        return st_mode & stat.S_IXUSR or st_mode & stat.S_IXGRP or st_mode & stat.S_IXOTH
+        # and it is a regular file (S_IFREG)
+        return st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & stat.S_IFREG
 
     success = True
     benchmark_names = [name for name in os.listdir(benchmark_context.benchmark_dir) if is_benchmark_executable(name)]
@@ -45,11 +46,15 @@ def write_system_info():
     def try_running_info(executable_name):
         out_filename = f'{executable_name}.txt'
         try:
-            with open(out_filename, 'w') as file:
-                subprocess.Popen(executable_name, stdout=file, env=os.environ).wait()
+            process = subprocess.Popen(executable_name, stdout=subprocess.PIPE, env=os.environ)
+            output, _ = process.communicate()
+            if output:
+                with open(out_filename, 'wb') as file:
+                    file.write(output)
                 return out_filename
-        except OSError as error:
-            print(f'Could not run {executable_name}. Error: "{error}"')
+        except OSError:
+            # Expected, when the executable is not available on the system
+            pass
 
 
     rocminfo_filename = try_running_info('rocminfo')
