@@ -147,7 +147,7 @@ test:rocm:
         --api_auth_token ${BENCHMARK_API_AUTH_TOKEN}
         --benchmark_dir ${CI_PROJECT_DIR}/build/benchmark
         --benchmark_datetime ${CI_PIPELINE_CREATED_AT}
-        --benchmark_commit_sha ${CI_COMMIT_SHORT_SHA}
+        --benchmark_version ${CI_COMMIT_REF_SLUG}_MR${CI_MERGE_REQUEST_IID}_${CI_COMMIT_SHORT_SHA}
         --benchmark_gpu_name "${GPU}"
 
 benchmark:rocm:
