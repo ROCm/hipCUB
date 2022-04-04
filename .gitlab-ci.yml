@@ -80,6 +80,7 @@ build:rocm:
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D GPU_TARGETS="$GPU_TARGETS"
+      -D ROCM_SYMLINK_LIBS=OFF
       -B build
       -S ./
     - cmake --build build
@@ -95,13 +96,15 @@ build:rocm:
       - build/CTestTestfile.cmake
       - build/hipcub*.deb
       - build/hipcub*.zip
+      - build/.ninja_log
     expire_in: 2 weeks
 
 .main_or_manual:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "develop_stream" || $CI_COMMIT_REF_NAME == "develop"
            || $CI_COMMIT_REF_NAME == "master"'
-    - when: manual
+    - if: '$CI_PIPELINE_SOURCE != "merge_request_event"'
+      when: manual
 
 build:rocm-benchmark:
   extends:
@@ -139,7 +142,6 @@ test:rocm:
 
 .benchmark:
   stage: benchmark
-  when: manual
   script:
     - python3 ${CI_PROJECT_DIR}/.gitlab/run_and_upload_benchmarks.py
         --api_endpoint ${BENCHMARK_API_ENDPOINT}
@@ -180,7 +182,7 @@ benchmark:rocm:
 .test:package:
   script:
     - cd build
-    - $SUDO_CMD dpkg -i hipcub*.deb
+    - $SUDO_CMD dpkg -i ${HIPCUB_DEV_PACKAGE_WILDCARD}
     - cd ..
     - export CXX
     - !reference [".test_package", script]
@@ -204,6 +206,7 @@ test:rocm_package:
     - build:rocm
   variables:
     CXX: "$AMDCLANG"
+    HIPCUB_DEV_PACKAGE_WILDCARD: hipcub-dev*.deb
   extends:
     - .rocm
     - .gpus:rocm-gpus
@@ -240,6 +243,7 @@ build:nvcc:
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D NVGPU_TARGETS="$GPU_TARGETS"
+      -D ROCM_SYMLINK_LIBS=OFF
       -B build
       -S .
     - cmake --build build
@@ -255,6 +259,7 @@ build:nvcc:
       - build/CTestTestfile.cmake
       - build/hipcub*.deb
       - build/hipcub*.zip
+      - build/.ninja_log
     expire_in: 2 weeks
 
 build:nvcc-benchmark:
@@ -307,6 +312,8 @@ test:nvcc_package:
   stage: test
   needs:
     - build:nvcc
+  variables:
+    HIPCUB_DEV_PACKAGE_WILDCARD: hipcub_nvcc-dev*.deb
   extends:
     - .nvcc
     - .test:package

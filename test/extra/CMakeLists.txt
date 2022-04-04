@@ -113,7 +113,7 @@ if(HIP_COMPILER STREQUAL "clang")
 endif()
 
 # Find hipCUB
-find_package(hipcub REQUIRED CONFIG HINTS ${hipcub_DIR} PATHS "/opt/rocm/hipcub")
+find_package(hipcub REQUIRED CONFIG HINTS ${hipcub_DIR} PATHS "/opt/rocm")
 
 # Build CXX flags
 set(CMAKE_CXX_STANDARD 14)

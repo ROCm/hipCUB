@@ -22,7 +22,7 @@ def run_benchmarks(benchmark_context, benchmark_search_prefix='benchmark'):
 
         # we are not interested in permissions, just whether there is any execution flag set
         # and it is a regular file (S_IFREG)
-        return st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & stat.S_IFREG
+        return (st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)) and (st_mode & stat.S_IFREG)
 
     success = True
     benchmark_names = [name for name in os.listdir(benchmark_context.benchmark_dir) if is_benchmark_executable(name)]
