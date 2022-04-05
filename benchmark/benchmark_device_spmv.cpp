@@ -26,7 +26,7 @@
 #include "hipcub/device/device_spmv.hpp"
 
 #ifndef DEFAULT_N
-const size_t DEFAULT_N = 1024 * 16;
+const size_t DEFAULT_N = 1024 * 32;
 #endif
 
 const unsigned int batch_size = 10;
@@ -41,42 +41,67 @@ void run_benchmark(benchmark::State& state,
     const T rand_min = T(1);
     const T rand_max = T(10);
 
-    std::vector<char> probs = benchmark_utils::get_random_data01<char>(size * size, probability);
+    // generate a lexicograhically sorted list of (row, column) index tuples
+    // number of nonzeroes cannot be guaranteed as duplicates may exist
+    const int num_nonzeroes_attempt = static_cast<int>(std::min(
+        static_cast<size_t>(INT_MAX), static_cast<size_t>(probability * static_cast<float>(size * size))));
+    std::vector<std::pair<int, int>> indices(num_nonzeroes_attempt);
+    {
+        std::vector<int> flat_indices = benchmark_utils::get_random_data<int>(
+            2 * num_nonzeroes_attempt, 0, size - 1, 2 * num_nonzeroes_attempt);
+        for(size_t i = 0; i < num_nonzeroes_attempt; i++)
+        {
+            indices[i] = std::make_pair(flat_indices[2 * i], flat_indices[2 * i + 1]);
+        }
+        std::sort(indices.begin(), indices.end());
+    }
+
+    // generate the compressed sparse rows matrix
+    std::pair<int, int> prev_cell = std::make_pair(-1, -1);
     int num_nonzeroes = 0;
-    for (size_t i = 0; i < size * size; i++) {
-        if (probs[i]) {
-            num_nonzeroes++;
-        }
-    }
-
-    std::vector<T> values = benchmark_utils::get_random_data<T>(num_nonzeroes, rand_min, rand_max);
     std::vector<int> row_offsets(size + 1);
-    std::vector<int> column_indices(num_nonzeroes);
-
-    size_t idx_matrix = 0; // index in size * size matrix
-    size_t idx_sparse = 0; // index in nonzero values
-    for (size_t row = 0; row < size; row++) {
-        row_offsets[row] = idx_sparse;
-        for (size_t col = 0; col < size; col++) {
-            if (probs[idx_matrix]) {
-                column_indices[idx_sparse] = col;
-                idx_sparse++;
+    // this vector might be too large, but doing the allocation now eliminates a scan
+    std::vector<int> column_indices(num_nonzeroes_attempt); 
+    row_offsets[0] = 0;
+    int last_row_written = 0;
+    for(size_t i = 0; i < num_nonzeroes_attempt; i++) 
+    {
+        if(indices[i] != prev_cell) 
+        {
+            // update the row offets if we go to the next row (or skip some)
+            if(indices[i].first != last_row_written)
+            {
+                for(int j = last_row_written + 1; j <= indices[i].first; j++)
+                {
+                    row_offsets[j] = num_nonzeroes;
+                }
+                last_row_written = indices[i].first;
             }
-            idx_matrix++; 
+
+            column_indices[num_nonzeroes++] = indices[i].second;
+
+            prev_cell = indices[i];
         }
     }
-    row_offsets[size] = idx_sparse;
+    // fill in the entries for any missing rows
+    for(int j = last_row_written + 1; j < size + 1; j++)
+    {
+        row_offsets[j] = num_nonzeroes;
+    }
+
+    // generate the random data once the actual number of nonzeroes are known
+    std::vector<T> values = benchmark_utils::get_random_data<T>(num_nonzeroes, rand_min, rand_max);
 
     std::vector<T> vector_x = benchmark_utils::get_random_data<T>(size, rand_min, rand_max);
 
-    T *d_values;
-    int *d_row_offsets;
-    int *d_column_indices;
-    T *d_vector_x;
-    T *d_vector_y;
+    T * d_values;
+    int * d_row_offsets;
+    int * d_column_indices;
+    T * d_vector_x;
+    T * d_vector_y;
     HIP_CHECK(hipMalloc(&d_values,  values.size() * sizeof(T)));
     HIP_CHECK(hipMalloc(&d_row_offsets, row_offsets.size() * sizeof(int)));
-    HIP_CHECK(hipMalloc(&d_column_indices, column_indices.size() * sizeof(int)));
+    HIP_CHECK(hipMalloc(&d_column_indices, num_nonzeroes * sizeof(int)));
     HIP_CHECK(hipMalloc(&d_vector_x, vector_x.size() * sizeof(T)));
     HIP_CHECK(hipMalloc(&d_vector_y, size * sizeof(T)));
     HIP_CHECK(hipMemcpy(
@@ -86,7 +111,7 @@ void run_benchmark(benchmark::State& state,
         d_row_offsets, row_offsets.data(), row_offsets.size() * sizeof(int), 
         hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy(
-        d_column_indices, column_indices.data(), column_indices.size() * sizeof(int), 
+        d_column_indices, column_indices.data(), num_nonzeroes * sizeof(int), 
         hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy(
         d_vector_x, vector_x.data(), vector_x.size() * sizeof(T), 
@@ -98,22 +123,9 @@ void run_benchmark(benchmark::State& state,
 
     // Get size of d_temp_storage
     HIP_CHECK(hipcub::DeviceSpmv::CsrMV(
-          nullptr,
-          temp_storage_size_bytes,
-          d_values,
-          d_row_offsets,
-          d_column_indices,
-          d_vector_x,
-          d_vector_y,
-          size,
-          size,
-          num_nonzeroes,
-          stream));
+          nullptr, temp_storage_size_bytes, d_values, d_row_offsets, 
+          d_column_indices, d_vector_x, d_vector_y, size, size, num_nonzeroes, stream));
     HIP_CHECK(hipDeviceSynchronize());
-
-    if (temp_storage_size_bytes == 0) {
-        temp_storage_size_bytes = 1;
-    }
 
     // allocate temporary storage
     void * d_temp_storage = nullptr;
@@ -121,37 +133,22 @@ void run_benchmark(benchmark::State& state,
     HIP_CHECK(hipDeviceSynchronize());
 
     // Warm-up
-    for (size_t i = 0; i < warmup_size; i++) {
+    for(size_t i = 0; i < warmup_size; i++) 
+    {
         HIP_CHECK(hipcub::DeviceSpmv::CsrMV(
-            d_temp_storage,
-            temp_storage_size_bytes,
-            d_values,
-            d_row_offsets,
-            d_column_indices,
-            d_vector_x,
-            d_vector_y,
-            size,
-            size,
-            num_nonzeroes,
-            stream));
+            d_temp_storage, temp_storage_size_bytes, d_values, d_row_offsets, 
+            d_column_indices, d_vector_x, d_vector_y, size, size, num_nonzeroes, stream));
     }
     HIP_CHECK(hipDeviceSynchronize());
 
-    for (auto _ : state) {
+    for(auto _ : state) 
+    {
         auto start = std::chrono::high_resolution_clock::now();
-        for (size_t i = 0; i < batch_size; i++) {
+        for(size_t i = 0; i < batch_size; i++) 
+        {
             HIP_CHECK(hipcub::DeviceSpmv::CsrMV(
-                d_temp_storage,
-                temp_storage_size_bytes,
-                d_values,
-                d_row_offsets,
-                d_column_indices,
-                d_vector_x,
-                d_vector_y,
-                size,
-                size,
-                num_nonzeroes,
-                stream));
+                d_temp_storage, temp_storage_size_bytes, d_values, d_row_offsets,
+                d_column_indices, d_vector_x, d_vector_y, size, size, num_nonzeroes, stream));
         }
         HIP_CHECK(hipDeviceSynchronize());
 
@@ -179,11 +176,11 @@ benchmark::RegisterBenchmark(          \
 )
 
 #define BENCHMARK_TYPE(type)         \
+    CREATE_BENCHMARK(type, 1.0e-6f), \
     CREATE_BENCHMARK(type, 1.0e-5f), \
     CREATE_BENCHMARK(type, 1.0e-4f), \
     CREATE_BENCHMARK(type, 1.0e-3f), \
-    CREATE_BENCHMARK(type, 1.0e-2f), \
-    CREATE_BENCHMARK(type, 1.0e-1f)
+    CREATE_BENCHMARK(type, 1.0e-2f)
 
 int main(int argc, char *argv[])
 {
