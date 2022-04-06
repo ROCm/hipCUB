@@ -320,7 +320,7 @@ benchmark::RegisterBenchmark( \
 ), \
 benchmark::RegisterBenchmark( \
     (std::string(EXCL ? "exclusive_scan_by_key" : "inclusive_scan_by_key") + \
-    ("<Datatype:" #T ",Op" #SCAN_OP ">")).c_str(), \
+    ("<Datatype:" #T ",Op:" #SCAN_OP ">")).c_str(), \
     &run_benchmark_by_key<EXCL, T, SCAN_OP>, size, stream, SCAN_OP() \
 ),
 
