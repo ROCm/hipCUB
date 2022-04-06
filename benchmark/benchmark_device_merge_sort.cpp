@@ -56,11 +56,11 @@ std::vector<Key> generate_keys(size_t size)
 template<class Key>
 void run_sort_keys_benchmark(benchmark::State& state,
                              hipStream_t stream,
-                             size_t size,
-                             std::shared_ptr<std::vector<Key>> keys_input)
+                             size_t size)
 {
     using key_type = Key;
     auto compare_function = [] (const key_type & a, const key_type & b) { return a < b; };
+    auto keys_input = std::make_shared<std::vector<Key>>(generate_keys<Key>(size));
 
     key_type * d_keys_input;
     key_type * d_keys_output;
@@ -132,12 +132,12 @@ void run_sort_keys_benchmark(benchmark::State& state,
 template<class Key, class Value>
 void run_sort_pairs_benchmark(benchmark::State& state,
                               hipStream_t stream,
-                              size_t size,
-                              std::shared_ptr<std::vector<Key>> keys_input)
+                              size_t size)
 {
     using key_type = Key;
     using value_type = Value;
     auto compare_function = [] (const key_type & a, const key_type & b) { return a < b; };
+    auto keys_input = std::make_shared<std::vector<Key>>(generate_keys<Key>(size));
 
     std::vector<value_type> values_input(size);
     for(size_t i = 0; i < size; i++)
@@ -231,22 +231,20 @@ void run_sort_pairs_benchmark(benchmark::State& state,
 
 #define CREATE_SORT_KEYS_BENCHMARK(Key) \
     { \
-        auto keys_input = std::make_shared<std::vector<Key>>(generate_keys<Key>(size)); \
         benchmarks.push_back( \
             benchmark::RegisterBenchmark( \
                 (std::string("sort_keys") + "<" #Key ">").c_str(), \
-                [=](benchmark::State& state) { run_sort_keys_benchmark<Key>(state, stream, size, keys_input); } \
+                [=](benchmark::State& state) { run_sort_keys_benchmark<Key>(state, stream, size); } \
             ) \
         ); \
     }
 
 #define CREATE_SORT_PAIRS_BENCHMARK(Key, Value) \
     { \
-        auto keys_input = std::make_shared<std::vector<Key>>(generate_keys<Key>(size)); \
         benchmarks.push_back( \
             benchmark::RegisterBenchmark( \
                 (std::string("sort_pairs") + "<" #Key ", " #Value">").c_str(), \
-                [=](benchmark::State& state) { run_sort_pairs_benchmark<Key, Value>(state, stream, size, keys_input); } \
+                [=](benchmark::State& state) { run_sort_pairs_benchmark<Key, Value>(state, stream, size); } \
             ) \
         ); \
     }
