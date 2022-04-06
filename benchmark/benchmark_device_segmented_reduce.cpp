@@ -197,25 +197,20 @@ benchmark::RegisterBenchmark( \
 
 #define BENCHMARK_TYPE(type, REDUCE_OP) \
     CREATE_BENCHMARK(type, 1, REDUCE_OP), \
-    CREATE_BENCHMARK(type, 10, REDUCE_OP), \
     CREATE_BENCHMARK(type, 100, REDUCE_OP), \
-    CREATE_BENCHMARK(type, 1000, REDUCE_OP), \
     CREATE_BENCHMARK(type, 10000, REDUCE_OP)
 
 #define CREATE_BENCHMARKS(REDUCE_OP) \
     BENCHMARK_TYPE(float, REDUCE_OP), \
     BENCHMARK_TYPE(double, REDUCE_OP), \
     BENCHMARK_TYPE(int8_t, REDUCE_OP), \
-    BENCHMARK_TYPE(uint8_t, REDUCE_OP), \
     BENCHMARK_TYPE(int, REDUCE_OP), \
-    BENCHMARK_TYPE(custom_float2, REDUCE_OP), \
     BENCHMARK_TYPE(custom_double2, REDUCE_OP)
 
 void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     hipStream_t stream,
                     size_t size)
 {
-    using custom_float2 = benchmark_utils::custom_type<float, float>;
     using custom_double2 = benchmark_utils::custom_type<double, double>;
 
     std::vector<benchmark::internal::Benchmark*> bs =
