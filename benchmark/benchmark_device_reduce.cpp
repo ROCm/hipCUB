@@ -155,8 +155,6 @@ benchmark::RegisterBenchmark( \
     CREATE_BENCHMARK(float, REDUCE_OP), \
     CREATE_BENCHMARK(double, REDUCE_OP), \
     CREATE_BENCHMARK(int8_t, REDUCE_OP), \
-    CREATE_BENCHMARK(uint8_t, REDUCE_OP), \
-    CREATE_BENCHMARK(custom_float2, REDUCE_OP), \
     CREATE_BENCHMARK(custom_double2, REDUCE_OP)
 
 int main(int argc, char *argv[])
@@ -179,7 +177,6 @@ int main(int argc, char *argv[])
     HIP_CHECK(hipGetDeviceProperties(&devProp, device_id));
     std::cout << "[HIP] Device name: " << devProp.name << std::endl;
 
-    using custom_float2 = benchmark_utils::custom_type<float, float>;
     using custom_double2 = benchmark_utils::custom_type<double, double>;
 
     // Add benchmarks
