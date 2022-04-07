@@ -111,7 +111,6 @@ build:rocm-benchmark:
   extends:
     - .rocm
     - .gpus:rocm-gpus
-    - .main_or_manual
   stage: build
   script:
     - cmake
@@ -158,6 +157,7 @@ benchmark:rocm:
     - .rocm
     - .benchmark
     - .gpus:rocm
+    - .main_or_manual
   needs:
     - build:rocm-benchmark
 
@@ -267,7 +267,6 @@ build:nvcc-benchmark:
   stage: build
   extends:
     - .nvcc
-    - .main_or_manual
   script:
     - cmake
       -G Ninja
@@ -308,6 +307,7 @@ benchmark:nvcc:
   extends:
     - test:nvcc
     - .benchmark
+    - .main_or_manual
 
 test:nvcc_package:
   stage: test
