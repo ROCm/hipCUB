@@ -40,7 +40,7 @@ std::vector<Key> generate_keys(size_t size)
 
     if(std::is_floating_point<key_type>::value)
     {
-        return benchmark_utils::get_random_data<key_type>(size, (key_type)-1000, (key_type)+1000, size);
+        return benchmark_utils::get_random_data<key_type>(size, static_cast<key_type>(-1000), static_cast<key_type>(1000), size);
     }
     else
     {
@@ -60,7 +60,8 @@ void run_sort_keys_benchmark(benchmark::State& state,
 {
     using key_type = Key;
     auto compare_function = [] (const key_type & a, const key_type & b) { return a < b; };
-    auto keys_input = std::make_shared<std::vector<Key>>(generate_keys<Key>(size));
+
+    auto keys_input = generate_keys<Key>(size);
 
     key_type * d_keys_input;
     key_type * d_keys_output;
@@ -68,7 +69,7 @@ void run_sort_keys_benchmark(benchmark::State& state,
     HIP_CHECK(hipMalloc(&d_keys_output, size * sizeof(key_type)));
     HIP_CHECK(
         hipMemcpy(
-            d_keys_input, keys_input->data(),
+            d_keys_input, keys_input.data(),
             size * sizeof(key_type),
             hipMemcpyHostToDevice
         )
@@ -137,8 +138,8 @@ void run_sort_pairs_benchmark(benchmark::State& state,
     using key_type = Key;
     using value_type = Value;
     auto compare_function = [] (const key_type & a, const key_type & b) { return a < b; };
-    auto keys_input = std::make_shared<std::vector<Key>>(generate_keys<Key>(size));
 
+    auto keys_input = generate_keys<Key>(size);
     std::vector<value_type> values_input(size);
     for(size_t i = 0; i < size; i++)
     {
@@ -151,7 +152,7 @@ void run_sort_pairs_benchmark(benchmark::State& state,
     HIP_CHECK(hipMalloc(&d_keys_output, size * sizeof(key_type)));
     HIP_CHECK(
         hipMemcpy(
-            d_keys_input, keys_input->data(),
+            d_keys_input, keys_input.data(),
             size * sizeof(key_type),
             hipMemcpyHostToDevice
         )
