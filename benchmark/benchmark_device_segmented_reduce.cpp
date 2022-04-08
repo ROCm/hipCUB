@@ -204,8 +204,7 @@ benchmark::RegisterBenchmark( \
     BENCHMARK_TYPE(float, REDUCE_OP), \
     BENCHMARK_TYPE(double, REDUCE_OP), \
     BENCHMARK_TYPE(int8_t, REDUCE_OP), \
-    BENCHMARK_TYPE(int, REDUCE_OP), \
-    BENCHMARK_TYPE(custom_double2, REDUCE_OP)
+    BENCHMARK_TYPE(int, REDUCE_OP)
 
 void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     hipStream_t stream,
