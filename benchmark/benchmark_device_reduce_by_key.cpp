@@ -176,8 +176,7 @@ benchmark::RegisterBenchmark( \
     CREATE_BENCHMARK(int, custom_double2, REDUCE_OP), \
     CREATE_BENCHMARK(int8_t, int8_t, REDUCE_OP), \
     CREATE_BENCHMARK(long long, float, REDUCE_OP), \
-    CREATE_BENCHMARK(long long, double, REDUCE_OP), \
-    CREATE_BENCHMARK(long long, custom_double2, REDUCE_OP)
+    CREATE_BENCHMARK(long long, double, REDUCE_OP)
 
 void add_benchmarks(size_t max_length,
                     std::vector<benchmark::internal::Benchmark*>& benchmarks,
@@ -189,7 +188,11 @@ void add_benchmarks(size_t max_length,
     std::vector<benchmark::internal::Benchmark*> bs =
     {
         CREATE_BENCHMARKS(hipcub::Sum),
+        CREATE_BENCHMARK(long long, custom_double2, hipcub::Sum),
         CREATE_BENCHMARKS(hipcub::Min),
+        #ifdef HIPCUB_ROCPRIM_API
+        CREATE_BENCHMARK(long long, custom_double2, hipcub::Min),
+        #endif
     };
 
     benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
