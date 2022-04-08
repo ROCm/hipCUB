@@ -154,8 +154,7 @@ benchmark::RegisterBenchmark( \
     CREATE_BENCHMARK(long long, REDUCE_OP), \
     CREATE_BENCHMARK(float, REDUCE_OP), \
     CREATE_BENCHMARK(double, REDUCE_OP), \
-    CREATE_BENCHMARK(int8_t, REDUCE_OP), \
-    CREATE_BENCHMARK(custom_double2, REDUCE_OP)
+    CREATE_BENCHMARK(int8_t, REDUCE_OP)
 
 int main(int argc, char *argv[])
 {
@@ -183,8 +182,15 @@ int main(int argc, char *argv[])
     std::vector<benchmark::internal::Benchmark*> benchmarks =
     {
         CREATE_BENCHMARKS(hipcub::Sum),
+        CREATE_BENCHMARK(custom_double2, hipcub::Sum),
         CREATE_BENCHMARKS(hipcub::Min),
+        #ifdef HIPCUB_ROCPRIM_API
+        CREATE_BENCHMARK(custom_double2, hipcub::Min),
+        #endif
         CREATE_BENCHMARKS(hipcub::ArgMin),
+        #ifdef HIPCUB_ROCPRIM_API
+        CREATE_BENCHMARK(custom_double2, hipcub::ArgMin),
+        #endif
     };
 
     // Use manual timing
