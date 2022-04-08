@@ -216,8 +216,15 @@ void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
     std::vector<benchmark::internal::Benchmark*> bs =
     {
         CREATE_BENCHMARKS(hipcub::Sum),
+        BENCHMARK_TYPE(custom_double2, hipcub::Sum),
         CREATE_BENCHMARKS(hipcub::Min),
+        #ifdef HIPCUB_ROCPRIM_API
+        BENCHMARK_TYPE(custom_double2, hipcub::Min),
+        #endif
         CREATE_BENCHMARKS(hipcub::ArgMin),
+        #ifdef HIPCUB_ROCPRIM_API
+        BENCHMARK_TYPE(custom_double2, hipcub::ArgMin),
+        #endif
     };
 
     benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
