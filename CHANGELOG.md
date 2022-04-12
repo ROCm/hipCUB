@@ -2,25 +2,29 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.11.0 for ROCm 5.1.0
+## (Unreleased) hipCUB-2.11.0 for ROCm 5.2.0
 ### Added
-- Device segmented sort
-- Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
-- Device three way partition
 - UniqueByKey device algorithm
 - SubtractLeft, SubtractLeftPartialTile, SubtractRight, SubtractRightPartialTile overloads in BlockAdjacentDifference.
   - The old overloads (FlagHeads, FlagTails, FlagHeadsAndTails) are deprecated.
 - DeviceAdjacentDifference algorithm.
 ### Changed
-- Device_scan and device_segmented_scan: inclusive_scan now uses the input-type as accumulator-type, exclusive_scan uses initial-value-type.
-  - This particularly changes behaviour of small-size input types with large-size output types (e.g. short input, int output).
-  - And low-res input with high-res output (e.g. float input, double output)
-  - Block merge sort no longer supports non power of two blocksizes
 - Obsolated type traits defined in util_type.hpp. Use the standard library equivalents instead.
 - CUB backend references CUB and thrust version 1.16.0.
 - DeviceRadixSort's num_items parameter's type is now templated instead of being an int.
   - If an integral type with a size at most 4 bytes is passed (i.e. an int), the former logic applies.
   - Otherwise the algorithm uses a larger indexing type that makes it possible to sort input data over 2**32 elements.
+
+## (Released) hipCUB-2.10.14 for ROCm 5.1.0
+### Added
+- Device segmented sort
+- Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
+- Device three way partition
+### Changed
+- Device_scan and device_segmented_scan: inclusive_scan now uses the input-type as accumulator-type, exclusive_scan uses initial-value-type.
+  - This particularly changes behaviour of small-size input types with large-size output types (e.g. short input, int output).
+  - And low-res input with high-res output (e.g. float input, double output)
+  - Block merge sort no longer supports non power of two blocksizes
 ### Known Issues
   - grid unit test hanging on HIP on Windows
 
