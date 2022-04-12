@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.11.0 for ROCm 5.2.0
+## (Unreleased) hipCUB-2.12.0 for ROCm 5.2.0
 ### Added
 - UniqueByKey device algorithm
 - SubtractLeft, SubtractLeftPartialTile, SubtractRight, SubtractRightPartialTile overloads in BlockAdjacentDifference.
@@ -15,7 +15,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
   - If an integral type with a size at most 4 bytes is passed (i.e. an int), the former logic applies.
   - Otherwise the algorithm uses a larger indexing type that makes it possible to sort input data over 2**32 elements.
 
-## (Released) hipCUB-2.10.14 for ROCm 5.1.0
+## (Released) hipCUB-2.11.0 for ROCm 5.1.0
 ### Added
 - Device segmented sort
 - Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB

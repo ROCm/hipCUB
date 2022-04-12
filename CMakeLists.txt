@@ -27,7 +27,7 @@ cmake_policy(VERSION 3.16...3.21)
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
 #Adding CMAKE_PREFIX_PATH
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm ${ROCM_PATH})
 
 # hipCUB project
 project(hipcub LANGUAGES CXX)
@@ -36,6 +36,7 @@ project(hipcub LANGUAGES CXX)
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+  ${ROCM_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip # FindHIP.cmake
 )
 
 # Set a default build type if none was specified
@@ -56,7 +57,9 @@ include( ROCMCreatePackage )
 include( ROCMInstallTargets )
 include( ROCMPackageConfigHelpers )
 include( ROCMInstallSymlinks )
-include( ROCMCheckTargetIds OPTIONAL )
+include( ROCMHeaderWrapper )
+include( ROCMCheckTargetIds )
+include( ROCMClients )
 
 #Set the AMDGPU_TARGETS with backward compatiblity
 set(AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
@@ -110,6 +113,8 @@ option(DOWNLOAD_CUB "Download CUB and thrust. Do not search for CUB package" OFF
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 option(BUILD_EXAMPLE "Build Examples" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+#Set the header wrapper ON by default. 
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 
 if(BUILD_ADDRESS_SANITIZER)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
@@ -131,9 +136,14 @@ print_configuration_summary()
 # hipCUB library
 add_subdirectory(hipcub)
 
+if(BUILD_TEST OR (BUILD_BENCHMARK AND NOT ONLY_INSTALL))
+  rocm_package_setup_component(clients)
+endif()
+
 # Tests
 if(BUILD_TEST)
   enable_testing()
+  rocm_package_setup_client_component(tests)
   add_subdirectory(test)
 endif()
 
@@ -144,20 +154,33 @@ endif()
 
 # Benchmarks
 if(BUILD_BENCHMARK AND NOT ONLY_INSTALL)
+  rocm_package_setup_client_component(benchmarks)
   add_subdirectory(benchmark)
+endif()
+
+# Create header wrapper for backward compatibility
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_wrap_header_dir(
+            ${PROJECT_SOURCE_DIR}/hipcub/include/hipcub/
+	    PATTERNS "*.h"
+	    PATTERN "*.hpp"
+	    GUARDS SYMLINK WRAPPER
+	    WRAPPER_LOCATIONS cub/include/hipcub/
+            OUTPUT_LOCATIONS cub/wrapper/include/hipcub/
+	  )
 endif()
 
 # Package
 if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocprim-dev (>= 2.10.1)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "rocprim-devel >= 2.10.1")
+  rocm_package_add_deb_dependencies(DEPENDS "rocprim-dev >= 2.10.1")
+  rocm_package_add_rpm_dependencies(DEPENDS "rocprim-devel >= 2.10.1")
   set(CPACK_DEBIAN_PACKAGE_REPLACES "cub-hip")
   set(CPACK_RPM_PACKAGE_OBSOLETES "cub-hip")
 else()
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-dev (>= 4.4)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip-dev >= 4.4")
+  rocm_package_add_dependencies(DEPENDS "hip-dev >= 4.4")
 endif()
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+set(CPACK_RPM_PACKAGE_LICENSE "BSD")
 # if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
 #   set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 # endif()
