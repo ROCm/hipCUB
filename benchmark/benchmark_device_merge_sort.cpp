@@ -59,7 +59,7 @@ void run_sort_keys_benchmark(benchmark::State& state,
                              size_t size)
 {
     using key_type = Key;
-    auto compare_function = [] __host__ __device__ (const key_type & a, const key_type & b) { return a < b; };
+    auto compare_function = [] __device__ (const key_type & a, const key_type & b) { return a < b; };
 
     auto keys_input = generate_keys<Key>(size);
 
@@ -137,7 +137,7 @@ void run_sort_pairs_benchmark(benchmark::State& state,
 {
     using key_type = Key;
     using value_type = Value;
-    auto compare_function = []  __host__ __device__ (const key_type & a, const key_type & b) { return a < b; };
+    auto compare_function = [] __device__ (const key_type & a, const key_type & b) { return a < b; };
 
     auto keys_input = generate_keys<Key>(size);
     std::vector<value_type> values_input(size);
