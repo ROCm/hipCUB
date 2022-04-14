@@ -368,6 +368,7 @@ void run_sort_pairs_benchmark(benchmark::State &state,
 #define BENCHMARK_KEY_TYPE(type)                \
         CREATE_SORT_KEYS_BENCHMARK(type, 10),   \
         CREATE_SORT_KEYS_BENCHMARK(type, 100),  \
+        CREATE_SORT_KEYS_BENCHMARK(type, 1000), \
         CREATE_SORT_KEYS_BENCHMARK(type, 10000)
 
 void add_sort_keys_benchmarks(std::vector<benchmark::internal::Benchmark *> &benchmarks,
