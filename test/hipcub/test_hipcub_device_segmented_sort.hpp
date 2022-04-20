@@ -93,7 +93,7 @@ using Params = ::testing::Types<
 >;
 
 template<typename ... Args>
-void dispatch_sort_keys(const SortMethod method, Args&& ... args)
+inline void dispatch_sort_keys(const SortMethod method, Args&& ... args)
 {
     switch (method)
     {
@@ -122,7 +122,7 @@ void dispatch_sort_keys(const SortMethod method, Args&& ... args)
     }
 }
 
-std::vector<size_t> get_sizes(const int seed_value)
+inline std::vector<size_t> get_sizes(const int seed_value)
 {
     std::vector<size_t> sizes = {
         1024, 2048, 4096, 1792,
