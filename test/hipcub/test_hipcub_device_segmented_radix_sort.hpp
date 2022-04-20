@@ -75,7 +75,7 @@ typedef ::testing::Types<
 
 TYPED_TEST_SUITE(HipcubDeviceSegmentedRadixSort, Params);
 
-std::vector<size_t> get_sizes()
+inline std::vector<size_t> get_sizes()
 {
     std::vector<size_t> sizes = {
         1024, 2048, 4096, 1792,

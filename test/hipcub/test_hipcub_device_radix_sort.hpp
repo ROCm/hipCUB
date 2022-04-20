@@ -88,7 +88,7 @@ typedef ::testing::Types<
 
 TYPED_TEST_SUITE(HipcubDeviceRadixSort, Params);
 
-std::vector<unsigned int> get_sizes()
+inline std::vector<unsigned int> get_sizes()
 {
     std::vector<unsigned int> sizes = { 1, 10, 53, 211, 1024, 2345, 4096, 34567, (1 << 16) - 1220, (1 << 23) - 76543 };
     const std::vector<unsigned int> random_sizes = test_utils::get_random_data<unsigned int>(10, 1, 100000, rand());
