@@ -25,7 +25,6 @@
 // HIP API
 #include "hipcub/hipcub.hpp"
 
-
 #ifndef DEFAULT_N
 const size_t DEFAULT_N = 1024 * 1024 * 32;
 #endif
