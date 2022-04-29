@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.12.0 for ROCm 5.2.0
+## (Unreleased) hipCUB-2.12.0 for ROCm 5.3.0
 ### Added
 - UniqueByKey device algorithm
 - SubtractLeft, SubtractLeftPartialTile, SubtractRight, SubtractRightPartialTile overloads in BlockAdjacentDifference.
@@ -19,7 +19,11 @@ See README.md on how to build the hipCUB documentation using Doxygen.
   - Otherwise the algorithm uses a larger indexing type that makes it possible to sort input data over 2**32 elements.
 - Improved build parallelism of the test suite by splitting up large compilation units
 
-## (Released) hipCUB-2.11.0 for ROCm 5.1.0
+## (Unreleased) hipCUB-2.11.1 for ROCm 5.2.0
+### Added
+- Packages for tests and benchmark executable on all supported OSes using CPack.
+
+## hipCUB-2.11.0 for ROCm 5.1.0
 ### Added
 - Device segmented sort
 - Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
