@@ -52,7 +52,7 @@ def write_system_info():
     def try_running_info(executable_name):
         out_filename = f'{executable_name}.txt'
         try:
-            run_result = subprocess.run(executable_name, capture_output=True, env=os.environ)
+            run_result = subprocess.run(executable_name, stdout=subprocess.PIPE)
             if run_result.returncode == 0:
                 with open(out_filename, 'wb') as file:
                     file.write(run_result.stdout)
