@@ -333,6 +333,9 @@ benchmark:nvcc:
     - .gpus:nvcc
     - .benchmark
     - .rules:benchmark
+  before_script:
+    # This is only needed because of the legacy before_script in .gpus:nvcc would otherwise overwrite before_script
+    - !reference [.nvcc, before_script]
 
 test:nvcc_package:
   stage: test
