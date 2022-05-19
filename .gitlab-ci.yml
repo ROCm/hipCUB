@@ -102,6 +102,7 @@ build:rocm:
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D GPU_TARGETS="$GPU_TARGETS"
+      -D GPU_TEST_TARGETS="$GPU_TARGETS"
       -D ROCM_SYMLINK_LIBS=OFF
       -B $CI_PROJECT_DIR/build
       -S $CI_PROJECT_DIR
@@ -166,7 +167,7 @@ test:rocm:
     - ctest
       --output-on-failure
       --repeat-until-fail 2
-      --tests-regex "hip|$GPU_TARGET"
+      --tests-regex "$GPU_TARGET"
       --resource-spec-file ./resources.json
       --parallel $PARALLEL_JOBS
 
