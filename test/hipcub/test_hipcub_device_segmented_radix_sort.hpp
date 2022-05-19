@@ -73,6 +73,10 @@ inline std::vector<size_t> get_sizes()
 template<typename TestFixture>
 inline void sort_keys()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     constexpr bool descending = TestFixture::params::descending;
     constexpr unsigned int start_bit = TestFixture::params::start_bit;
@@ -232,6 +236,10 @@ inline void sort_keys()
 template<typename TestFixture>
 inline void sort_pairs()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using value_type = typename TestFixture::params::value_type;
     constexpr bool descending = TestFixture::params::descending;
@@ -425,6 +433,10 @@ inline void sort_pairs()
 template<typename TestFixture>
 inline void sort_keys_double_buffer()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     constexpr bool descending = TestFixture::params::descending;
     constexpr unsigned int start_bit = TestFixture::params::start_bit;
@@ -586,6 +598,10 @@ inline void sort_keys_double_buffer()
 template<typename TestFixture>
 inline void sort_pairs_double_buffer()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using value_type = typename TestFixture::params::value_type;
     constexpr bool descending = TestFixture::params::descending;

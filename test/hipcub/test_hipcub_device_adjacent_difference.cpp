@@ -146,6 +146,10 @@ TYPED_TEST_SUITE(HipcubDeviceAdjacentDifference, Params);
 
 TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using input_type = typename TestFixture::params::input_type;
     static constexpr std::integral_constant<bool, TestFixture::params::left> left_constant{};
     static constexpr std::integral_constant<bool, TestFixture::params::copy> copy_constant{};

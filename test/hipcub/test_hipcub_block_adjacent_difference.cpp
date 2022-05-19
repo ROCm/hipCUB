@@ -442,6 +442,10 @@ void subtract_right_partial_tile_kernel(const T* input, int* tile_sizes, Storage
 
 TYPED_TEST(HipcubBlockAdjacentDifference, FlagHeads)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
   using type = typename TestFixture::params::type;
   // std::vector<bool> is a special case that will cause an error in hipMemcpy
   using stored_flag_type = typename std::conditional<
@@ -544,6 +548,10 @@ TYPED_TEST(HipcubBlockAdjacentDifference, FlagHeads)
 
 TYPED_TEST(HipcubBlockAdjacentDifference, FlagTails)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
   using type = typename TestFixture::params::type;
   // std::vector<bool> is a special case that will cause an error in hipMemcpy
   using stored_flag_type = typename std::conditional<
@@ -646,6 +654,10 @@ TYPED_TEST(HipcubBlockAdjacentDifference, FlagTails)
 
 TYPED_TEST(HipcubBlockAdjacentDifference, FlagHeadsAndTails)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
   using type = typename TestFixture::params::type;
   // std::vector<bool> is a special case that will cause an error in hipMemcpy
   using stored_flag_type = typename std::conditional<
@@ -772,6 +784,10 @@ TYPED_TEST(HipcubBlockAdjacentDifference, FlagHeadsAndTails)
 
 TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeft)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using type = typename TestFixture::params_subtract::type;
     using binary_function = typename TestFixture::params_subtract::binary_function;
 
@@ -867,6 +883,10 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeft)
 
 TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using type = typename TestFixture::params_subtract::type;
     using binary_function = typename TestFixture::params_subtract::binary_function;
 
@@ -981,6 +1001,10 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
 
 TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using type = typename TestFixture::params_subtract::type;
     using binary_function = typename TestFixture::params_subtract::binary_function;
 
@@ -1076,6 +1100,10 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
 
 TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartialTile)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using type = typename TestFixture::params_subtract::type;
     using binary_function = typename TestFixture::params_subtract::binary_function;
 
