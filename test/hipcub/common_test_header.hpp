@@ -21,18 +21,18 @@
 // SOFTWARE.
 
 #include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <type_traits>
-#include <tuple>
-#include <vector>
-#include <utility>
-#include <random>
-#include <cmath>
 #include <limits>
-#include <cstdlib>
+#include <random>
 #include <string>
-#include <cctype>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #ifdef WIN32
 #include <numeric>
@@ -43,7 +43,6 @@
 
 // HIP API
 #include <hip/hip_runtime.h>
-
 
 // test_utils.hpp should only be included by this header.
 // The following definition is used as guard in test_utils.hpp
@@ -82,11 +81,12 @@ namespace test_common_utils
 inline int obtain_device_from_ctest()
 {
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4996 ) // getenv: This function or variable may be unsafe. Consider using _dupenv_s instead.
+    #pragma warning(push)
+    #pragma warning( \
+        disable : 4996) // getenv: This function or variable may be unsafe. Consider using _dupenv_s instead.
 #endif
     static const std::string rg0 = "CTEST_RESOURCE_GROUP_0";
-    if (std::getenv(rg0.c_str()) != nullptr)
+    if(std::getenv(rg0.c_str()) != nullptr)
     {
         std::string amdgpu_target = std::getenv(rg0.c_str());
         std::transform(
@@ -94,15 +94,15 @@ inline int obtain_device_from_ctest()
             amdgpu_target.cend(),
             amdgpu_target.begin(),
             // Feeding std::toupper plainly results in implicitly truncating conversions between int and char triggering warnings.
-            [](unsigned char c){ return static_cast<char>(std::toupper(c)); }
-        );
+            [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
         std::string reqs = std::getenv((rg0 + "_" + amdgpu_target).c_str());
-        return std::atoi(reqs.substr(reqs.find(':') + 1, reqs.find(',') - (reqs.find(':') + 1)).c_str());
+        return std::atoi(
+            reqs.substr(reqs.find(':') + 1, reqs.find(',') - (reqs.find(':') + 1)).c_str());
     }
     else
         return 0;
 #ifdef _MSC_VER
-#pragma warning( pop )
+    #pragma warning(pop)
 #endif
 }
 

@@ -446,20 +446,19 @@ TYPED_TEST(HipcubBlockAdjacentDifference, FlagHeads)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-  using type = typename TestFixture::params::type;
-  // std::vector<bool> is a special case that will cause an error in hipMemcpy
-  using stored_flag_type = typename std::conditional<
-                             std::is_same<bool, typename TestFixture::params::flag_type>::value,
-                             int,
-                             typename TestFixture::params::flag_type
-                         >::type;
-  using flag_type = typename TestFixture::params::flag_type;
-  using flag_op_type = typename TestFixture::params::flag_op_type;
-  constexpr size_t block_size = TestFixture::params::block_size;
-  constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
-  constexpr size_t items_per_block = block_size * items_per_thread;
-  const size_t size = items_per_block * 2048;
-  constexpr size_t grid_size = size / items_per_block;
+    using type = typename TestFixture::params::type;
+    // std::vector<bool> is a special case that will cause an error in hipMemcpy
+    using stored_flag_type = typename std::conditional<
+        std::is_same<bool, typename TestFixture::params::flag_type>::value,
+        int,
+        typename TestFixture::params::flag_type>::type;
+    using flag_type                   = typename TestFixture::params::flag_type;
+    using flag_op_type                = typename TestFixture::params::flag_op_type;
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+    const size_t     size             = items_per_block * 2048;
+    constexpr size_t grid_size        = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
@@ -552,20 +551,19 @@ TYPED_TEST(HipcubBlockAdjacentDifference, FlagTails)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-  using type = typename TestFixture::params::type;
-  // std::vector<bool> is a special case that will cause an error in hipMemcpy
-  using stored_flag_type = typename std::conditional<
-                             std::is_same<bool, typename TestFixture::params::flag_type>::value,
-                             int,
-                             typename TestFixture::params::flag_type
-                         >::type;
-  using flag_type = typename TestFixture::params::flag_type;
-  using flag_op_type = typename TestFixture::params::flag_op_type;
-  constexpr size_t block_size = TestFixture::params::block_size;
-  constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
-  constexpr size_t items_per_block = block_size * items_per_thread;
-  const size_t size = items_per_block * 2048;
-  constexpr size_t grid_size = size / items_per_block;
+    using type = typename TestFixture::params::type;
+    // std::vector<bool> is a special case that will cause an error in hipMemcpy
+    using stored_flag_type = typename std::conditional<
+        std::is_same<bool, typename TestFixture::params::flag_type>::value,
+        int,
+        typename TestFixture::params::flag_type>::type;
+    using flag_type                   = typename TestFixture::params::flag_type;
+    using flag_op_type                = typename TestFixture::params::flag_op_type;
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+    const size_t     size             = items_per_block * 2048;
+    constexpr size_t grid_size        = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
@@ -658,20 +656,19 @@ TYPED_TEST(HipcubBlockAdjacentDifference, FlagHeadsAndTails)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-  using type = typename TestFixture::params::type;
-  // std::vector<bool> is a special case that will cause an error in hipMemcpy
-  using stored_flag_type = typename std::conditional<
-                             std::is_same<bool, typename TestFixture::params::flag_type>::value,
-                             int,
-                             typename TestFixture::params::flag_type
-                         >::type;
-  using flag_type = typename TestFixture::params::flag_type;
-  using flag_op_type = typename TestFixture::params::flag_op_type;
-  constexpr size_t block_size = TestFixture::params::block_size;
-  constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
-  constexpr size_t items_per_block = block_size * items_per_thread;
-  const size_t size = items_per_block * 2048;
-  constexpr size_t grid_size = size / items_per_block;
+    using type = typename TestFixture::params::type;
+    // std::vector<bool> is a special case that will cause an error in hipMemcpy
+    using stored_flag_type = typename std::conditional<
+        std::is_same<bool, typename TestFixture::params::flag_type>::value,
+        int,
+        typename TestFixture::params::flag_type>::type;
+    using flag_type                   = typename TestFixture::params::flag_type;
+    using flag_op_type                = typename TestFixture::params::flag_op_type;
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+    const size_t     size             = items_per_block * 2048;
+    constexpr size_t grid_size        = size / items_per_block;
 
     // Given block size not supported
     if(block_size > test_utils::get_max_block_size())
