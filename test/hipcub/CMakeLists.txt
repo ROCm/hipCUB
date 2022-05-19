@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-set(AMDGPU_TEST_TARGETS "" CACHE STRING "List of specific device types to test for") # Leave empty for default system device
+set(GPU_TEST_TARGETS "" CACHE STRING "List of specific device types to test for (Leave empty for default system device)")
 
 # Gets a test target name based on the first source file.
 function(get_hipcub_test_target TEST_SOURCES TEST_TARGET)
@@ -58,13 +58,12 @@ function(add_hipcub_test_internal TEST_NAME TEST_SOURCES TEST_TARGET)
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test/hipcub"
   )
-  if(AMDGPU_TEST_TARGETS)
-    foreach(AMDGPU_TARGET IN LISTS AMDGPU_TEST_TARGETS)
-      add_relative_test("${AMDGPU_TARGET}-${TEST_NAME}" ${TEST_TARGET})
-      set_tests_properties("${AMDGPU_TARGET}-${TEST_NAME}"
+  if(GPU_TEST_TARGETS)
+    foreach(GPU_TARGET IN LISTS GPU_TEST_TARGETS)
+      add_relative_test("${GPU_TARGET}-${TEST_NAME}" ${TEST_TARGET})
+      set_tests_properties("${GPU_TARGET}-${TEST_NAME}"
           PROPERTIES
-              RESOURCE_GROUPS "1,${AMDGPU_TARGET}:1"
-              LABELS "${AMDGPU_TARGET}"
+              RESOURCE_GROUPS "1,${GPU_TARGET}:1"
       )
     endforeach()
   else()
