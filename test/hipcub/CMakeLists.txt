@@ -64,16 +64,11 @@ function(add_hipcub_test_internal TEST_NAME TEST_SOURCES TEST_TARGET)
       set_tests_properties("${AMDGPU_TARGET}-${TEST_NAME}"
           PROPERTIES
               RESOURCE_GROUPS "1,${AMDGPU_TARGET}:1"
-              LABELS "hip;${AMDGPU_TARGET}"
+              LABELS "${AMDGPU_TARGET}"
       )
     endforeach()
   else()
       add_relative_test(${TEST_NAME} ${TEST_TARGET})
-#TODO: set_test_properties? - wasn't here before, but is in rocPRIM
-      set_tests_properties(${TEST_NAME}
-          PROPERTIES
-              LABELS "hip"
-      )
   endif()
 
   if (WIN32 AND NOT DEFINED DLLS_COPIED)
