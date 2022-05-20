@@ -394,7 +394,7 @@ void run_multi_range_benchmark(benchmark::State& state, size_t bins, hipStream_t
     std::vector<T> levels[ActiveChannels];
     for (unsigned int channel = 0; channel < ActiveChannels; channel++) 
     {
-        levels[channel].reserve(num_levels_channel);
+        levels[channel].resize(num_levels_channel);
         std::iota(levels[channel].begin(), levels[channel].end(), static_cast<T>(0));
         num_levels[channel] = num_levels_channel;
     }
