@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+set(GPU_TEST_TARGETS "" CACHE STRING "List of specific device types to test for (Leave empty for default system device)")
+
 # Gets a test target name based on the first source file.
 function(get_hipcub_test_target TEST_SOURCES TEST_TARGET)
   list(GET TEST_SOURCES 0 TEST_MAIN_SOURCE)
@@ -56,10 +58,18 @@ function(add_hipcub_test_internal TEST_NAME TEST_SOURCES TEST_TARGET)
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test/hipcub"
   )
-  add_relative_test(
-    ${TEST_NAME}
-    ${TEST_TARGET}
-  )
+  if(GPU_TEST_TARGETS)
+    foreach(GPU_TARGET IN LISTS GPU_TEST_TARGETS)
+      add_relative_test("${GPU_TARGET}-${TEST_NAME}" ${TEST_TARGET})
+      set_tests_properties("${GPU_TARGET}-${TEST_NAME}"
+          PROPERTIES
+              RESOURCE_GROUPS "1,${GPU_TARGET}:1"
+      )
+    endforeach()
+  else()
+      add_relative_test(${TEST_NAME} ${TEST_TARGET})
+  endif()
+
   if (WIN32 AND NOT DEFINED DLLS_COPIED)
     set(DLLS_COPIED "YES")
     set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)

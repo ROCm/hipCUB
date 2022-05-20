@@ -123,6 +123,10 @@ void block_run_length_decode_kernel(
 
 TYPED_TEST(HipcubBlockRunLengthDecodeTest, TestDecode)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using ItemT = typename TestFixture::params::item_type;
     using LengthT = typename TestFixture::params::length_type;
     constexpr unsigned block_size = TestFixture::params::block_size;

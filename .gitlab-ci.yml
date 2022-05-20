@@ -102,6 +102,7 @@ build:rocm:
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D GPU_TARGETS="$GPU_TARGETS"
+      -D GPU_TEST_TARGETS="$GPU_TARGETS"
       -D ROCM_SYMLINK_LIBS=OFF
       -B $CI_PROJECT_DIR/build
       -S $CI_PROJECT_DIR
@@ -159,7 +160,16 @@ test:rocm:
     - .rules:test
   script:
     - cd $CI_PROJECT_DIR/build
-    - ctest --output-on-failure --repeat-until-fail 2
+    - cmake
+      -D CMAKE_PREFIX_PATH=/opt/rocm
+      -P $CI_PROJECT_DIR/cmake/GenerateResourceSpec.cmake
+    - cat ./resources.json
+    - ctest
+      --output-on-failure
+      --repeat-until-fail 2
+      --tests-regex "$GPU_TARGET"
+      --resource-spec-file ./resources.json
+      --parallel $PARALLEL_JOBS
 
 .benchmark:
   stage: benchmark

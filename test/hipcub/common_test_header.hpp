@@ -21,16 +21,18 @@
 // SOFTWARE.
 
 #include <algorithm>
-#include <functional>
-#include <iostream>
-#include <type_traits>
-#include <vector>
-#include <utility>
-#include <tuple>
-#include <random>
-#include <limits>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #ifdef WIN32
 #include <numeric>
@@ -75,6 +77,34 @@
 
 namespace test_common_utils
 {
+
+inline int obtain_device_from_ctest()
+{
+#ifdef _MSC_VER
+    #pragma warning(push)
+    #pragma warning( \
+        disable : 4996) // getenv: This function or variable may be unsafe. Consider using _dupenv_s instead.
+#endif
+    static const std::string rg0 = "CTEST_RESOURCE_GROUP_0";
+    if(std::getenv(rg0.c_str()) != nullptr)
+    {
+        std::string amdgpu_target = std::getenv(rg0.c_str());
+        std::transform(
+            amdgpu_target.cbegin(),
+            amdgpu_target.cend(),
+            amdgpu_target.begin(),
+            // Feeding std::toupper plainly results in implicitly truncating conversions between int and char triggering warnings.
+            [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+        std::string reqs = std::getenv((rg0 + "_" + amdgpu_target).c_str());
+        return std::atoi(
+            reqs.substr(reqs.find(':') + 1, reqs.find(',') - (reqs.find(':') + 1)).c_str());
+    }
+    else
+        return 0;
+#ifdef _MSC_VER
+    #pragma warning(pop)
+#endif
+}
 
 inline bool use_hmm()
 {
