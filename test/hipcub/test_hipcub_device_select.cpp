@@ -649,7 +649,14 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
                                                debug_synchronous));
         HIP_CHECK(hipDeviceSynchronize());
 
-        ASSERT_EQ(*d_selected_count_output, size);
+        // Check if number of selected value is as expected
+        size_t selected_count_output;
+        HIP_CHECK(hipMemcpy(&selected_count_output,
+                            d_selected_count_output,
+                            sizeof(size_t),
+                            hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+        ASSERT_EQ(selected_count_output, size);
 
         HIP_CHECK(hipFree(d_temp_storage));
         HIP_CHECK(hipFree(d_selected_count_output));
