@@ -24,6 +24,8 @@
 
 // hipcub API
 #include "hipcub/device/device_select.hpp"
+#include "hipcub/iterator/counting_input_iterator.hpp"
+#include "hipcub/iterator/discard_output_iterator.hpp"
 
 // Params for tests
 template<
@@ -496,6 +498,62 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                 hipFree(d_temp_storage);
             }
         }
+    }
+}
+
+TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    const bool debug_synchronous = false;
+
+    hipStream_t stream = 0; //default stream
+
+    const auto sizes = get_sizes();
+    for(auto size : sizes)
+    {
+        hipcub::CountingInputIterator<unsigned int> d_input;
+        hipcub::DiscardOutputIterator<>             d_output;
+        size_t*                                     d_selected_count_output;
+
+        HIP_CHECK(test_common_utils::hipMallocHelper((&d_selected_count_output), sizeof(size_t)));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // temp storage
+        size_t temp_storage_size_bytes;
+        // Get size of d_temp_storage
+        HIP_CHECK(hipcub::DeviceSelect::Unique(nullptr,
+                                               temp_storage_size_bytes,
+                                               d_input,
+                                               d_output,
+                                               d_selected_count_output,
+                                               size,
+                                               stream,
+                                               debug_synchronous));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // temp_storage_size_bytes must be >0
+        ASSERT_GT(temp_storage_size_bytes, 0U);
+
+        // allocate temporary storage
+        void* d_temp_storage = nullptr;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // Run
+        HIP_CHECK(hipcub::DeviceSelect::Unique(d_temp_storage,
+                                               temp_storage_size_bytes,
+                                               d_input,
+                                               d_output,
+                                               d_selected_count_output,
+                                               size,
+                                               stream,
+                                               debug_synchronous));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        ASSERT_EQ(*d_selected_count_output, size);
     }
 }
 
