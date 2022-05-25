@@ -610,7 +610,7 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
     const auto sizes = get_sizes();
     for(auto size : sizes)
     {
-        hipcub::CountingInputIterator<unsigned int> d_input;
+        hipcub::CountingInputIterator<unsigned int> d_input(0);
         hipcub::DiscardOutputIterator<>             d_output;
         size_t*                                     d_selected_count_output;
 
