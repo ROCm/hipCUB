@@ -215,6 +215,102 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
     }
 }
 
+TEST(HipcubDeviceSelectTests, FlagNormalization)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T                      = int;
+    using U                      = long;
+    using F                      = unsigned int;
+    const bool debug_synchronous = false;
+
+    hipStream_t stream = 0; // default stream
+
+    const std::vector<size_t> sizes = get_sizes();
+    for(auto size : sizes)
+    {
+
+        hipcub::CountingInputIterator<T> d_input(0);
+        hipcub::CountingInputIterator<F> d_flags(1);
+        U*                               d_output;
+        unsigned int*                    d_selected_count_output;
+
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, size * sizeof(U)));
+        HIP_CHECK(
+            test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // Calculate expected results on host
+        std::vector<U> expected;
+        expected.reserve(size);
+        for(size_t i = 0; i < size; i++)
+        {
+            if(d_flags[i] != 0)
+            {
+                expected.push_back(static_cast<T>(i));
+            }
+        }
+
+        // temp storage
+        size_t temp_storage_size_bytes;
+        // Get size of d_temp_storage
+        HIP_CHECK(hipcub::DeviceSelect::Flagged(nullptr,
+                                                temp_storage_size_bytes,
+                                                d_input,
+                                                d_flags,
+                                                d_output,
+                                                d_selected_count_output,
+                                                size,
+                                                stream,
+                                                debug_synchronous));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // temp_storage_size_bytes must be >0
+        ASSERT_GT(temp_storage_size_bytes, 0U);
+
+        // allocate temporary storage
+        void* d_temp_storage = nullptr;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // Run
+        HIP_CHECK(hipcub::DeviceSelect::Flagged(d_temp_storage,
+                                                temp_storage_size_bytes,
+                                                d_input,
+                                                d_flags,
+                                                d_output,
+                                                d_selected_count_output,
+                                                size,
+                                                stream,
+                                                debug_synchronous));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        // Check if number of selected value is as expected
+        unsigned int selected_count_output = 0;
+        HIP_CHECK(hipMemcpy(&selected_count_output,
+                            d_selected_count_output,
+                            sizeof(unsigned int),
+                            hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+        ASSERT_EQ(selected_count_output, size);
+
+        // Check if output values are as expected
+        std::vector<U> output(size);
+        HIP_CHECK(hipMemcpy(output.data(), d_output, size * sizeof(U), hipMemcpyDeviceToHost));
+        HIP_CHECK(hipDeviceSynchronize());
+        for(size_t i = 0; i < size; i++)
+        {
+            ASSERT_EQ(output[i], expected[i]) << "where index = " << i;
+        }
+
+        HIP_CHECK(hipFree(d_output));
+        HIP_CHECK(hipFree(d_selected_count_output));
+        HIP_CHECK(hipFree(d_temp_storage));
+    }
+}
+
 struct TestSelectOp
 {
     template<class T>
@@ -554,6 +650,9 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
         HIP_CHECK(hipDeviceSynchronize());
 
         ASSERT_EQ(*d_selected_count_output, size);
+
+        HIP_CHECK(hipFree(d_temp_storage));
+        HIP_CHECK(hipFree(d_selected_count_output));
     }
 }
 
