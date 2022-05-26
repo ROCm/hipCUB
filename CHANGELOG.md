@@ -1,10 +1,11 @@
 # Change Log for hipCUB
 
 See README.md on how to build the hipCUB documentation using Doxygen.
-## (Unreleased) hipCUB-2.11.1 for ROCm 5.2.0
+## (Released) hipCUB-2.11.1 for ROCm 5.2.0
 ### Added
 - Packages for tests and benchmark executable on all supported OSes using CPack.
-## (Unreleased) hipCUB-2.11.0 for ROCm 5.1.0
+
+## (Released) hipCUB-2.11.0 for ROCm 5.1.0
 ### Added
 - Device segmented sort
 - Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
