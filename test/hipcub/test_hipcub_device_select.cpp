@@ -240,7 +240,6 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, size * sizeof(U)));
         HIP_CHECK(
             test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // Calculate expected results on host
         std::vector<U> expected;
@@ -249,7 +248,7 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
         {
             if(d_flags[i] != 0)
             {
-                expected.push_back(static_cast<T>(i));
+                expected.push_back(static_cast<U>(i));
             }
         }
 
@@ -273,7 +272,6 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
         // allocate temporary storage
         void* d_temp_storage = nullptr;
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // Run
         HIP_CHECK(hipcub::DeviceSelect::Flagged(d_temp_storage,
@@ -293,13 +291,13 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
                             d_selected_count_output,
                             sizeof(unsigned int),
                             hipMemcpyDeviceToHost));
-        HIP_CHECK(hipDeviceSynchronize());
+
         ASSERT_EQ(selected_count_output, size);
 
         // Check if output values are as expected
         std::vector<U> output(size);
         HIP_CHECK(hipMemcpy(output.data(), d_output, size * sizeof(U), hipMemcpyDeviceToHost));
-        HIP_CHECK(hipDeviceSynchronize());
+
         for(size_t i = 0; i < size; i++)
         {
             ASSERT_EQ(output[i], expected[i]) << "where index = " << i;
@@ -615,7 +613,6 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
         size_t*                                     d_selected_count_output;
 
         HIP_CHECK(test_common_utils::hipMallocHelper((&d_selected_count_output), sizeof(size_t)));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // temp storage
         size_t temp_storage_size_bytes;
@@ -636,7 +633,6 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
         // allocate temporary storage
         void* d_temp_storage = nullptr;
         HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // Run
         HIP_CHECK(hipcub::DeviceSelect::Unique(d_temp_storage,
@@ -655,7 +651,7 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
                             d_selected_count_output,
                             sizeof(size_t),
                             hipMemcpyDeviceToHost));
-        HIP_CHECK(hipDeviceSynchronize());
+
         ASSERT_EQ(selected_count_output, size);
 
         HIP_CHECK(hipFree(d_temp_storage));
