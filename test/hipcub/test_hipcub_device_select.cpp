@@ -231,15 +231,16 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
     {
+        SCOPED_TRACE(testing::Message() << "with size = " << size);
 
         hipcub::CountingInputIterator<T> d_input(0);
         hipcub::CountingInputIterator<F> d_flags(1);
         U*                               d_output;
         unsigned int*                    d_selected_count_output;
 
-        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, size * sizeof(U)));
-        HIP_CHECK(
-            test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, size * sizeof(*d_output)));
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output,
+                                                     sizeof(*d_selected_count_output)));
 
         // Calculate expected results on host
         std::vector<U> expected;
@@ -289,14 +290,15 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
         unsigned int selected_count_output = 0;
         HIP_CHECK(hipMemcpy(&selected_count_output,
                             d_selected_count_output,
-                            sizeof(unsigned int),
+                            sizeof(selected_count_output),
                             hipMemcpyDeviceToHost));
 
         ASSERT_EQ(selected_count_output, size);
 
         // Check if output values are as expected
         std::vector<U> output(size);
-        HIP_CHECK(hipMemcpy(output.data(), d_output, size * sizeof(U), hipMemcpyDeviceToHost));
+        HIP_CHECK(
+            hipMemcpy(output.data(), d_output, size * sizeof(*d_output), hipMemcpyDeviceToHost));
 
         for(size_t i = 0; i < size; i++)
         {
@@ -608,6 +610,8 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
     const auto sizes = get_sizes();
     for(auto size : sizes)
     {
+        SCOPED_TRACE(testing::Message() << "with size = " << size);
+
         hipcub::CountingInputIterator<unsigned int> d_input(0);
         hipcub::DiscardOutputIterator<>             d_output;
         size_t*                                     d_selected_count_output;
