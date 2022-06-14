@@ -469,7 +469,7 @@ TYPED_TEST(HipcubDeviceAdjacentDifferenceLargeTests, LargeIndicesAndOpOnce)
             static constexpr auto copy_tag = std::integral_constant<bool, copy>{};
 
             // Allocate temporary storage
-            std::size_t temp_storage_size = 1;
+            std::size_t temp_storage_size = 0;
             void*       d_temp_storage    = nullptr;
             HIP_CHECK(dispatch_adjacent_difference(left_tag,
                                                    copy_tag,
