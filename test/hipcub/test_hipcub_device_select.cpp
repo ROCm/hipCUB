@@ -254,7 +254,7 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
         }
 
         // temp storage
-        size_t temp_storage_size_bytes;
+        size_t temp_storage_size_bytes = 0;
         // Get size of d_temp_storage
         HIP_CHECK(hipcub::DeviceSelect::Flagged(nullptr,
                                                 temp_storage_size_bytes,
@@ -265,7 +265,6 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
                                                 size,
                                                 stream,
                                                 debug_synchronous));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -284,7 +283,6 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
                                                 size,
                                                 stream,
                                                 debug_synchronous));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // Check if number of selected value is as expected
         unsigned int selected_count_output = 0;
@@ -619,7 +617,7 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
         HIP_CHECK(test_common_utils::hipMallocHelper((&d_selected_count_output), sizeof(size_t)));
 
         // temp storage
-        size_t temp_storage_size_bytes;
+        size_t temp_storage_size_bytes = 0;
         // Get size of d_temp_storage
         HIP_CHECK(hipcub::DeviceSelect::Unique(nullptr,
                                                temp_storage_size_bytes,
@@ -629,7 +627,6 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
                                                size,
                                                stream,
                                                debug_synchronous));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // temp_storage_size_bytes must be >0
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -647,10 +644,9 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
                                                size,
                                                stream,
                                                debug_synchronous));
-        HIP_CHECK(hipDeviceSynchronize());
 
         // Check if number of selected value is as expected
-        size_t selected_count_output;
+        size_t selected_count_output = 0;
         HIP_CHECK(hipMemcpy(&selected_count_output,
                             d_selected_count_output,
                             sizeof(size_t),
