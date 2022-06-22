@@ -33,15 +33,49 @@
 #include "../../config.hpp"
 
 // Block
-#include <cub/block/block_histogram.cuh>
+#include <cub/block/block_adjacent_difference.cuh>
 #include <cub/block/block_discontinuity.cuh>
 #include <cub/block/block_exchange.cuh>
+#include <cub/block/block_histogram.cuh>
 #include <cub/block/block_load.cuh>
+#include <cub/block/block_merge_sort.cuh>
 #include <cub/block/block_radix_rank.cuh>
 #include <cub/block/block_radix_sort.cuh>
 #include <cub/block/block_reduce.cuh>
 #include <cub/block/block_scan.cuh>
 #include <cub/block/block_store.cuh>
+
+// Device functions must be wrapped so they return
+// hipError_t instead of cudaError_t
+#include "device/device_adjacent_difference.hpp"
+#include "device/device_histogram.hpp"
+#include "device/device_merge_sort.hpp"
+#include "device/device_partition.hpp"
+#include "device/device_radix_sort.hpp"
+#include "device/device_reduce.hpp"
+#include "device/device_run_length_encode.hpp"
+#include "device/device_scan.hpp"
+#include "device/device_segmented_radix_sort.hpp"
+#include "device/device_segmented_reduce.hpp"
+#include "device/device_segmented_sort.hpp"
+#include "device/device_select.hpp"
+#include "device/device_spmv.hpp"
+
+// Grid
+#include <grid/grid_even_share.cuh>
+#include <grid/grid_mapping.cuh>
+#include <grid/grid_queue.cuh>
+
+// Iterator
+#include <cub/iterator/arg_index_input_iterator.cuh>
+#include <cub/iterator/cache_modified_input_iterator.cuh>
+#include <cub/iterator/cache_modified_output_iterator.cuh>
+#include <cub/iterator/constant_input_iterator.cuh>
+#include <cub/iterator/counting_input_iterator.cuh>
+#include <cub/iterator/discard_output_iterator.cuh>
+#include <cub/iterator/tex_obj_input_iterator.cuh>
+#include <cub/iterator/tex_ref_input_iterator.cuh>
+#include <cub/iterator/transform_input_iterator.cuh>
 
 // Thread
 #include <cub/thread/thread_load.cuh>
@@ -53,43 +87,19 @@
 // Warp
 #include <cub/warp/warp_exchange.cuh>
 #include <cub/warp/warp_load.cuh>
+#include <cub/warp/warp_merge_sort.cuh>
 #include <cub/warp/warp_reduce.cuh>
 #include <cub/warp/warp_scan.cuh>
 #include <cub/warp/warp_store.cuh>
-
-// Iterator
-#include <cub/iterator/arg_index_input_iterator.cuh>
-#include <cub/iterator/cache_modified_input_iterator.cuh>
-#include <cub/iterator/cache_modified_output_iterator.cuh>
-#include <cub/iterator/constant_input_iterator.cuh>
-#include <cub/iterator/counting_input_iterator.cuh>
-#include <cub/iterator/tex_obj_input_iterator.cuh>
-#include <cub/iterator/tex_ref_input_iterator.cuh>
-#include <cub/iterator/transform_input_iterator.cuh>
 
 // Util
 #include <cub/util_debug.cuh>
 #include <cub/util_device.cuh>
 #include <cub/util_macro.cuh>
-#include <cub/util_type.cuh>
 #include <cub/util_ptx.cuh>
-
+#include <cub/util_type.cuh>
 // These functions must be wrapped so they return
 // hipError_t instead of cudaError_t
 #include "util_allocator.hpp"
-
-// Device functions must be wrapped so they return
-// hipError_t instead of cudaError_t
-#include "device/device_adjacent_difference.hpp"
-#include "device/device_histogram.hpp"
-#include "device/device_radix_sort.hpp"
-#include "device/device_reduce.hpp"
-#include "device/device_run_length_encode.hpp"
-#include "device/device_segmented_radix_sort.hpp"
-#include "device/device_segmented_reduce.hpp"
-#include "device/device_segmented_sort.hpp"
-#include "device/device_scan.hpp"
-#include "device/device_select.hpp"
-#include "device/device_spmv.hpp"
 
 #endif // HIPCUB_CUB_HIPCUB_HPP_
