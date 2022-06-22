@@ -41,9 +41,13 @@
 #include <cub/block/block_merge_sort.cuh>
 #include <cub/block/block_radix_rank.cuh>
 #include <cub/block/block_radix_sort.cuh>
+#include <cub/block/block_raking_layout.cuh>
 #include <cub/block/block_reduce.cuh>
+#include <cub/block/block_run_length_decode.cuh>
 #include <cub/block/block_scan.cuh>
+#include <cub/block/block_shuffle.cuh>
 #include <cub/block/block_store.cuh>
+#include <cub/block/radix_rank_sort_operations.cuh>
 
 // Device functions must be wrapped so they return
 // hipError_t instead of cudaError_t
@@ -62,9 +66,12 @@
 #include "device/device_spmv.hpp"
 
 // Grid
-#include <grid/grid_even_share.cuh>
-#include <grid/grid_mapping.cuh>
-#include <grid/grid_queue.cuh>
+#include <cub/grid/grid_even_share.cuh>
+#include <cub/grid/grid_mapping.cuh>
+#include <cub/grid/grid_queue.cuh>
+// These functions must be wrapped so they return
+// hipError_t instead of cudaError_t
+#include "grid/grid_barrier.hpp"
 
 // Iterator
 #include <cub/iterator/arg_index_input_iterator.cuh>
@@ -82,6 +89,8 @@
 #include <cub/thread/thread_operators.cuh>
 #include <cub/thread/thread_reduce.cuh>
 #include <cub/thread/thread_scan.cuh>
+#include <cub/thread/thread_search.cuh>
+#include <cub/thread/thread_sort.cuh>
 #include <cub/thread/thread_store.cuh>
 
 // Warp
