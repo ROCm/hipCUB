@@ -41,9 +41,10 @@
 #include "../../../util_type.hpp"
 #include "../../../util_ptx.hpp"
 
-#include "../thread/thread_reduce.hpp"
 #include "../block/block_scan.hpp"
 #include "../block/radix_rank_sort_operations.hpp"
+#include "../thread/thread_reduce.hpp"
+#include "../thread/thread_scan.hpp"
 
 BEGIN_HIPCUB_NAMESPACE
 
