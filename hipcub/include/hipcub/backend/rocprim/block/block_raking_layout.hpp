@@ -74,7 +74,7 @@ struct BlockRakingLayout
 
         /// Maximum number of warp-synchronous raking threads
         MAX_RAKING_THREADS = ::rocprim::detail::get_min_warp_size(
-            static_cast<unsigned int> BLOCK_THREADS, HIPCUB_DEVICE_WARP_THREADS),
+            static_cast<unsigned int>(BLOCK_THREADS), HIPCUB_DEVICE_WARP_THREADS),
 
         /// Number of raking elements per warp-synchronous raking thread (rounded up)
         SEGMENT_LENGTH = (SHARED_ELEMENTS + MAX_RAKING_THREADS - 1) / MAX_RAKING_THREADS,
