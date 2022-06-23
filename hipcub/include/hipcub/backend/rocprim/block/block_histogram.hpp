@@ -30,6 +30,8 @@
 #ifndef HIPCUB_ROCPRIM_BLOCK_BLOCK_HISTOGRAM_HPP_
 #define HIPCUB_ROCPRIM_BLOCK_BLOCK_HISTOGRAM_HPP_
 
+#include "../util_ptx.hpp"
+
 #include <type_traits>
 
 #include <rocprim/block/block_histogram.hpp>
