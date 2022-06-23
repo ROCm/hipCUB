@@ -43,6 +43,7 @@
 #ifdef __HIP_PLATFORM_AMD__
     #define HIPCUB_ROCPRIM_API 1
     #define HIPCUB_RUNTIME_FUNCTION __host__
+    #define HIPCUB_ARCH 1 // ignored with rocPRIM backend
 #elif defined(__HIP_PLATFORM_NVIDIA__)
     #define HIPCUB_CUB_API 1
     #define HIPCUB_RUNTIME_FUNCTION CUB_RUNTIME_FUNCTION
