@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -92,6 +92,7 @@ void block_run_length_decode_kernel(
         RunsPerThread,
         DecodedItemsPerThread
     >;
+    static constexpr unsigned int decoded_items_per_block = BlockSize * DecodedItemsPerThread;
     __shared__ typename BlockRunLengthDecodeT::TempStorage temp_storage;
 
     ItemT run_items[RunsPerThread];
@@ -115,9 +116,13 @@ void block_run_length_decode_kernel(
         ItemT decoded_items[DecodedItemsPerThread];
 
         block_run_length_decode.RunLengthDecode(decoded_items, decoded_window_offset);
-        hipcub::StoreDirectBlocked(global_thread_idx, d_decoded_items + decoded_window_offset, decoded_items);
+        hipcub::StoreDirectBlocked(
+            global_thread_idx,
+            d_decoded_items + decoded_window_offset,
+            decoded_items,
+            hipcub::Min{}(total_decoded_size - decoded_window_offset, decoded_items_per_block));
 
-        decoded_window_offset += BlockSize * DecodedItemsPerThread;
+        decoded_window_offset += decoded_items_per_block;
     }
 }
 
