@@ -33,27 +33,31 @@
 const size_t DEFAULT_N = 1024 * 1024 * 128;
 #endif
 
-enum class benchmark_kinds
+enum class RadixRankAlgorithm
 {
-    basic,
-    basic_memoize_outer_scan,
-    match,
+    RADIX_RANK_BASIC,
+    RADIX_RANK_MEMOIZE,
+    RADIX_RANK_MATCH,
 };
 
 template<class T,
-         unsigned int    RadixBits,
-         bool            Descending,
-         benchmark_kinds BenchmarkKind,
-         unsigned int    BlockSize,
-         unsigned int    ItemsPerThread,
-         unsigned int    Trials>
-__global__ __launch_bounds__(BlockSize) void rank_kernel(const T* input, int* output)
+         unsigned int       RadixBits,
+         bool               Descending,
+         RadixRankAlgorithm BenchmarkKind,
+         unsigned int       BlockSize,
+         unsigned int       ItemsPerThread,
+         unsigned int       Trials>
+__global__ __launch_bounds__(BlockSize) void rank_kernel(const T* keys_input, int* ranks_output)
 {
+    constexpr bool     warp_striped = BenchmarkKind == RadixRankAlgorithm::RADIX_RANK_MATCH;
     const unsigned int lid          = hipThreadIdx_x;
     const unsigned int block_offset = hipBlockIdx_x * ItemsPerThread * BlockSize;
 
     T keys[ItemsPerThread];
-    hipcub::LoadDirectStriped<BlockSize>(lid, input + block_offset, keys);
+    if(warp_striped)
+        hipcub::LoadDirectWarpStriped(lid, keys_input + block_offset, keys);
+    else
+        hipcub::LoadDirectBlocked(lid, keys_input + block_offset, keys);
 
     using KeyTraits      = hipcub::Traits<T>;
     using UnsignedBits   = typename KeyTraits::UnsignedBits;
@@ -63,12 +67,12 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const T* input, int* ou
         = reinterpret_cast<UnsignedBits(&)[ItemsPerThread]>(keys);
 
     using RankType = std::conditional_t<
-        BenchmarkKind == benchmark_kinds::match,
+        BenchmarkKind == RadixRankAlgorithm::RADIX_RANK_MATCH,
         hipcub::BlockRadixRankMatch<BlockSize, RadixBits, Descending>,
         hipcub::BlockRadixRank<BlockSize,
                                RadixBits,
                                Descending,
-                               BenchmarkKind == benchmark_kinds::basic_memoize_outer_scan>>;
+                               BenchmarkKind == RadixRankAlgorithm::RADIX_RANK_MEMOIZE>>;
 
 #pragma unroll
     for(int KEY = 0; KEY < ItemsPerThread; KEY++)
@@ -96,14 +100,17 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const T* input, int* ou
         }
     }
 
-    hipcub::StoreDirectStriped<BlockSize>(lid, output + block_offset, ranks);
+    if(warp_striped)
+        hipcub::StoreDirectWarpStriped(lid, ranks_output + block_offset, ranks);
+    else
+        hipcub::StoreDirectBlocked(lid, ranks_output + block_offset, ranks);
 }
 
 template<class T,
-         benchmark_kinds BenchmarkKind,
-         unsigned int    BlockSize,
-         unsigned int    ItemsPerThread,
-         unsigned int    Trials = 10>
+         RadixRankAlgorithm BenchmarkKind,
+         unsigned int       BlockSize,
+         unsigned int       ItemsPerThread,
+         unsigned int       Trials = 10>
 void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 {
     constexpr auto items_per_block = BlockSize * ItemsPerThread;
@@ -162,10 +169,10 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
         stream,                                                                                  \
         size)
 
-#define CREATE_BENCHMARK_KINDS(type, block, ipt)                                       \
-    CREATE_BENCHMARK(type, benchmark_kinds::basic, block, ipt),                        \
-        CREATE_BENCHMARK(type, benchmark_kinds::basic_memoize_outer_scan, block, ipt), \
-        CREATE_BENCHMARK(type, benchmark_kinds::match, block, ipt)
+#define CREATE_BENCHMARK_KINDS(type, block, ipt)                                    \
+    CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_BASIC, block, ipt),       \
+        CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_MEMOIZE, block, ipt), \
+        CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_MATCH, block, ipt)
 
 #define BENCHMARK_TYPE(type, block)                                                      \
     CREATE_BENCHMARK_KINDS(type, block, 1), CREATE_BENCHMARK_KINDS(type, block, 4),      \
@@ -181,10 +188,6 @@ void add_benchmarks(const std::string&                            name,
         BENCHMARK_TYPE(int, 128),
         BENCHMARK_TYPE(int, 256),
         BENCHMARK_TYPE(int, 512),
-
-        BENCHMARK_TYPE(int8_t, 128),
-        BENCHMARK_TYPE(int8_t, 256),
-        BENCHMARK_TYPE(int8_t, 512),
 
         BENCHMARK_TYPE(uint8_t, 128),
         BENCHMARK_TYPE(uint8_t, 256),
