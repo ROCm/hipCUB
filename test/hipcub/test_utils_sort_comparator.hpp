@@ -50,7 +50,7 @@ struct key_comparator<Key, Descending, StartBit, EndBit, false, typename std::en
     static constexpr Key radix_mask_bottom = (Key(1) << StartBit) - 1;
     static constexpr Key radix_mask = radix_mask_upper ^ radix_mask_bottom;
 
-    bool operator()(const Key& lhs, const Key& rhs)
+    bool operator()(const Key& lhs, const Key& rhs) const
     {
         Key l = lhs & radix_mask;
         Key r = rhs & radix_mask;
@@ -62,7 +62,7 @@ template <class Key, bool Descending, unsigned int StartBit, unsigned int EndBit
 struct key_comparator<Key, Descending, StartBit, EndBit, false, typename std::enable_if<std::is_floating_point<Key>::value>::type>
 {
     // Floating-point types do not support StartBit and EndBit.
-    bool operator()(const Key&, const Key&)
+    bool operator()(const Key&, const Key&) const
     {
         return false;
     }
@@ -71,7 +71,7 @@ struct key_comparator<Key, Descending, StartBit, EndBit, false, typename std::en
 template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_comparator<Key, Descending, StartBit, EndBit, true, typename std::enable_if<std::is_integral<Key>::value>::type>
 {
-    bool operator()(const Key& lhs, const Key& rhs)
+    bool operator()(const Key& lhs, const Key& rhs) const
     {
         return Descending ? (rhs < lhs) : (lhs < rhs);
     }
@@ -80,7 +80,7 @@ struct key_comparator<Key, Descending, StartBit, EndBit, true, typename std::ena
 template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_comparator<Key, Descending, StartBit, EndBit, true, typename std::enable_if<std::is_floating_point<Key>::value>::type>
 {
-    bool operator()(const Key& lhs, const Key& rhs)
+    bool operator()(const Key& lhs, const Key& rhs) const
     {
         if(is_floating_nan_host(lhs) && is_floating_nan_host(rhs) && std::signbit(lhs) == std::signbit(rhs)){
             return false;
@@ -102,7 +102,7 @@ template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_comparator<Key, Descending, StartBit, EndBit, true,
                       typename std::enable_if<std::is_same<Key, test_utils::half>::value>::type>
 {
-    bool operator()(const Key& lhs, const Key& rhs)
+    bool operator()(const Key& lhs, const Key& rhs) const
     {
         test_utils::native_half lhs_native(lhs);
         test_utils::native_half rhs_native(rhs);
@@ -114,7 +114,7 @@ template<class Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_comparator<Key, Descending, StartBit, EndBit, true,
                       typename std::enable_if<std::is_same<Key, test_utils::bfloat16>::value>::type>
 {
-    bool operator()(const Key& lhs, const Key& rhs)
+    bool operator()(const Key& lhs, const Key& rhs) const
     {
         // HIP's half and bfloat16 doesn't have __host__ comparison operators, use floats instead
         return key_comparator<float, Descending, 0, sizeof(float) * 8>()(lhs, rhs);
@@ -124,7 +124,7 @@ struct key_comparator<Key, Descending, StartBit, EndBit, true,
 template<class Key, class Value, bool Descending, unsigned int StartBit, unsigned int EndBit>
 struct key_value_comparator
 {
-    bool operator()(const std::pair<Key, Value>& lhs, const std::pair<Key, Value>& rhs)
+    bool operator()(const std::pair<Key, Value>& lhs, const std::pair<Key, Value>& rhs) const
     {
         return key_comparator<Key, Descending, StartBit, EndBit>()(lhs.first, rhs.first);
     }
