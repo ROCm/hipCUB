@@ -169,10 +169,10 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
         stream,                                                                                  \
         size)
 
-#define CREATE_BENCHMARK_KINDS(type, block, ipt)                                    \
-    CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_BASIC, block, ipt),       \
-        CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_MEMOIZE, block, ipt), \
-        CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_MATCH, block, ipt)
+// Note: RADIX_RANK_MATCH disabled because the related tests do not pass.
+#define CREATE_BENCHMARK_KINDS(type, block, ipt)                              \
+    CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_BASIC, block, ipt), \
+        CREATE_BENCHMARK(type, RadixRankAlgorithm::RADIX_RANK_MEMOIZE, block, ipt)
 
 #define BENCHMARK_TYPE(type, block)                                                      \
     CREATE_BENCHMARK_KINDS(type, block, 1), CREATE_BENCHMARK_KINDS(type, block, 4),      \
