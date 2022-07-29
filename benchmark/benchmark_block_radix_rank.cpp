@@ -113,8 +113,8 @@ template<class T,
          unsigned int       Trials = 10>
 void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 {
-    constexpr auto items_per_block = BlockSize * ItemsPerThread;
-    const auto     size = items_per_block * ((N + items_per_block - 1) / items_per_block);
+    constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
+    const unsigned int     size = items_per_block * ((N + items_per_block - 1) / items_per_block);
 
     std::vector<T> input;
     if(std::is_floating_point<T>::value)
