@@ -11,6 +11,9 @@ function or by parameters.
 - Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
 - CUB backend references CUB and thrust version 1.17.1.
+### Known Issues
+- `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
+- `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
 
 ## (Unreleased) hipCUB-2.12.0 for ROCm 5.3.0
 ### Added

@@ -31,15 +31,10 @@
 #include "common_test_header.hpp"
 
 // hipcub API
-#include "hipcub/util_type.hpp"
-#include "hipcub/block/block_radix_sort.hpp"
 #include "hipcub/block/block_load.hpp"
-#include "hipcub/block/block_store.hpp"
-
-#include "hipcub/block/block_exchange.hpp"
 #include "hipcub/block/block_radix_rank.hpp"
-
-#include "hipcub/block/radix_rank_sort_operations.hpp"
+#include "hipcub/block/block_store.hpp"
+#include "hipcub/util_type.hpp"
 
 template<class Key,
          unsigned int BlockSize,
@@ -69,13 +64,13 @@ public:
 typedef ::testing::Types<
     // Power of 2 BlockSize
     params<unsigned int, 64U, 1>,
-    params<int, 128U, 1>,
-    params<unsigned int, 256U, 1>,
+    params<test_utils::half, 128U, 1>,
+    params<float, 256U, 1>,
     params<unsigned short, 512U, 1, true>,
 
     // Non-power of 2 BlockSize
-    params<short, 65U, 1>,
-    params<int, 37U, 1>,
+    params<double, 65U, 1>,
+    params<float, 37U, 1>,
     params<long long, 510U, 1, true>,
     params<unsigned int, 162U, 1, false>,
     params<unsigned char, 255U, 1>,
@@ -84,25 +79,22 @@ typedef ::testing::Types<
     params<unsigned long long, 64U, 2, true>,
     params<int, 128U, 4>,
     params<unsigned short, 256U, 7>,
+    params<float, 512U, 2, false>,
 
     // Non-power of 2 BlockSize and ItemsPerThread > 1
-    params<int, 33U, 5>,
+    params<double, 33U, 5>,
     params<char, 464U, 2, true>,
     params<unsigned short, 100U, 3>,
-    params<short, 234U, 9>,
+    params<test_utils::half, 234U, 9>,
 
     // StartBit and MaxRadixBits
     params<unsigned long long, 64U, 1, false, 8, 5>,
     params<unsigned short, 102U, 3, true, 4, 3>,
+    params<float, 60U, 1, true, 8, 3>,
 
     // RadixBits < MaxRadixBits
     params<unsigned int, 162U, 2, true, 3, 6, 2>,
-    params<unsigned char, 193U, 2, true, 1, 4, 3>,
-
-    // Stability (a number of key values is lower than BlockSize * ItemsPerThread: some keys appear
-    // multiple times with different values or key parts outside [StartBit, EndBit))
-    params<unsigned char, 512U, 2, false>,
-    params<unsigned short, 60U, 1, true, 8, 3>>
+    params<test_utils::half, 193U, 2, true, 1, 4, 3>>
     Params;
 
 TYPED_TEST_SUITE(HipcubBlockRadixRank, Params);
@@ -170,6 +162,62 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const KeyType* keys_inp
         hipcub::StoreDirectBlocked(lid, ranks_output + block_offset, ranks);
 }
 
+template<typename Key,
+         bool         Descending,
+         unsigned int StartBit,
+         unsigned int EndBit,
+         typename Enable = void>
+struct key_comparator;
+
+template<typename Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
+struct key_comparator<Key,
+                      Descending,
+                      StartBit,
+                      EndBit,
+                      typename std::enable_if<std::is_integral<Key>::value>::type>
+    : test_utils::key_comparator<Key, Descending, StartBit, EndBit>
+{};
+
+template<typename Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
+struct key_comparator<
+    Key,
+    Descending,
+    StartBit,
+    EndBit,
+    typename std::enable_if<hipcub::NumericTraits<Key>::CATEGORY == hipcub::FLOATING_POINT>::type>
+{
+    using unsigned_bits = typename hipcub::NumericTraits<Key>::UnsignedBits;
+
+    bool operator()(const Key& lhs, const Key& rhs) const
+    {
+        return key_comparator<unsigned_bits, Descending, StartBit, EndBit>()(to_int(lhs),
+                                                                             to_int(rhs));
+    }
+
+    unsigned_bits to_int(const Key& key) const
+    {
+        unsigned_bits bit_key;
+        std::memcpy(&bit_key, &key, sizeof(Key));
+
+        // Remove signed zero, this case is supposed to be treated the same as
+        // unsigned zero in hipcub sorting algorithms.
+        constexpr unsigned_bits minus_zero = unsigned_bits{1} << (8 * sizeof(Key) - 1);
+        // Positive and negative zero should compare the same.
+        if(bit_key == minus_zero)
+        {
+            return 0;
+        }
+        // Flip bits mantissa and exponent if the key is negative, so as to make
+        // 'more negative' values compare before 'less negative'.
+        if(bit_key & minus_zero)
+        {
+            bit_key ^= ~minus_zero;
+        }
+        bit_key ^= minus_zero; // Make negatives compare before positives.
+        return bit_key;
+    }
+};
+
 template<typename TestFixture, RadixRankAlgorithm Algorithm>
 void test_radix_rank()
 {
@@ -211,8 +259,8 @@ void test_radix_rank()
         if(std::is_floating_point<key_type>::value)
         {
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               (key_type)-1000,
-                                                               (key_type) + 1000,
+                                                               static_cast<key_type>(-1000),
+                                                               static_cast<key_type>(+1000),
                                                                seed_value);
         }
         else
@@ -223,13 +271,14 @@ void test_radix_rank()
                                                                seed_value);
         }
 
+        test_utils::add_special_values(keys_input, seed_value);
+
         // Calculate expected results on host
         std::vector<int> expected(keys_input.size());
         for(size_t i = 0; i < grid_size; i++)
         {
             size_t     block_offset = i * items_per_block;
-            const auto key_cmp
-                = test_utils::key_comparator<key_type, descending, start_bit, end_bit>();
+            const auto key_cmp      = key_comparator<key_type, descending, start_bit, end_bit>();
 
             // Perform an 'argsort', which gives a sorted sequence of indices into `keys_input`.
             std::vector<int> indices(items_per_block);
@@ -305,14 +354,20 @@ TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMemoize)
 
 TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMatch)
 {
-// BlockRadixRankMatch currently does not pass the test on AMD.
+// The hipCUB implementation of BlockRadixRankMatch is currently broken for the
+// rocPRIM backend, and does not pass the tests yet.
 #ifdef __HIP_PLATFORM_AMD__
     GTEST_SKIP();
 #endif
 
     constexpr unsigned int block_size = TestFixture::params::block_size;
     if(block_size % HIPCUB_DEVICE_WARP_THREADS != 0)
-        return;
+    {
+        // The CUB implementation of BlockRadixRankMatch is currently broken when
+        // the warp size does not divide the block size exactly, see
+        // https://github.com/NVIDIA/cub/issues/552.
+        GTEST_SKIP();
+    }
 
     test_radix_rank<TestFixture, RadixRankAlgorithm::RADIX_RANK_MATCH>();
 }
