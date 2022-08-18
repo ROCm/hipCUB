@@ -162,62 +162,6 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const KeyType* keys_inp
         hipcub::StoreDirectBlocked(lid, ranks_output + block_offset, ranks);
 }
 
-template<typename Key,
-         bool         Descending,
-         unsigned int StartBit,
-         unsigned int EndBit,
-         typename Enable = void>
-struct key_comparator;
-
-template<typename Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
-struct key_comparator<Key,
-                      Descending,
-                      StartBit,
-                      EndBit,
-                      typename std::enable_if<std::is_integral<Key>::value>::type>
-    : test_utils::key_comparator<Key, Descending, StartBit, EndBit>
-{};
-
-template<typename Key, bool Descending, unsigned int StartBit, unsigned int EndBit>
-struct key_comparator<
-    Key,
-    Descending,
-    StartBit,
-    EndBit,
-    typename std::enable_if<hipcub::NumericTraits<Key>::CATEGORY == hipcub::FLOATING_POINT>::type>
-{
-    using unsigned_bits = typename hipcub::NumericTraits<Key>::UnsignedBits;
-
-    bool operator()(const Key& lhs, const Key& rhs) const
-    {
-        return key_comparator<unsigned_bits, Descending, StartBit, EndBit>()(to_int(lhs),
-                                                                             to_int(rhs));
-    }
-
-    unsigned_bits to_int(const Key& key) const
-    {
-        unsigned_bits bit_key;
-        std::memcpy(&bit_key, &key, sizeof(Key));
-
-        // Remove signed zero, this case is supposed to be treated the same as
-        // unsigned zero in hipcub sorting algorithms.
-        constexpr unsigned_bits minus_zero = unsigned_bits{1} << (8 * sizeof(Key) - 1);
-        // Positive and negative zero should compare the same.
-        if(bit_key == minus_zero)
-        {
-            return 0;
-        }
-        // Flip bits mantissa and exponent if the key is negative, so as to make
-        // 'more negative' values compare before 'less negative'.
-        if(bit_key & minus_zero)
-        {
-            bit_key ^= ~minus_zero;
-        }
-        bit_key ^= minus_zero; // Make negatives compare before positives.
-        return bit_key;
-    }
-};
-
 template<typename TestFixture, RadixRankAlgorithm Algorithm>
 void test_radix_rank()
 {
@@ -278,7 +222,8 @@ void test_radix_rank()
         for(size_t i = 0; i < grid_size; i++)
         {
             size_t     block_offset = i * items_per_block;
-            const auto key_cmp      = key_comparator<key_type, descending, start_bit, end_bit>();
+            const auto key_cmp
+                = test_utils::key_comparator<key_type, descending, start_bit, end_bit>();
 
             // Perform an 'argsort', which gives a sorted sequence of indices into `keys_input`.
             std::vector<int> indices(items_per_block);
