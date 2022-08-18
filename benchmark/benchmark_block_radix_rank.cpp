@@ -119,7 +119,9 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
     std::vector<T> input;
     if(std::is_floating_point<T>::value)
     {
-        input = benchmark_utils::get_random_data<T>(size, (T)-1000, (T) + 1000);
+        input = benchmark_utils::get_random_data<T>(size,
+                                                    static_cast<T>(-1000),
+                                                    static_cast<T>(1000));
     }
     else
     {
