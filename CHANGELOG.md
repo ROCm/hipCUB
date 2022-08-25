@@ -13,6 +13,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 `DeviceSegmentedSort`
 - CMake functionality to improve build parallelism of the test suite that splits compilation units by
 function or by parameters.
+- New overload for `BlockAdjacentDifference::SubtractLeftPartialTile` that takes a predecessor item.
 ### Changed
 - Obsolated type traits defined in util_type.hpp. Use the standard library equivalents instead.
 - CUB backend references CUB and thrust version 1.16.0.
@@ -21,6 +22,7 @@ function or by parameters.
   - Otherwise the algorithm uses a larger indexing type that makes it possible to sort input data over 2**32 elements.
 - Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
+- CUB backend references CUB and thrust version 1.17.1.
 
 ## (Unreleased) hipCUB-2.11.1 for ROCm 5.2.0
 ### Added
