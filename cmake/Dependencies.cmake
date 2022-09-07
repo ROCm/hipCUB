@@ -143,7 +143,16 @@ if(BUILD_TEST)
       BUILD_PROJECT       TRUE
       UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
     )
-    find_package(GTest REQUIRED)
+
+    set(GTEST_INCLUDE_DIRS ${CMAKE_CURRENT_BINARY_DIR}/gtest/include CACHE PATH "")
+    if(EXISTS ${GTEST_ROOT}/lib)
+        set(GTEST_BOTH_LIBRARIES ${GTEST_ROOT}/lib/libgtest.so;${GTEST_ROOT}/lib/libgtest_main.so CACHE PATH "")
+    elseif(EXISTS ${GTEST_ROOT}/lib64)
+        set(GTEST_BOTH_LIBRARIES ${GTEST_ROOT}/lib64/libgtest.so;${GTEST_ROOT}/lib64/libgtest_main.so CACHE PATH "")
+    else()
+        message(FATAL_ERROR "Cannot find gtest library installation path.")
+    endif()
+    find_package(GTest REQUIRED CONFIG PATHS ${GTEST_ROOT})
   endif()
 endif()
 
