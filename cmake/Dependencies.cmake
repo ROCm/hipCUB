@@ -143,7 +143,7 @@ if(BUILD_TEST)
       BUILD_PROJECT       TRUE
       UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
     )
-    find_package((GTest 1.11.0 EXACT REQUIRED MODULE)
+    find_package(GTest 1.11.0 EXACT REQUIRED MODULE)
   endif()
 endif()
 
