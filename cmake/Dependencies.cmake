@@ -118,7 +118,7 @@ endif()
 if(BUILD_TEST)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
     # Google Test (https://github.com/google/googletest)
-    find_package(GTest 1.11.0 EXACT CONFIG)
+    #find_package(GTest 1.11.0 EXACT CONFIG)
   endif()
 
   if(NOT GTest_FOUND)
