@@ -126,7 +126,11 @@ if(BUILD_TEST)
     # Google Test (https://github.com/google/googletest)
     if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
       # hip-clang cannot compile googletest for some reason
-      set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+      if(WIN32)
+        set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=cl")
+      else()
+        set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+      endif()
     endif()
     set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gtest CACHE PATH "")
     download_project(
