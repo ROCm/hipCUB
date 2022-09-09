@@ -121,7 +121,7 @@ if(BUILD_TEST)
     find_package(GTest 1.11.0 CONFIG)
   endif()
 
-  if(NOT GTest_FOUND)
+  if(NOT GTest_FOUND OR NOT TARGET GTest::GTest OR NOT TARGET GTest::gtest)
     message(STATUS "GTest not found or force download GTest on. Downloading and building GTest.")
     # Google Test (https://github.com/google/googletest)
     if(WIN32)
