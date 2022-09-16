@@ -174,7 +174,7 @@ struct half_t
         {
             if (mantissa)
             {
-                f = 0x7fffffff;     // not a number
+                f = 0x7fffffff | (sign << 31);     // not a number
             }
             else
             {
@@ -284,7 +284,7 @@ struct half_t
  ******************************************************************************/
 
 /// Insert formatted \p half_t into the output stream
-std::ostream& operator<<(std::ostream &out, const half_t &x)
+inline std::ostream& operator<<(std::ostream &out, const half_t &x)
 {
     out << (float)x;
     return out;

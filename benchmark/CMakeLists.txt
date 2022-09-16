@@ -25,7 +25,7 @@ function(add_hipcub_benchmark BENCHMARK_SOURCE)
   add_executable(${BENCHMARK_TARGET} ${BENCHMARK_SOURCE})
   target_include_directories(${BENCHMARK_TARGET} SYSTEM BEFORE
     PUBLIC
-      "${GOOGLEBENCHMARK_ROOT}/include"
+      "$<BUILD_INTERFACE:${GOOGLEBENCHMARK_ROOT}/include>"
   )
   target_link_libraries(${BENCHMARK_TARGET}
     PRIVATE
@@ -48,6 +48,7 @@ function(add_hipcub_benchmark BENCHMARK_SOURCE)
     PROPERTIES
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/benchmark"
   )
+  rocm_install(TARGETS ${BENCHMARK_TARGET} COMPONENT benchmarks)
   if (WIN32 AND NOT DEFINED DLLS_COPIED)
     set(DLLS_COPIED "YES")
     set(DLLS_COPIED ${DLLS_COPIED} PARENT_SCOPE)
@@ -67,6 +68,7 @@ endfunction()
 # ****************************************************************************
 # Benchmarks
 # ****************************************************************************
+add_hipcub_benchmark(benchmark_block_adjacent_difference.cpp)
 add_hipcub_benchmark(benchmark_block_discontinuity.cpp)
 add_hipcub_benchmark(benchmark_block_exchange.cpp)
 add_hipcub_benchmark(benchmark_block_histogram.cpp)
@@ -75,7 +77,9 @@ add_hipcub_benchmark(benchmark_block_radix_sort.cpp)
 add_hipcub_benchmark(benchmark_block_reduce.cpp)
 add_hipcub_benchmark(benchmark_block_run_length_decode.cpp)
 add_hipcub_benchmark(benchmark_block_scan.cpp)
+add_hipcub_benchmark(benchmark_device_adjacent_difference.cpp)
 add_hipcub_benchmark(benchmark_device_histogram.cpp)
+add_hipcub_benchmark(benchmark_device_merge_sort.cpp)
 add_hipcub_benchmark(benchmark_device_partition.cpp)
 add_hipcub_benchmark(benchmark_device_radix_sort.cpp)
 add_hipcub_benchmark(benchmark_device_reduce_by_key.cpp)
@@ -86,6 +90,7 @@ add_hipcub_benchmark(benchmark_device_segmented_sort.cpp)
 add_hipcub_benchmark(benchmark_device_segmented_radix_sort.cpp)
 add_hipcub_benchmark(benchmark_device_segmented_reduce.cpp)
 add_hipcub_benchmark(benchmark_device_select.cpp)
+add_hipcub_benchmark(benchmark_device_spmv.cpp)
 add_hipcub_benchmark(benchmark_warp_exchange.cpp)
 add_hipcub_benchmark(benchmark_warp_load.cpp)
 add_hipcub_benchmark(benchmark_warp_reduce.cpp)

@@ -72,7 +72,7 @@ private:
         #ifdef __HIP_PLATFORM_AMD__
         KEYS_ONLY                   = rocprim::Equals<ValueT, hipcub::NullType>::VALUE,
         #else
-        KEYS_ONLY                   = cub::Equals<ValueT, hipcub::NullType>::VALUE,
+        KEYS_ONLY                   = std::is_same<ValueT, hipcub::NullType>::value,
         #endif
     };
 
@@ -532,6 +532,10 @@ void sort_key_kernel(
 
 TYPED_TEST(HipcubBlockRadixSort, SortKeys)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     constexpr size_t block_size = TestFixture::params::block_size;
     constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
@@ -678,6 +682,10 @@ void sort_key_value_kernel(
 
 TYPED_TEST(HipcubBlockRadixSort, SortKeysValues)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using value_type = typename TestFixture::params::value_type;
     constexpr size_t block_size = TestFixture::params::block_size;

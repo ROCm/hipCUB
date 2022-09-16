@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2021, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2021-2022, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -41,9 +41,10 @@
 #include "../../../util_type.hpp"
 #include "../../../util_ptx.hpp"
 
-#include "../thread/thread_reduce.hpp"
 #include "../block/block_scan.hpp"
 #include "../block/radix_rank_sort_operations.hpp"
+#include "../thread/thread_reduce.hpp"
+#include "../thread/thread_scan.hpp"
 
 BEGIN_HIPCUB_NAMESPACE
 
@@ -105,9 +106,9 @@ private:
     typedef unsigned short DigitCounter;
 
     // Integer type for packing DigitCounters into columns of shared memory banks
-    typedef typename If<(SMEM_CONFIG == hipSharedMemBankSizeEightByte),
+    typedef typename std::conditional<(SMEM_CONFIG == hipSharedMemBankSizeEightByte),
         unsigned long long,
-        unsigned int>::Type PackedCounter;
+        unsigned int>::type PackedCounter;
 
     enum
     {

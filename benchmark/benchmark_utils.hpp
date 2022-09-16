@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #ifndef HIPCUB_BENCHMARK_UTILS_HPP_
 #define HIPCUB_BENCHMARK_UTILS_HPP_
 
-#ifndef BENCHMARK_UTILS_INCLUDE_GAURD
+#ifndef BENCHMARK_UTILS_INCLUDE_GUARD
     #error benchmark_utils.hpp must ONLY be included by common_benchmark_header.hpp. Please include common_benchmark_header.hpp instead.
 #endif
 
@@ -253,7 +253,9 @@ struct custom_type
     HIPCUB_HOST_DEVICE inline
     bool operator<(const custom_type& rhs) const
     {
-        return (x < rhs.x || (x == rhs.x && y < rhs.y));
+        // intentionally suboptimal choice for short-circuting,
+        // required to generate more performant device code
+        return ((x == rhs.x && y < rhs.y) || x < rhs.x);
     }
 
     HIPCUB_HOST_DEVICE inline

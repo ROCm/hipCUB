@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
+#ifndef HIPCUB_TEST_HIPCUB_DEVICE_SEGMENTED_SORT_HPP_
+#define HIPCUB_TEST_HIPCUB_DEVICE_SEGMENTED_SORT_HPP_
 
 #include "common_test_header.hpp"
 
@@ -62,35 +65,8 @@ public:
     using params = Params;
 };
 
-using Params = ::testing::Types<
-    params<int, int, SortMethod::SortAscending, 0, 100>,
-    params<int, int, SortMethod::SortDescending, 0, 100>,
-    params<int, int, SortMethod::StableSortAscending, 0, 100>,
-    params<int, int, SortMethod::StableSortDescending, 0, 100>,
-
-    params<unsigned, int, SortMethod::SortAscending, 10, 312>,
-    params<unsigned, int, SortMethod::SortDescending, 10, 312>,
-    params<unsigned, int, SortMethod::StableSortAscending, 10, 312>,
-    params<unsigned, int, SortMethod::StableSortDescending, 10, 312>,
-
-    params<char, int, SortMethod::SortAscending, 1, 1239>,
-    params<char, int, SortMethod::SortDescending, 1, 1239>,
-    params<char, int, SortMethod::StableSortAscending, 1, 1239>,
-    params<char, int, SortMethod::StableSortDescending, 1, 1239>,
-
-    params<float, int, SortMethod::SortAscending, 0, 322>,
-    params<float, int, SortMethod::SortDescending, 0, 322>,
-    params<float, int, SortMethod::StableSortAscending, 0, 322>,
-    params<float, int, SortMethod::StableSortDescending, 0, 322>,
-
-    params<double, int, SortMethod::SortAscending, 321, 555>,
-    params<double, int, SortMethod::SortDescending, 321, 555>,
-    params<double, int, SortMethod::StableSortAscending, 321, 555>,
-    params<double, int, SortMethod::StableSortDescending, 321, 555>
->;
-
 template<typename ... Args>
-void dispatch_sort_keys(const SortMethod method, Args&& ... args)
+inline void dispatch_sort_keys(const SortMethod method, Args&& ... args)
 {
     switch (method)
     {
@@ -119,7 +95,7 @@ void dispatch_sort_keys(const SortMethod method, Args&& ... args)
     }
 }
 
-std::vector<size_t> get_sizes(const int seed_value)
+inline std::vector<size_t> get_sizes(const int seed_value)
 {
     std::vector<size_t> sizes = {
         1024, 2048, 4096, 1792,
@@ -134,7 +110,7 @@ std::vector<size_t> get_sizes(const int seed_value)
 }
 
 template<typename key_type, typename offset_type>
-void generate_input_data(std::vector<key_type> &keys_input,
+inline void generate_input_data(std::vector<key_type> &keys_input,
                          std::vector<offset_type> &offsets,
                          const size_t size,
                          const int seed_value,
@@ -180,7 +156,7 @@ void generate_input_data(std::vector<key_type> &keys_input,
 }
 
 template<typename T>
-T * hipMallocAndCopy(const std::vector<T> &data)
+inline T * hipMallocAndCopy(const std::vector<T> &data)
 {
     T * d_ptr{};
     HIP_CHECK(test_common_utils::hipMallocHelper(&d_ptr, data.size() * sizeof(T)));
@@ -195,7 +171,7 @@ T * hipMallocAndCopy(const std::vector<T> &data)
 }
 
 template<typename key_type, typename offset_type>
-std::vector<key_type> generate_expected_data(const std::vector<key_type> &keys_input,
+inline std::vector<key_type> generate_expected_data(const std::vector<key_type> &keys_input,
                                              const std::vector<offset_type> &offsets,
                                              const bool descending)
 {
@@ -220,7 +196,7 @@ std::vector<key_type> generate_expected_data(const std::vector<key_type> &keys_i
 
 template<bool descending, typename key_type, typename value_type, typename offset_type>
 std::vector<std::pair<key_type, value_type>>
-generate_expected_data(const std::vector<key_type> &keys_input,
+inline generate_expected_data(const std::vector<key_type> &keys_input,
                        const std::vector<value_type> &values_input,
                        const std::vector<offset_type> &offsets)
 {
@@ -243,7 +219,7 @@ generate_expected_data(const std::vector<key_type> &keys_input,
 }
 
 template<typename T>
-std::vector<T> download(const T * const d_ptr, const size_t size)
+inline std::vector<T> download(const T * const d_ptr, const size_t size)
 {
     std::vector<T> data(size);
     HIP_CHECK(
@@ -256,10 +232,15 @@ std::vector<T> download(const T * const d_ptr, const size_t size)
     return data;
 }
 
-TYPED_TEST_SUITE(HipcubDeviceSegmentedSort, Params);
+TYPED_TEST_SUITE_P(HipcubDeviceSegmentedSort);
 
-TYPED_TEST(HipcubDeviceSegmentedSort, SortKeys)
+template<typename TestFixture>
+inline void sort_keys()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using offset_type = unsigned int;
     constexpr SortMethod method = TestFixture::params::method;
@@ -324,8 +305,13 @@ TYPED_TEST(HipcubDeviceSegmentedSort, SortKeys)
     }
 }
 
-TYPED_TEST(HipcubDeviceSegmentedSort, SortKeysDoubleBuffer)
+template<typename TestFixture>
+inline void sort_keys_double_buffer()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using offset_type = unsigned int;
     constexpr SortMethod method = TestFixture::params::method;
@@ -422,8 +408,13 @@ void dispatch_sort_pairs(const SortMethod method, Args&& ... args)
     }
 }
 
-TYPED_TEST(HipcubDeviceSegmentedSort, SortPairs)
+template<typename TestFixture>
+inline void sort_pairs()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using value_type = typename TestFixture::params::value_type;
     using offset_type = unsigned int;
@@ -505,8 +496,13 @@ TYPED_TEST(HipcubDeviceSegmentedSort, SortPairs)
     }
 }
 
-TYPED_TEST(HipcubDeviceSegmentedSort, SortPairsDoubleBuffer)
+template<typename TestFixture>
+inline void sort_pairs_double_buffer()
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type = typename TestFixture::params::key_type;
     using value_type = typename TestFixture::params::value_type;
     using offset_type = unsigned int;
@@ -588,3 +584,7 @@ TYPED_TEST(HipcubDeviceSegmentedSort, SortPairsDoubleBuffer)
         }
     }
 }
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(HipcubDeviceSegmentedSort);
+
+#endif // HIPCUB_TEST_HIPCUB_DEVICE_SEGMENTED_SORT_HPP_

@@ -30,12 +30,6 @@
 # For downloading, building, and installing required dependencies
 include(cmake/DownloadProject.cmake)
 
-# GIT
-find_package(Git REQUIRED)
-if (NOT Git_FOUND)
-  message(FATAL_ERROR "Please ensure Git is installed on the system")
-endif()
-
 # CUB (only for CUDA platform)
 if(HIP_COMPILER STREQUAL "nvcc")
 
@@ -46,59 +40,59 @@ if(HIP_COMPILER STREQUAL "nvcc")
 
   if(NOT DEFINED CUB_INCLUDE_DIR)
     file(
-      DOWNLOAD https://github.com/NVIDIA/cub/archive/1.15.0.zip
-      ${CMAKE_CURRENT_BINARY_DIR}/cub-1.15.0.zip
+      DOWNLOAD https://github.com/NVIDIA/cub/archive/1.17.1.zip
+      ${CMAKE_CURRENT_BINARY_DIR}/cub-1.17.1.zip
       STATUS cub_download_status LOG cub_download_log
     )
     list(GET cub_download_status 0 cub_download_error_code)
     if(cub_download_error_code)
       message(FATAL_ERROR "Error: downloading "
-        "https://github.com/NVIDIA/cub/archive/1.15.0.zip failed "
+        "https://github.com/NVIDIA/cub/archive/1.17.1.zip failed "
         "error_code: ${cub_download_error_code} "
         "log: ${cub_download_log} "
       )
     endif()
 
     execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/cub-1.15.0.zip
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/cub-1.17.1.zip
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       RESULT_VARIABLE cub_unpack_error_code
     )
     if(cub_unpack_error_code)
-      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/cub-1.15.0.zip failed")
+      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/cub-1.17.1.zip failed")
     endif()
-    set(CUB_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/cub-1.15.0/ CACHE PATH "")
+    set(CUB_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/cub-1.17.1/ CACHE PATH "")
   endif()
 
   if(NOT DEFINED THRUST_INCLUDE_DIR)
     file(
-      DOWNLOAD https://github.com/NVIDIA/thrust/archive/1.15.0.zip
-      ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.15.0.zip
+      DOWNLOAD https://github.com/NVIDIA/thrust/archive/1.17.1.zip
+      ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.17.1.zip
       STATUS thrust_download_status LOG thrust_download_log
     )
     list(GET thrust_download_status 0 thrust_download_error_code)
     if(thrust_download_error_code)
       message(FATAL_ERROR "Error: downloading "
-        "https://github.com/NVIDIA/thrust/archive/1.15.0.zip failed "
+        "https://github.com/NVIDIA/thrust/archive/1.17.1.zip failed "
         "error_code: ${thrust_download_error_code} "
         "log: ${thrust_download_log} "
       )
     endif()
 
     execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.15.0.zip
+      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.17.1.zip
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       RESULT_VARIABLE thrust_unpack_error_code
     )
     if(thrust_unpack_error_code)
-      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.15.0.zip failed")
+      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.17.1.zip failed")
     endif()
-    set(THRUST_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.15.0/ CACHE PATH "")
+    set(THRUST_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/thrust-1.17.1/ CACHE PATH "")
   endif()
 else()
   # rocPRIM (only for ROCm platform)
   if(NOT DOWNLOAD_ROCPRIM)
-    find_package(rocprim)
+    find_package(rocprim QUIET)
   endif()
   if(NOT rocprim_FOUND)
     message(STATUS "Downloading and building rocprim.")
@@ -124,15 +118,14 @@ endif()
 if(BUILD_TEST)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
     # Google Test (https://github.com/google/googletest)
-    find_package(GTest QUIET)
+    find_package(GTest 1.11.0 CONFIG)
   endif()
 
-  if(NOT TARGET GTest::GTest AND NOT TARGET GTest::gtest)
+  if(NOT GTest_FOUND)
     message(STATUS "GTest not found or force download GTest on. Downloading and building GTest.")
     # Google Test (https://github.com/google/googletest)
-    if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$|.*/nvcc$")
-      # hip-clang cannot compile googletest for some reason
-      set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+    if(WIN32)
+      set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=cl")
     endif()
     set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gtest CACHE PATH "")
     download_project(
@@ -149,33 +142,42 @@ if(BUILD_TEST)
       BUILD_PROJECT       TRUE
       UPDATE_DISCONNECTED TRUE # Never update automatically from the remote repository
     )
-    find_package(GTest REQUIRED)
+    find_package(GTest 1.11.0 EXACT REQUIRED MODULE)
   endif()
 endif()
 
 # Benchmark dependencies
 if(BUILD_BENCHMARK)
-  # Google Benchmark (https://github.com/google/benchmark.git)
-  message(STATUS "Downloading and building Google Benchmark.")
-  if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$|.*/nvcc$")
-    # hip-clang cannot compile googlebenchmark for some reason
-    set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+    # Google Benchmark (https://github.com/google/benchmark.git)
+    find_package(benchmark QUIET)
   endif()
-  # Download, build and install googlebenchmark library
-  set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/googlebenchmark CACHE PATH "")
-  download_project(
-    PROJ           googlebenchmark
-    GIT_REPOSITORY https://github.com/google/benchmark.git
-    GIT_TAG        v1.5.2
-    GIT_SHALLOW    TRUE
-    INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
-    CMAKE_ARGS     -DCMAKE_BUILD_TYPE=RELEASE -DBENCHMARK_ENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${COMPILER_OVERRIDE}
-    LOG_DOWNLOAD   TRUE
-    LOG_CONFIGURE  TRUE
-    LOG_BUILD      TRUE
-    LOG_INSTALL    TRUE
-    BUILD_PROJECT  TRUE
-    ${UPDATE_DISCONNECTED_IF_AVAILABLE}
-  )
+
+  if(NOT benchmark_FOUND)
+    message(STATUS "Google Benchmark not found or force download Google Benchmark on. Downloading and building Google Benchmark.")
+    if(CMAKE_CONFIGURATION_TYPES)
+      message(FATAL_ERROR "DownloadProject.cmake doesn't support multi-configuration generators.")
+    endif()
+    set(GOOGLEBENCHMARK_ROOT ${CMAKE_CURRENT_BINARY_DIR}/deps/googlebenchmark CACHE PATH "")
+    if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
+      # hip-clang cannot compile googlebenchmark for some reason
+      set(COMPILER_OVERRIDE "-DCMAKE_CXX_COMPILER=g++")
+    endif()
+
+    download_project(
+      PROJ           googlebenchmark
+      GIT_REPOSITORY https://github.com/google/benchmark.git
+      GIT_TAG        v1.6.1
+      GIT_SHALLOW    TRUE
+      INSTALL_DIR    ${GOOGLEBENCHMARK_ROOT}
+      CMAKE_ARGS     -DCMAKE_BUILD_TYPE=RELEASE -DBENCHMARK_ENABLE_TESTING=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${COMPILER_OVERRIDE}
+      LOG_DOWNLOAD   TRUE
+      LOG_CONFIGURE  TRUE
+      LOG_BUILD      TRUE
+      LOG_INSTALL    TRUE
+      BUILD_PROJECT  TRUE
+      UPDATE_DISCONNECTED TRUE
+    )
+  endif()
   find_package(benchmark REQUIRED CONFIG PATHS ${GOOGLEBENCHMARK_ROOT})
 endif()

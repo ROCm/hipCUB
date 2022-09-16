@@ -75,6 +75,10 @@ std::vector<size_t> get_sizes()
 
 TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type                  = typename TestFixture::params::key_type;
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
@@ -99,8 +103,8 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
+                                                               test_utils::numeric_limits<key_type>::min(),
+                                                               test_utils::numeric_limits<key_type>::max(),
                                                                seed_value + seed_value_addition);
             key_type * d_keys_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
@@ -149,6 +153,10 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 
 TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type                  = typename TestFixture::params::key_type;
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
@@ -173,8 +181,8 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
+                                                               test_utils::numeric_limits<key_type>::min(),
+                                                               test_utils::numeric_limits<key_type>::max(),
                                                                seed_value + seed_value_addition);
             key_type * d_keys_input;
             key_type * d_keys_output;
@@ -228,6 +236,10 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
 
 TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type                  = typename TestFixture::params::key_type;
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
@@ -252,8 +264,8 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
+                                                               test_utils::numeric_limits<key_type>::min(),
+                                                               test_utils::numeric_limits<key_type>::max(),
                                                                seed_value + seed_value_addition);
             key_type * d_keys_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
@@ -304,6 +316,10 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
 
 TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type                  = typename TestFixture::params::key_type;
     using value_type                = typename TestFixture::params::value_type;
     using compare_function          = typename TestFixture::params::compare_function;
@@ -332,8 +348,8 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
+                                                               test_utils::numeric_limits<key_type>::min(),
+                                                               test_utils::numeric_limits<key_type>::max(),
                                                                seed_value + seed_value_addition);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
@@ -428,6 +444,10 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
 
 TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type                  = typename TestFixture::params::key_type;
     using value_type                = typename TestFixture::params::value_type;
     using compare_function          = typename TestFixture::params::compare_function;
@@ -456,8 +476,8 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
+                                                               test_utils::numeric_limits<key_type>::min(),
+                                                               test_utils::numeric_limits<key_type>::max(),
                                                                seed_value + seed_value_addition);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
@@ -563,6 +583,10 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
 
 TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
 {
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
     using key_type                  = typename TestFixture::params::key_type;
     using value_type                = typename TestFixture::params::value_type;
     using compare_function          = typename TestFixture::params::compare_function;
@@ -591,8 +615,8 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
+                                                               test_utils::numeric_limits<key_type>::min(),
+                                                               test_utils::numeric_limits<key_type>::max(),
                                                                seed_value + seed_value_addition);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);

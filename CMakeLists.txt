@@ -27,15 +27,19 @@ cmake_policy(VERSION 3.16...3.21)
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
 #Adding CMAKE_PREFIX_PATH
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm ${ROCM_PATH})
 
 # hipCUB project
 project(hipcub LANGUAGES CXX)
+
+#Adding CMAKE_PREFIX_PATH
+list(APPEND CMAKE_PREFIX_PATH /opt/rocm)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
+  ${ROCM_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip # FindHIP.cmake
 )
 
 # Set a default build type if none was specified
@@ -56,42 +60,28 @@ include( ROCMCreatePackage )
 include( ROCMInstallTargets )
 include( ROCMPackageConfigHelpers )
 include( ROCMInstallSymlinks )
-include( ROCMCheckTargetIds OPTIONAL )
+include( ROCMHeaderWrapper )
+include( ROCMCheckTargetIds )
+include( ROCMClients )
 
-#Set the AMDGPU_TARGETS with backward compatiblity
-set(AMDGPU_TARGETS "all" CACHE STRING "Compile for which gpu architectures?")
-if(COMMAND rocm_check_target_ids)
-  rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-    TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
-  )
-else()
-  # Detect compiler support for target ID
-  # This section is deprecated. Please use rocm_check_target_ids for future use.
-  if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-      OUTPUT_VARIABLE CXX_OUTPUT
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      ERROR_STRIP_TRAILING_WHITESPACE)
-    string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-  endif()
-  if(TARGET_ID_SUPPORT)
-    set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx1030")
+# Setup GPU targets for rocm platform
+if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
+  if (NOT DEFINED AMDGPU_TARGETS)
+      set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
   else()
-    set(DEFAULT_AMDGPU_TARGETS "gfx803;gfx900;gfx906;gfx908;gfx1030")
+    set(GPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for")
+  endif()
+  set_property(CACHE GPU_TARGETS PROPERTY STRINGS "all")
+
+  if(GPU_TARGETS STREQUAL "all")
+    rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
+      TARGETS "gfx803;gfx900:xnack-;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx1030"
+    )
+    set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
   endif()
 endif()
-if (AMDGPU_TARGETS)
-  if( AMDGPU_TARGETS STREQUAL "all" )
-    set( gpus "${DEFAULT_AMDGPU_TARGETS}")
-  else()
-    set( gpus "${AMDGPU_TARGETS}")
-  endif()
-  # must FORCE set this AMDGPU_TARGETS before any find_package( hip ...), in this file
-  # to override CACHE var and set --offload-arch flags via hip-config.cmake hip::device dependency
-  set( AMDGPU_TARGETS "${gpus}" CACHE STRING "AMD GPU targets to compile for" FORCE )
-endif()
 
-# Verify that hcc compiler is used on ROCM platform
+# Verify that hip-clang is used on ROCM platform
 if (NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 endif()
@@ -101,8 +91,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-
 # Build options
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
 option(DOWNLOAD_ROCPRIM "Download rocPRIM and do not search for rocPRIM package" OFF)
@@ -110,6 +98,8 @@ option(DOWNLOAD_CUB "Download CUB and thrust. Do not search for CUB package" OFF
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 option(BUILD_EXAMPLE "Build Examples" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+#Set the header wrapper ON by default. 
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 
 if(BUILD_ADDRESS_SANITIZER)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
@@ -131,9 +121,14 @@ print_configuration_summary()
 # hipCUB library
 add_subdirectory(hipcub)
 
+if(BUILD_TEST OR (BUILD_BENCHMARK AND NOT ONLY_INSTALL))
+  rocm_package_setup_component(clients)
+endif()
+
 # Tests
 if(BUILD_TEST)
   enable_testing()
+  rocm_package_setup_client_component(tests)
   add_subdirectory(test)
 endif()
 
@@ -144,27 +139,40 @@ endif()
 
 # Benchmarks
 if(BUILD_BENCHMARK AND NOT ONLY_INSTALL)
+  rocm_package_setup_client_component(benchmarks)
   add_subdirectory(benchmark)
+endif()
+
+# Create header wrapper for backward compatibility
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_wrap_header_dir(
+            ${PROJECT_SOURCE_DIR}/hipcub/include/hipcub/
+	    PATTERNS "*.h"
+	    PATTERN "*.hpp"
+	    GUARDS SYMLINK WRAPPER
+	    WRAPPER_LOCATIONS cub/${CMAKE_INSTALL_INCLUDEDIR}/hipcub/
+            OUTPUT_LOCATIONS cub/wrapper/include/hipcub/
+	  )
 endif()
 
 # Package
 if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "rocprim-dev (>= 2.10.1)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "rocprim-devel >= 2.10.1")
+  rocm_package_add_deb_dependencies(DEPENDS "rocprim-dev >= 2.10.1")
+  rocm_package_add_rpm_dependencies(DEPENDS "rocprim-devel >= 2.10.1")
   set(CPACK_DEBIAN_PACKAGE_REPLACES "cub-hip")
   set(CPACK_RPM_PACKAGE_OBSOLETES "cub-hip")
 else()
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-dev (>= 4.4)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip-dev >= 4.4")
+  rocm_package_add_dependencies(DEPENDS "hip-dev >= 4.4")
 endif()
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+set(CPACK_RPM_PACKAGE_LICENSE "BSD")
 # if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
 #   set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 # endif()
 
-set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}")
 
-if(HIP_COMPILER STREQUAL "hcc" OR HIP_COMPILER STREQUAL "clang")
+if(HIP_COMPILER STREQUAL "clang")
   rocm_create_package(
     NAME hipcub
     DESCRIPTION "hipCUB (rocPRIM backend)"
