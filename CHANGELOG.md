@@ -10,7 +10,7 @@ function or by parameters.
 ### Changed
 - Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
-- CUB backend references CUB and thrust version 1.17.1.
+- CUB backend references CUB and Thrust version 1.17.2.
 ### Known Issues
 - `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
 - `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
