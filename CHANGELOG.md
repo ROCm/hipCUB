@@ -17,7 +17,8 @@ function or by parameters.
 ### Changed
 - Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
-- CUB backend references CUB and Thrust version 1.17.1.
+- CUB backend references CUB and Thrust version 1.17.2.
+- Improved benchmark coverage of `BlockScan` by adding `ExclusiveScan`.
 
 ## hipCUB-2.12.0 for ROCm 5.3.0
 ### Added
