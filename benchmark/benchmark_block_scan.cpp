@@ -30,69 +30,78 @@
 const size_t DEFAULT_N = 1024 * 1024 * 32;
 #endif
 
-template<hipcub::BlockScanAlgorithm Algorithm,
+template<class Runner,
          class T,
          unsigned int BlockSize,
          unsigned int ItemsPerThread,
          unsigned int Trials>
-__global__ __launch_bounds__(BlockSize) void inclusive_kernel(const T* input, T* output)
+__global__ __launch_bounds__(BlockSize) void kernel(const T* input, T* output, const T init)
 {
-    const unsigned int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-
-    T values[ItemsPerThread];
-    for(unsigned int k = 0; k < ItemsPerThread; k++)
-    {
-        values[k] = input[i * ItemsPerThread + k];
-    }
-
-    using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
-    __shared__ typename bscan_t::TempStorage storage;
-
-#pragma nounroll
-    for(unsigned int trial = 0; trial < Trials; trial++)
-    {
-        bscan_t(storage).InclusiveScan(values, values, hipcub::Sum());
-    }
-
-    for(unsigned int k = 0; k < ItemsPerThread; k++)
-    {
-        output[i * ItemsPerThread + k] = values[k];
-    }
+    Runner::template run<T, BlockSize, ItemsPerThread, Trials>(input, output, init);
 }
 
-template<hipcub::BlockScanAlgorithm Algorithm,
-         class T,
-         unsigned int BlockSize,
-         unsigned int ItemsPerThread,
-         unsigned int Trials>
-__global__
-    __launch_bounds__(BlockSize) void exclusive_kernel(const T* input, T* output, const T init)
+template<hipcub::BlockScanAlgorithm Algorithm>
+struct inclusive_scan
 {
-    const unsigned int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-
-    T values[ItemsPerThread];
-    for(unsigned int k = 0; k < ItemsPerThread; k++)
+    template<class T, unsigned int BlockSize, unsigned int ItemsPerThread, unsigned int Trials>
+    __device__ static void run(const T* input, T* output, const T init)
     {
-        values[k] = input[i * ItemsPerThread + k];
-    }
+        (void)init;
+        const unsigned int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 
-    using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
-    __shared__ typename bscan_t::TempStorage storage;
+        T values[ItemsPerThread];
+        for(unsigned int k = 0; k < ItemsPerThread; k++)
+        {
+            values[k] = input[i * ItemsPerThread + k];
+        }
+
+        using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
+        __shared__ typename bscan_t::TempStorage storage;
+
+        #pragma nounroll
+        for(unsigned int trial = 0; trial < Trials; trial++)
+        {
+            bscan_t(storage).InclusiveScan(values, values, hipcub::Sum());
+        }
+
+        for(unsigned int k = 0; k < ItemsPerThread; k++)
+        {
+            output[i * ItemsPerThread + k] = values[k];
+        }
+    }
+};
+
+template<hipcub::BlockScanAlgorithm Algorithm>
+struct exclusive_scan
+{
+    template<class T, unsigned int BlockSize, unsigned int ItemsPerThread, unsigned int Trials>
+    __device__ static void run(const T* input, T* output, const T init)
+    {
+        const unsigned int i = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+
+        T values[ItemsPerThread];
+        for(unsigned int k = 0; k < ItemsPerThread; k++)
+        {
+            values[k] = input[i * ItemsPerThread + k];
+        }
+
+        using bscan_t = hipcub::BlockScan<T, BlockSize, Algorithm>;
+        __shared__ typename bscan_t::TempStorage storage;
 
 #pragma nounroll
-    for(unsigned int trial = 0; trial < Trials; trial++)
-    {
-        bscan_t(storage).ExclusiveScan(values, values, init, hipcub::Sum());
-    }
+        for(unsigned int trial = 0; trial < Trials; trial++)
+        {
+            bscan_t(storage).ExclusiveScan(values, values, init, hipcub::Sum());
+        }
 
-    for(unsigned int k = 0; k < ItemsPerThread; k++)
-    {
-        output[i * ItemsPerThread + k] = values[k];
+        for(unsigned int k = 0; k < ItemsPerThread; k++)
+        {
+            output[i * ItemsPerThread + k] = values[k];
+        }
     }
-}
+};
 
-template<bool                       Inclusive,
-         hipcub::BlockScanAlgorithm Algorithm,
+template<class Benchmark,
          class T,
          unsigned int BlockSize,
          unsigned int ItemsPerThread,
@@ -120,29 +129,14 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
     for (auto _ : state)
     {
         auto start = std::chrono::high_resolution_clock::now();
-        if(Inclusive)
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(inclusive_kernel<Algorithm, T, BlockSize, ItemsPerThread, Trials>),
-                dim3(size / items_per_block),
-                dim3(BlockSize),
-                0,
-                stream,
-                d_input,
-                d_output);
-        }
-        else
-        {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(exclusive_kernel<Algorithm, T, BlockSize, ItemsPerThread, Trials>),
-                dim3(size / items_per_block),
-                dim3(BlockSize),
-                0,
-                stream,
-                d_input,
-                d_output,
-                input[0]);
-        }
+        hipLaunchKernelGGL(HIP_KERNEL_NAME(kernel<Benchmark, T, BlockSize, ItemsPerThread, Trials>),
+                           dim3(size / items_per_block),
+                           dim3(BlockSize),
+                           0,
+                           stream,
+                           d_input,
+                           d_output,
+                           input[0]);
         HIP_CHECK(hipPeekAtLastError());
         HIP_CHECK(hipDeviceSynchronize());
 
@@ -160,15 +154,12 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 }
 
 // IPT - items per thread
-#define CREATE_BENCHMARK(T, BS, IPT)                                                          \
-    benchmark::RegisterBenchmark((std::string("block_scan<Datatype:" #T ",Block Size:" #BS    \
-                                              ",Items Per Thread:" #IPT ",SubAlgorithm Name:" \
-                                              + algorithm_name + ">.Method Name:")            \
-                                  + method_name)                                              \
-                                     .c_str(),                                                \
-                                 &run_benchmark<Inclusive, Algorithm, T, BS, IPT>,            \
-                                 stream,                                                      \
-                                 size)
+#define CREATE_BENCHMARK(T, BS, IPT) \
+    benchmark::RegisterBenchmark( \
+        (std::string("block_scan<Datatype:"#T",Block Size:"#BS",Items Per Thread:"#IPT",SubAlgorithm Name:" + algorithm_name + ">.Method Name:") + method_name).c_str(), \
+        &run_benchmark<Benchmark, T, BS, IPT>, \
+        stream, size \
+    )
 
 // clang-format off
 #define BENCHMARK_TYPE(type, block)    \
@@ -180,7 +171,7 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
     CREATE_BENCHMARK(type, block, 16)
 // clang-format on
 
-template<bool Inclusive, hipcub::BlockScanAlgorithm Algorithm>
+template<class Benchmark>
 void add_benchmarks(std::vector<benchmark::internal::Benchmark*>& benchmarks,
                     const std::string&                            method_name,
                     const std::string&                            algorithm_name,
@@ -238,17 +229,17 @@ int main(int argc, char *argv[])
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks;
     // clang-format off
-    add_benchmarks<true, hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING>(
+    add_benchmarks<inclusive_scan<hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING>>(
         benchmarks, "inclusive_scan", "BLOCK_SCAN_RAKING", stream, size);
-    add_benchmarks<true, hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING_MEMOIZE>(
+    add_benchmarks<inclusive_scan<hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING_MEMOIZE>>(
         benchmarks, "inclusive_scan", "BLOCK_SCAN_RAKING_MEMOIZE", stream, size);
-    add_benchmarks<true, hipcub::BlockScanAlgorithm::BLOCK_SCAN_WARP_SCANS>(
+    add_benchmarks<inclusive_scan<hipcub::BlockScanAlgorithm::BLOCK_SCAN_WARP_SCANS>>(
         benchmarks, "inclusive_scan", "BLOCK_SCAN_WARP_SCANS", stream, size);
-    add_benchmarks<false, hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING>(
+    add_benchmarks<exclusive_scan<hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING>>(
         benchmarks, "exclusive_scan", "BLOCK_SCAN_RAKING", stream, size);
-    add_benchmarks<false, hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING_MEMOIZE>(
+    add_benchmarks<exclusive_scan<hipcub::BlockScanAlgorithm::BLOCK_SCAN_RAKING_MEMOIZE>>(
         benchmarks, "exclusive_scan", "BLOCK_SCAN_RAKING_MEMOIZE", stream, size);
-    add_benchmarks<false, hipcub::BlockScanAlgorithm::BLOCK_SCAN_WARP_SCANS>(
+    add_benchmarks<exclusive_scan<hipcub::BlockScanAlgorithm::BLOCK_SCAN_WARP_SCANS>>(
         benchmarks, "exclusive_scan", "BLOCK_SCAN_WARP_SCANS", stream, size);
     // clang-format on
 
