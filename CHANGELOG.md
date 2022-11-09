@@ -14,6 +14,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 - CMake functionality to improve build parallelism of the test suite that splits compilation units by
 function or by parameters.
 - New overload for `BlockAdjacentDifference::SubtractLeftPartialTile` that takes a predecessor item.
+- `BlockShuffle` benchmark.
 ### Changed
 - Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
