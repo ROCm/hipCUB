@@ -232,34 +232,37 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
                                  stream,                                                           \
                                  size)
 
-template<class Benchmark, class T>
+template<class Benchmark, class T, std::enable_if_t<Benchmark::uses_ipt, bool> = true>
 void add_benchmarks_type(const std::string&                            name,
                          std::vector<benchmark::internal::Benchmark*>& benchmarks,
                          hipStream_t                                   stream,
                          size_t                                        size,
                          const std::string&                            type_name)
 {
-    if(Benchmark::uses_ipt)
-    {
-        std::vector<benchmark::internal::Benchmark*> bs = {
-            CREATE_BENCHMARK_IPT(256, 1),
-            CREATE_BENCHMARK_IPT(256, 3),
-            CREATE_BENCHMARK_IPT(256, 4),
-            CREATE_BENCHMARK_IPT(256, 8),
-            CREATE_BENCHMARK_IPT(256, 16),
-            CREATE_BENCHMARK_IPT(256, 32),
-        };
+    std::vector<benchmark::internal::Benchmark*> bs = {
+        CREATE_BENCHMARK_IPT(256, 1),
+        CREATE_BENCHMARK_IPT(256, 3),
+        CREATE_BENCHMARK_IPT(256, 4),
+        CREATE_BENCHMARK_IPT(256, 8),
+        CREATE_BENCHMARK_IPT(256, 16),
+        CREATE_BENCHMARK_IPT(256, 32),
+    };
 
-        benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
-    }
-    else
-    {
-        std::vector<benchmark::internal::Benchmark*> bs = {
-            CREATE_BENCHMARK(256),
-        };
+    benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
+}
 
-        benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
-    }
+template<class Benchmark, class T, std::enable_if_t<!Benchmark::uses_ipt, bool> = true>
+void add_benchmarks_type(const std::string&                            name,
+                         std::vector<benchmark::internal::Benchmark*>& benchmarks,
+                         hipStream_t                                   stream,
+                         size_t                                        size,
+                         const std::string&                            type_name)
+{
+    std::vector<benchmark::internal::Benchmark*> bs = {
+        CREATE_BENCHMARK(256),
+    };
+
+    benchmarks.insert(benchmarks.end(), bs.begin(), bs.end());
 }
 
 #define CREATE_BENCHMARKS(T) add_benchmarks_type<Benchmark, int>(name, benchmarks, stream, size, #T)
