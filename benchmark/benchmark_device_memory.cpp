@@ -28,10 +28,11 @@
 
 enum memory_operation_method
 {
-    block_primitive_direct,
+    direct,
     striped,
-    vectorized,
-    block_primitives_transpose,
+    vectorize,
+    transpose,
+    warp_transpose
 };
 
 enum kernel_operation
@@ -79,9 +80,9 @@ struct operation<custom_operation, T, ItemsPerThread, BlockSize>
 #pragma unroll
         for(unsigned int i = 0; i < ItemsPerThread; i++)
         {
-            input[i] = input[i] + 666;
-#pragma unroll
+            input[i]                       = input[i] + 666;
             constexpr unsigned int repeats = 30;
+#pragma unroll
             for(unsigned int j = 0; j < repeats; j++)
             {
                 input[i] = input[i] * (input[j % ItemsPerThread]);
@@ -184,7 +185,7 @@ struct memory_operation
 {};
 
 template<>
-struct memory_operation<block_primitive_direct>
+struct memory_operation<direct>
 {
     static constexpr hipcub::BlockLoadAlgorithm load_type
         = hipcub::BlockLoadAlgorithm::BLOCK_LOAD_DIRECT;
@@ -202,7 +203,7 @@ struct memory_operation<striped>
 };
 
 template<>
-struct memory_operation<vectorized>
+struct memory_operation<vectorize>
 {
     static constexpr hipcub::BlockLoadAlgorithm load_type
         = hipcub::BlockLoadAlgorithm::BLOCK_LOAD_VECTORIZE;
@@ -211,12 +212,21 @@ struct memory_operation<vectorized>
 };
 
 template<>
-struct memory_operation<block_primitives_transpose>
+struct memory_operation<transpose>
 {
     static constexpr hipcub::BlockLoadAlgorithm load_type
         = hipcub::BlockLoadAlgorithm::BLOCK_LOAD_TRANSPOSE;
     static constexpr hipcub::BlockStoreAlgorithm store_type
         = hipcub::BlockStoreAlgorithm::BLOCK_STORE_TRANSPOSE;
+};
+
+template<>
+struct memory_operation<warp_transpose>
+{
+    static constexpr hipcub::BlockLoadAlgorithm load_type
+        = hipcub::BlockLoadAlgorithm::BLOCK_LOAD_WARP_TRANSPOSE;
+    static constexpr hipcub::BlockStoreAlgorithm store_type
+        = hipcub::BlockStoreAlgorithm::BLOCK_STORE_WARP_TRANSPOSE;
 };
 
 template<typename T,
@@ -396,7 +406,7 @@ void run_benchmark_memcpy(benchmark::State& state, size_t size, const hipStream_
     HIP_CHECK(hipFree(d_output));
 }
 
-#define CREATE_BENCHMARK(METHOD, OPERATION, T, SIZE, BLOCK_SIZE, IPT)                  \
+#define CREATE_BENCHMARK_IPT(METHOD, OPERATION, T, SIZE, BLOCK_SIZE, IPT)              \
     benchmark::RegisterBenchmark(                                                      \
         (#METHOD "_" #OPERATION "<" #T "," #SIZE ",BS:" #BLOCK_SIZE ",IPT:" #IPT ">"), \
         run_benchmark<T, BLOCK_SIZE, IPT, METHOD, OPERATION>,                          \
@@ -408,6 +418,24 @@ void run_benchmark_memcpy(benchmark::State& state, size_t size, const hipStream_
                                  run_benchmark_memcpy<T>,      \
                                  SIZE,                         \
                                  stream)
+
+// clang-format off
+#define CREATE_BENCHMARK_BLOCK_SIZE(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE) \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 1),        \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 2),        \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 4),        \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 8)
+
+#define CREATE_BENCHMARK_MEM_OP(MEM_OP, OP, TYPE, SIZE) \
+    CREATE_BENCHMARK_BLOCK_SIZE(MEM_OP, OP, TYPE, SIZE, 256)
+
+#define CREATE_BENCHMARK(OP, TYPE, SIZE)                \
+    CREATE_BENCHMARK_MEM_OP(direct, OP, TYPE, SIZE),    \
+    CREATE_BENCHMARK_MEM_OP(striped, OP, TYPE, SIZE),   \
+    CREATE_BENCHMARK_MEM_OP(vectorize, OP, TYPE, SIZE), \
+    CREATE_BENCHMARK_MEM_OP(transpose, OP, TYPE, SIZE), \
+    CREATE_BENCHMARK_MEM_OP(warp_transpose, OP, TYPE, SIZE)
+// clang-format on
 
 template<typename T>
 constexpr unsigned int megabytes(unsigned int size)
@@ -441,462 +469,12 @@ int main(int argc, char* argv[])
         CREATE_BENCHMARK_MEMCPY(int, megabytes<int>(128)),
 
         // clang-format off
-
-        // simple memory copy
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, int, megabytes<int>(128), 1024, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 4),
-
-        // simple memory copy using vector type
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, int, megabytes<int>(128), 1024, 8),
-
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 2),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 4),
-        CREATE_BENCHMARK(vectorized, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 8),
-
-        // simple memory copy using striped
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(striped, no_operation, int, megabytes<int>(128), 1024, 8),
-
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 2),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 4),
-        CREATE_BENCHMARK(striped, no_operation, uint64_t, megabytes<uint64_t>(128), 1024, 8),
-
-        // block_scan
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 128, 16),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 128, 32),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, int, megabytes<int>(128), 1024, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, float, megabytes<int>(128), 1024, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, double, megabytes<uint64_t>(128), 1024, 4),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, block_scan, uint64_t, megabytes<uint64_t>(128), 1024, 4),
-
-        // vectorized - block_scan
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, int, megabytes<int>(128), 1024, 8),
-
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 128, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 128, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 128, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 128, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 128, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 256, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 256, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 256, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 256, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 256, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 512, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 512, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 512, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 512, 8),
-
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 1024, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 1024, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 1024, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, float, megabytes<float>(128), 1024, 8),
-
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 128, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 128, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 128, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 128, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 128, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 256, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 256, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 256, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 256, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 256, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 512, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 512, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 512, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 512, 8),
-
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 1024, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 1024, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, double, megabytes<double>(128), 1024, 4),
-
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 1024, 2),
-        CREATE_BENCHMARK(vectorized, block_scan, uint64_t, megabytes<uint64_t>(128), 1024, 4),
-
-        // custom_op
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, int, megabytes<int>(128), 1024, 4),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, float, megabytes<float>(128), 1024, 4),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, double, megabytes<double>(128), 1024, 2),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, custom_operation, uint64_t, megabytes<uint64_t>(128), 1024, 2),
-
-        // transpose - atomics no collision
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_no_collision, int, megabytes<int>(128), 1024, 8),
-
-        // transpose - atomics inter block collision
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_block_collision, int, megabytes<int>(128), 1024, 8),
-
-        // transpose - atomics inter warp collision
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 128, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 128, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 128, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 128, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 128, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 256, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 256, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 256, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 256, 8),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 256, 16),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 512, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 512, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 512, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 512, 8),
-
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 1024, 1),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 1024, 2),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 1024, 4),
-        CREATE_BENCHMARK(block_primitives_transpose, atomics_inter_warp_collision, int, megabytes<int>(128), 1024, 8),
-
+        CREATE_BENCHMARK(no_operation,                  int, megabytes<int>(128)),
+        CREATE_BENCHMARK(block_scan,                    int, megabytes<int>(128)),
+        CREATE_BENCHMARK(custom_operation,              int, megabytes<int>(128)),
+        CREATE_BENCHMARK(atomics_no_collision,          int, megabytes<int>(128)),
+        CREATE_BENCHMARK(atomics_inter_block_collision, int, megabytes<int>(128)),
+        CREATE_BENCHMARK(atomics_inter_warp_collision,  int, megabytes<int>(128)),
         // clang-format on
     };
 
