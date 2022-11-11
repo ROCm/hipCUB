@@ -406,34 +406,36 @@ void run_benchmark_memcpy(benchmark::State& state, size_t size, const hipStream_
     HIP_CHECK(hipFree(d_output));
 }
 
-#define CREATE_BENCHMARK_IPT(METHOD, OPERATION, T, SIZE, BLOCK_SIZE, IPT)              \
-    benchmark::RegisterBenchmark(                                                      \
-        (#METHOD "_" #OPERATION "<" #T "," #SIZE ",BS:" #BLOCK_SIZE ",IPT:" #IPT ">"), \
-        run_benchmark<T, BLOCK_SIZE, IPT, METHOD, OPERATION>,                          \
-        SIZE,                                                                          \
-        stream)
+#define CREATE_BENCHMARK_IPT(METHOD, OPERATION, T, SIZE, BLOCK_SIZE, IPT)                     \
+    {                                                                                         \
+        benchmarks.push_back(benchmark::RegisterBenchmark(                                    \
+            #METHOD "_" #OPERATION "<" #T "," #SIZE ",BS:" #BLOCK_SIZE ",IPT:" #IPT ">",      \
+            [=](benchmark::State& state)                                                      \
+            { run_benchmark<T, BLOCK_SIZE, IPT, METHOD, OPERATION>(state, SIZE, stream); })); \
+    }
 
-#define CREATE_BENCHMARK_MEMCPY(T, SIZE)                       \
-    benchmark::RegisterBenchmark(("Memcpy<" #T "," #SIZE ">"), \
-                                 run_benchmark_memcpy<T>,      \
-                                 SIZE,                         \
-                                 stream)
+#define CREATE_BENCHMARK_MEMCPY(T, SIZE)                                                      \
+    {                                                                                         \
+        benchmarks.push_back(benchmark::RegisterBenchmark(                                    \
+            "Memcpy<" #T "," #SIZE ">",                                                       \
+            [=](benchmark::State& state) { run_benchmark_memcpy<T>(state, SIZE, stream); })); \
+    }
 
 // clang-format off
 #define CREATE_BENCHMARK_BLOCK_SIZE(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE) \
-    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 1),        \
-    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 2),        \
-    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 4),        \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 1)         \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 2)         \
+    CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 4)         \
     CREATE_BENCHMARK_IPT(MEM_OP, OP, TYPE, SIZE, BLOCK_SIZE, 8)
 
 #define CREATE_BENCHMARK_MEM_OP(MEM_OP, OP, TYPE, SIZE) \
     CREATE_BENCHMARK_BLOCK_SIZE(MEM_OP, OP, TYPE, SIZE, 256)
 
-#define CREATE_BENCHMARK(OP, TYPE, SIZE)                \
-    CREATE_BENCHMARK_MEM_OP(direct, OP, TYPE, SIZE),    \
-    CREATE_BENCHMARK_MEM_OP(striped, OP, TYPE, SIZE),   \
-    CREATE_BENCHMARK_MEM_OP(vectorize, OP, TYPE, SIZE), \
-    CREATE_BENCHMARK_MEM_OP(transpose, OP, TYPE, SIZE), \
+#define CREATE_BENCHMARK(OP, TYPE, SIZE)               \
+    CREATE_BENCHMARK_MEM_OP(direct, OP, TYPE, SIZE)    \
+    CREATE_BENCHMARK_MEM_OP(striped, OP, TYPE, SIZE)   \
+    CREATE_BENCHMARK_MEM_OP(vectorize, OP, TYPE, SIZE) \
+    CREATE_BENCHMARK_MEM_OP(transpose, OP, TYPE, SIZE) \
     CREATE_BENCHMARK_MEM_OP(warp_transpose, OP, TYPE, SIZE)
 // clang-format on
 
@@ -464,19 +466,19 @@ int main(int argc, char* argv[])
     std::cout << "[HIP] Device name: " << devProp.name << std::endl;
 
     // Add benchmarks
-    std::vector<benchmark::internal::Benchmark*> benchmarks = {
-        // simple memory copy not running kernel
-        CREATE_BENCHMARK_MEMCPY(int, megabytes<int>(128)),
+    std::vector<benchmark::internal::Benchmark*> benchmarks;
 
-        // clang-format off
-        CREATE_BENCHMARK(no_operation,                  int, megabytes<int>(128)),
-        CREATE_BENCHMARK(block_scan,                    int, megabytes<int>(128)),
-        CREATE_BENCHMARK(custom_operation,              int, megabytes<int>(128)),
-        CREATE_BENCHMARK(atomics_no_collision,          int, megabytes<int>(128)),
-        CREATE_BENCHMARK(atomics_inter_block_collision, int, megabytes<int>(128)),
-        CREATE_BENCHMARK(atomics_inter_warp_collision,  int, megabytes<int>(128)),
-        // clang-format on
-    };
+    // simple memory copy not running kernel
+    CREATE_BENCHMARK_MEMCPY(int, megabytes<int>(128))
+
+    // clang-format off
+    CREATE_BENCHMARK(no_operation,                  int, megabytes<int>(128))
+    CREATE_BENCHMARK(block_scan,                    int, megabytes<int>(128))
+    CREATE_BENCHMARK(custom_operation,              int, megabytes<int>(128))
+    CREATE_BENCHMARK(atomics_no_collision,          int, megabytes<int>(128))
+    CREATE_BENCHMARK(atomics_inter_block_collision, int, megabytes<int>(128))
+    CREATE_BENCHMARK(atomics_inter_warp_collision,  int, megabytes<int>(128))
+    // clang-format on
 
     // Use manual timing
     for(auto& b : benchmarks)
