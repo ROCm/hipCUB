@@ -468,7 +468,7 @@ int main(int argc, char* argv[])
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks;
 
-    // simple memory copy not running kernel
+    // Simple memory copy from device to device, not running a kernel
     CREATE_BENCHMARK_MEMCPY(int, megabytes<int>(128))
 
     // clang-format off
