@@ -18,7 +18,10 @@ function or by parameters.
 - Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
 - CUB backend references CUB and Thrust version 1.17.2.
-- Improved benchmark coverage of `BlockScan` by adding `ExclusiveScan`.
+- Improved benchmark coverage of `BlockScan` by adding `ExclusiveScan`, benchmark coverage of `BlockRadixSort` by adding `SortBlockedToStriped`, and benchmark coverage of `WarpScan` by adding `Broadcast`.
+### Known Issues
+- `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
+- `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
 
 ## hipCUB-2.12.0 for ROCm 5.3.0
 ### Added
