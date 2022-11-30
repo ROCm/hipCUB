@@ -46,6 +46,8 @@
 #include "../thread/thread_reduce.hpp"
 #include "../thread/thread_scan.hpp"
 
+#include <rocprim/block/block_radix_rank.hpp>
+
 BEGIN_HIPCUB_NAMESPACE
 
 
@@ -84,237 +86,55 @@ BEGIN_HIPCUB_NAMESPACE
  *
  *      \endcode
  */
-template <
-    int                     BLOCK_DIM_X,
-    int                     RADIX_BITS,
-    bool                    IS_DESCENDING,
-    bool                    MEMOIZE_OUTER_SCAN   = false,
-    BlockScanAlgorithm      INNER_SCAN_ALGORITHM = BLOCK_SCAN_WARP_SCANS,
-    hipSharedMemConfig      SMEM_CONFIG          = hipSharedMemBankSizeFourByte,
-    int                     BLOCK_DIM_Y          = 1,
-    int                     BLOCK_DIM_Z          = 1,
-    int                     ARCH                 = HIPCUB_ARCH /* ignored */>
+template<int                BLOCK_DIM_X,
+         int                RADIX_BITS,
+         bool               IS_DESCENDING,
+         bool               MEMOIZE_OUTER_SCAN   = false,
+         BlockScanAlgorithm INNER_SCAN_ALGORITHM = BLOCK_SCAN_WARP_SCANS,
+         hipSharedMemConfig SMEM_CONFIG          = hipSharedMemBankSizeFourByte,
+         int                BLOCK_DIM_Y          = 1,
+         int                BLOCK_DIM_Z          = 1,
+         int                ARCH                 = HIPCUB_ARCH /* ignored */>
 class BlockRadixRank
+    : private ::rocprim::block_radix_rank<BLOCK_DIM_X,
+                                          RADIX_BITS,
+                                          MEMOIZE_OUTER_SCAN
+                                              ? ::rocprim::block_radix_rank_algorithm::basic_memoize
+                                              : ::rocprim::block_radix_rank_algorithm::basic,
+                                          BLOCK_DIM_Y,
+                                          BLOCK_DIM_Z>
 {
-private:
+    static_assert(BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z > 0,
+                  "BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z must be greater than 0");
 
-    /******************************************************************************
-     * Type definitions and constants
-     ******************************************************************************/
-
-    // Integer type for digit counters (to be packed into words of type PackedCounters)
-    typedef unsigned short DigitCounter;
-
-    // Integer type for packing DigitCounters into columns of shared memory banks
-    typedef typename std::conditional<(SMEM_CONFIG == hipSharedMemBankSizeEightByte),
-        unsigned long long,
-        unsigned int>::type PackedCounter;
-
-    enum
-    {
-        // The thread block size in threads
-        BLOCK_THREADS               = BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z,
-
-        RADIX_DIGITS                = 1 << RADIX_BITS,
-
-        LOG_WARP_THREADS            = Log2<ARCH>::VALUE,
-        WARP_THREADS                = 1 << LOG_WARP_THREADS,
-        WARPS                       = (BLOCK_THREADS + WARP_THREADS - 1) / WARP_THREADS,
-
-        BYTES_PER_COUNTER           = sizeof(DigitCounter),
-        LOG_BYTES_PER_COUNTER       = Log2<BYTES_PER_COUNTER>::VALUE,
-
-        PACKING_RATIO               = sizeof(PackedCounter) / sizeof(DigitCounter),
-        LOG_PACKING_RATIO           = Log2<PACKING_RATIO>::VALUE,
-
-        LOG_COUNTER_LANES           = rocprim::maximum<int>()((int(RADIX_BITS) - int(LOG_PACKING_RATIO)), 0),                // Always at least one lane
-        COUNTER_LANES               = 1 << LOG_COUNTER_LANES,
-
-        // The number of packed counters per thread (plus one for padding)
-        PADDED_COUNTER_LANES        = COUNTER_LANES + 1,
-        RAKING_SEGMENT              = PADDED_COUNTER_LANES,
-    };
+    using base_type
+        = ::rocprim::block_radix_rank<BLOCK_DIM_X,
+                                      RADIX_BITS,
+                                      MEMOIZE_OUTER_SCAN
+                                          ? ::rocprim::block_radix_rank_algorithm::basic_memoize
+                                          : ::rocprim::block_radix_rank_algorithm::basic,
+                                      BLOCK_DIM_Y,
+                                      BLOCK_DIM_Z>;
 
 public:
-
-    enum
-    {
-        /// Number of bin-starting offsets tracked per thread
-        BINS_TRACKED_PER_THREAD = rocprim::maximum<int>()(1, (RADIX_DIGITS + BLOCK_THREADS - 1) / BLOCK_THREADS),
-    };
+    using TempStorage = typename base_type::storage_type;
 
 private:
+    // Reference to temporary storage (usually shared memory)
+    TempStorage& temp_storage_;
 
-
-    /// BlockScan type
-    typedef BlockScan<
-            PackedCounter,
-            BLOCK_DIM_X,
-            INNER_SCAN_ALGORITHM,
-            BLOCK_DIM_Y,
-            BLOCK_DIM_Z,
-            ARCH>
-        BlockScan;
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-
-    /// Shared memory storage layout type for BlockRadixRank
-    struct __align__(16) _TempStorage
+    HIPCUB_DEVICE inline TempStorage& PrivateStorage()
     {
-        union Aliasable
-        {
-            DigitCounter            digit_counters[PADDED_COUNTER_LANES * BLOCK_THREADS * PACKING_RATIO];
-            PackedCounter           raking_grid[BLOCK_THREADS * RAKING_SEGMENT];
-
-        } aliasable;
-
-        // Storage for scanning local ranks
-        typename BlockScan::TempStorage block_scan;
-    };
-
-#endif
-
-    /******************************************************************************
-     * Thread fields
-     ******************************************************************************/
-
-    /// Shared storage reference
-    _TempStorage &temp_storage;
-
-    /// Linear thread-id
-    unsigned int linear_tid;
-
-    /// Copy of raking segment, promoted to registers
-    PackedCounter cached_segment[RAKING_SEGMENT];
-
-
-    /******************************************************************************
-     * Utility methods
-     ******************************************************************************/
-
-    /**
-     * Internal storage allocator
-     */
-    HIPCUB_DEVICE inline _TempStorage& PrivateStorage()
-    {
-        __shared__ _TempStorage private_storage;
+        HIPCUB_SHARED_MEMORY TempStorage private_storage;
         return private_storage;
     }
 
-
-    /**
-     * Performs upsweep raking reduction, returning the aggregate
-     */
-    HIPCUB_DEVICE inline PackedCounter Upsweep()
-    {
-        PackedCounter *smem_raking_ptr = &temp_storage.aliasable.raking_grid[linear_tid * RAKING_SEGMENT];
-        PackedCounter *raking_ptr;
-
-        if (MEMOIZE_OUTER_SCAN)
-        {
-            // Copy data into registers
-            #pragma unroll
-            for (int i = 0; i < RAKING_SEGMENT; i++)
-            {
-                cached_segment[i] = smem_raking_ptr[i];
-            }
-            raking_ptr = cached_segment;
-        }
-        else
-        {
-            raking_ptr = smem_raking_ptr;
-        }
-
-        return internal::ThreadReduce<RAKING_SEGMENT>(raking_ptr, Sum());
-    }
-
-
-    /// Performs exclusive downsweep raking scan
-    HIPCUB_DEVICE inline void ExclusiveDownsweep(
-        PackedCounter raking_partial)
-    {
-        PackedCounter *smem_raking_ptr = &temp_storage.aliasable.raking_grid[linear_tid * RAKING_SEGMENT];
-
-        PackedCounter *raking_ptr = (MEMOIZE_OUTER_SCAN) ?
-            cached_segment :
-            smem_raking_ptr;
-
-        // Exclusive raking downsweep scan
-        internal::ThreadScanExclusive<RAKING_SEGMENT>(raking_ptr, raking_ptr, Sum(), raking_partial);
-
-        if (MEMOIZE_OUTER_SCAN)
-        {
-            // Copy data back to smem
-            #pragma unroll
-            for (int i = 0; i < RAKING_SEGMENT; i++)
-            {
-                smem_raking_ptr[i] = cached_segment[i];
-            }
-        }
-    }
-
-
-    /**
-     * Reset shared memory digit counters
-     */
-    HIPCUB_DEVICE inline void ResetCounters()
-    {
-        // Reset shared memory digit counters
-        #pragma unroll
-        for (int LANE = 0; LANE < PADDED_COUNTER_LANES; LANE++)
-        {
-            #pragma unroll
-            for (int SUB_COUNTER = 0; SUB_COUNTER < PACKING_RATIO; SUB_COUNTER++)
-            {
-                temp_storage.aliasable.digit_counters[(LANE * BLOCK_THREADS + linear_tid) * PACKING_RATIO + SUB_COUNTER] = 0;
-            }
-        }
-    }
-
-
-    /**
-     * Block-scan prefix callback
-     */
-    struct PrefixCallBack
-    {
-        HIPCUB_DEVICE inline PackedCounter operator()(PackedCounter block_aggregate)
-        {
-            PackedCounter block_prefix = 0;
-
-            // Propagate totals in packed fields
-            #pragma unroll
-            for (int PACKED = 1; PACKED < PACKING_RATIO; PACKED++)
-            {
-                block_prefix += block_aggregate << (sizeof(DigitCounter) * 8 * PACKED);
-            }
-
-            return block_prefix;
-        }
-    };
-
-
-    /**
-     * Scan shared memory digit counters.
-     */
-    HIPCUB_DEVICE inline void ScanCounters()
-    {
-        // Upsweep scan
-        PackedCounter raking_partial = Upsweep();
-
-        // Compute exclusive sum
-        PackedCounter exclusive_partial;
-        PrefixCallBack prefix_call_back;
-        BlockScan(temp_storage.block_scan).ExclusiveSum(raking_partial, exclusive_partial, prefix_call_back);
-
-        // Downsweep scan with exclusive partial
-        ExclusiveDownsweep(exclusive_partial);
-    }
-
 public:
-
-    /// \smemstorage{BlockScan}
-    struct TempStorage : Uninitialized<_TempStorage> {};
-
+    enum
+    {
+        /// Number of bin-starting offsets tracked per thread
+        BINS_TRACKED_PER_THREAD = base_type::digits_per_thread,
+    };
 
     /******************************************************************//**
      * \name Collective constructors
@@ -324,134 +144,82 @@ public:
     /**
      * \brief Collective constructor using a private static allocation of shared memory as temporary storage.
      */
-    HIPCUB_DEVICE inline BlockRadixRank()
-    :
-        temp_storage(PrivateStorage()),
-        linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
-    {}
-
+    HIPCUB_DEVICE inline BlockRadixRank() : temp_storage_(PrivateStorage()) {}
 
     /**
      * \brief Collective constructor using the specified memory allocation as temporary storage.
      */
     HIPCUB_DEVICE inline BlockRadixRank(
-        TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
-    :
-        temp_storage(temp_storage.Alias()),
-        linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
+        TempStorage&
+            temp_storage) ///< [in] Reference to memory allocation having layout type TempStorage
+        : temp_storage_(temp_storage)
     {}
 
-
     //@}  end member group
-    /******************************************************************//**
-     * \name Raking
+    /******************************************************************/ /**
+     * \name Ranking
      *********************************************************************/
     //@{
 
     /**
      * \brief Rank keys.
      */
-    template <
-        typename        UnsignedBits,
-        int             KEYS_PER_THREAD,
-        typename        DigitExtractorT>
+    template<typename UnsignedBits,
+             int KEYS_PER_THREAD,
+             typename DigitExtractorT>
     HIPCUB_DEVICE inline void RankKeys(
-        UnsignedBits    (&keys)[KEYS_PER_THREAD],           ///< [in] Keys for this tile
-        int             (&ranks)[KEYS_PER_THREAD],          ///< [out] For each key, the local rank within the tile
-        DigitExtractorT digit_extractor)                    ///< [in] The digit extractor
+        UnsignedBits (&keys)[KEYS_PER_THREAD], ///< [in] Keys for this tile
+        int (&ranks)[KEYS_PER_THREAD], ///< [out] For each key, the local rank within the tile
+        DigitExtractorT digit_extractor) ///< [in] The digit extractor
     {
-        DigitCounter    thread_prefixes[KEYS_PER_THREAD];   // For each key, the count of previous keys in this tile having the same digit
-        DigitCounter*   digit_counters[KEYS_PER_THREAD];    // For each key, the byte-offset of its corresponding digit counter in smem
-
-        // Reset shared memory digit counters
-        ResetCounters();
-
-        #pragma unroll
-        for (int ITEM = 0; ITEM < KEYS_PER_THREAD; ++ITEM)
-        {
-            // Get digit
-            unsigned int digit = digit_extractor.Digit(keys[ITEM]);
-
-            // Get sub-counter
-            unsigned int sub_counter = digit >> LOG_COUNTER_LANES;
-
-            // Get counter lane
-            unsigned int counter_lane = digit & (COUNTER_LANES - 1);
-
-            if (IS_DESCENDING)
-            {
-                sub_counter = PACKING_RATIO - 1 - sub_counter;
-                counter_lane = COUNTER_LANES - 1 - counter_lane;
-            }
-
-            // Pointer to smem digit counter
-            digit_counters[ITEM] = &temp_storage.aliasable.digit_counters[counter_lane * BLOCK_THREADS * PACKING_RATIO + linear_tid * PACKING_RATIO + sub_counter];
-
-            // Load thread-exclusive prefix
-            thread_prefixes[ITEM] = *digit_counters[ITEM];
-
-            // Store inclusive prefix
-            *digit_counters[ITEM] = thread_prefixes[ITEM] + 1;
-        }
-
-        ::rocprim::syncthreads();
-
-        // Scan shared memory counters
-        ScanCounters();
-
-        ::rocprim::syncthreads();
-
-        // Extract the local ranks of each key
-        #pragma unroll
-        for (int ITEM = 0; ITEM < KEYS_PER_THREAD; ++ITEM)
-        {
-            // Add in thread block exclusive prefix
-            ranks[ITEM] = thread_prefixes[ITEM] + *digit_counters[ITEM];
-        }
+        base_type::rank_keys(keys,
+                             reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
+                             temp_storage_,
+                             [&](const UnsignedBits key)
+                             {
+                                 UnsignedBits digit = digit_extractor.Digit(key);
+                                 if(IS_DESCENDING)
+                                 {
+                                     // Flip digit bits
+                                     digit ^= (1 << RADIX_BITS) - 1;
+                                 }
+                                 return digit;
+                             });
     }
-
 
     /**
      * \brief Rank keys.  For the lower \p RADIX_DIGITS threads, digit counts for each digit are provided for the corresponding thread.
      */
-    template <
-        typename        UnsignedBits,
-        int             KEYS_PER_THREAD,
-        typename        DigitExtractorT>
+    template<typename UnsignedBits,
+             int KEYS_PER_THREAD,
+             typename DigitExtractorT>
     HIPCUB_DEVICE inline void RankKeys(
-        UnsignedBits    (&keys)[KEYS_PER_THREAD],           ///< [in] Keys for this tile
-        int             (&ranks)[KEYS_PER_THREAD],          ///< [out] For each key, the local rank within the tile (out parameter)
-        DigitExtractorT digit_extractor,                    ///< [in] The digit extractor
-        int             (&exclusive_digit_prefix)[BINS_TRACKED_PER_THREAD])            ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
+        UnsignedBits (&keys)[KEYS_PER_THREAD], ///< [in] Keys for this tile
+        int (&ranks)
+            [KEYS_PER_THREAD], ///< [out] For each key, the local rank within the tile (out parameter)
+        DigitExtractorT digit_extractor, ///< [in] The digit extractor
+        int (&exclusive_digit_prefix)
+            [BINS_TRACKED_PER_THREAD]) ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
     {
-        // Rank keys
-        RankKeys(keys, ranks, digit_extractor);
-
-        // Get the inclusive and exclusive digit totals corresponding to the calling thread.
-        #pragma unroll
-        for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
-        {
-            int bin_idx = (linear_tid * BINS_TRACKED_PER_THREAD) + track;
-
-            if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
+        unsigned int counts[BINS_TRACKED_PER_THREAD];
+        base_type::rank_keys(
+            keys,
+            reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
+            temp_storage_,
+            [&](const UnsignedBits key)
             {
-                if (IS_DESCENDING)
-                    bin_idx = RADIX_DIGITS - bin_idx - 1;
-
-                // Obtain ex/inclusive digit counts.  (Unfortunately these all reside in the
-                // first counter column, resulting in unavoidable bank conflicts.)
-                unsigned int counter_lane   = (bin_idx & (COUNTER_LANES - 1));
-                unsigned int sub_counter    = bin_idx >> (LOG_COUNTER_LANES);
-
-                exclusive_digit_prefix[track] = temp_storage.aliasable.digit_counter[counter_lane * BLOCK_THREADS * PACKING_RATIO + sub_counter];
-            }
-        }
+                UnsignedBits digit = digit_extractor.Digit(key);
+                if(IS_DESCENDING)
+                {
+                    // Flip digit bits
+                    digit ^= (1 << RADIX_BITS) - 1;
+                }
+                return digit;
+            },
+            reinterpret_cast<unsigned int(&)[BINS_TRACKED_PER_THREAD]>(exclusive_digit_prefix),
+            counts);
     }
 };
-
-
-
-
 
 /**
  * Radix-rank using match.any
