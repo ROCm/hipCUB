@@ -31,6 +31,7 @@
 #include "common_test_header.hpp"
 
 // hipcub API
+#include "hipcub/block/block_exchange.hpp"
 #include "hipcub/block/block_load.hpp"
 #include "hipcub/block/block_radix_rank.hpp"
 #include "hipcub/block/block_store.hpp"
@@ -130,15 +131,29 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const KeyType* keys_inp
                                Descending,
                                Algorithm == RadixRankAlgorithm::RADIX_RANK_MEMOIZE>>;
 
+    using KeyExchangeType  = hipcub::BlockExchange<KeyType, BlockSize, ItemsPerThread>;
+    using RankExchangeType = hipcub::BlockExchange<int, BlockSize, ItemsPerThread>;
+
     constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
     const unsigned int     lid             = hipThreadIdx_x;
     const unsigned int     block_offset    = hipBlockIdx_x * items_per_block;
 
+    __shared__ union
+    {
+        typename KeyExchangeType::TempStorage  key_exchange;
+        typename RankType::TempStorage         rank;
+        typename RankExchangeType::TempStorage rank_exchange;
+    } storage;
+
     KeyType keys[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, keys_input + block_offset, keys);
+
     if(warp_striped)
-        hipcub::LoadDirectWarpStriped(lid, keys_input + block_offset, keys);
-    else
-        hipcub::LoadDirectBlocked(lid, keys_input + block_offset, keys);
+    {
+        KeyExchangeType exchange(storage.key_exchange);
+        exchange.BlockedToWarpStriped(keys, keys);
+        __syncthreads();
+    }
 
     UnsignedBits(&unsigned_keys)[ItemsPerThread]
         = reinterpret_cast<UnsignedBits(&)[ItemsPerThread]>(keys);
@@ -149,17 +164,20 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const KeyType* keys_inp
         unsigned_keys[KEY] = KeyTraits::TwiddleIn(unsigned_keys[KEY]);
     }
 
-    __shared__ typename RankType::TempStorage storage;
-    RankType                                  rank(storage);
-    const DigitExtractor                      digit_extractor(start_bit, radix_bits);
-    int                                       ranks[ItemsPerThread];
+    RankType             rank(storage.rank);
+    const DigitExtractor digit_extractor(start_bit, radix_bits);
+    int                  ranks[ItemsPerThread];
 
     rank.RankKeys(unsigned_keys, ranks, digit_extractor);
 
     if(warp_striped)
-        hipcub::StoreDirectWarpStriped(lid, ranks_output + block_offset, ranks);
-    else
-        hipcub::StoreDirectBlocked(lid, ranks_output + block_offset, ranks);
+    {
+        __syncthreads();
+        RankExchangeType exchange(storage.rank_exchange);
+        exchange.WarpStripedToBlocked(ranks, ranks);
+    }
+
+    hipcub::StoreDirectBlocked(lid, ranks_output + block_offset, ranks);
 }
 
 template<typename TestFixture, RadixRankAlgorithm Algorithm>
