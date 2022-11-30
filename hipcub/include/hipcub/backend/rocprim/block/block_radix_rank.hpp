@@ -224,116 +224,67 @@ public:
 /**
  * Radix-rank using match.any
  */
-template <
-    int                     BLOCK_DIM_X,
-    int                     RADIX_BITS,
-    bool                    IS_DESCENDING,
-    BlockScanAlgorithm      INNER_SCAN_ALGORITHM    = BLOCK_SCAN_WARP_SCANS,
-    int                     BLOCK_DIM_Y             = 1,
-    int                     BLOCK_DIM_Z             = 1,
-    int                     ARCH                = HIPCUB_ARCH>
+template<int                BLOCK_DIM_X,
+         int                RADIX_BITS,
+         bool               IS_DESCENDING,
+         BlockScanAlgorithm INNER_SCAN_ALGORITHM = BLOCK_SCAN_WARP_SCANS,
+         int                BLOCK_DIM_Y          = 1,
+         int                BLOCK_DIM_Z          = 1,
+         int                ARCH                 = HIPCUB_ARCH>
 class BlockRadixRankMatch
+    : private ::rocprim::block_radix_rank<BLOCK_DIM_X,
+                                          RADIX_BITS,
+                                          ::rocprim::block_radix_rank_algorithm::match,
+                                          BLOCK_DIM_Y,
+                                          BLOCK_DIM_Z>
 {
-private:
+    static_assert(BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z > 0,
+                  "BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z must be greater than 0");
 
-    /******************************************************************************
-     * Type definitions and constants
-     ******************************************************************************/
-
-    typedef int32_t    RankT;
-    typedef int32_t    DigitCounterT;
-
-    enum
-    {
-        // The thread block size in threads
-        BLOCK_THREADS               = BLOCK_DIM_X * BLOCK_DIM_Y * BLOCK_DIM_Z,
-
-        RADIX_DIGITS                = 1 << RADIX_BITS,
-
-        LOG_WARP_THREADS            = Log2<ARCH>::VALUE,
-        WARP_THREADS                = 1 << LOG_WARP_THREADS,
-        WARPS                       = (BLOCK_THREADS + WARP_THREADS - 1) / WARP_THREADS,
-
-        PADDED_WARPS            = ((WARPS & 0x1) == 0) ?
-                                    WARPS + 1 :
-                                    WARPS,
-
-        COUNTERS                = PADDED_WARPS * RADIX_DIGITS,
-        RAKING_SEGMENT          = (COUNTERS + BLOCK_THREADS - 1) / BLOCK_THREADS,
-        PADDED_RAKING_SEGMENT   = ((RAKING_SEGMENT & 0x1) == 0) ?
-                                    RAKING_SEGMENT + 1 :
-                                    RAKING_SEGMENT,
-    };
+    using base_type = ::rocprim::block_radix_rank<BLOCK_DIM_X,
+                                                  RADIX_BITS,
+                                                  ::rocprim::block_radix_rank_algorithm::match,
+                                                  BLOCK_DIM_Y,
+                                                  BLOCK_DIM_Z>;
 
 public:
+    using TempStorage = typename base_type::storage_type;
 
+private:
+    // Reference to temporary storage (usually shared memory)
+    TempStorage& temp_storage_;
+
+    HIPCUB_DEVICE inline TempStorage& PrivateStorage()
+    {
+        HIPCUB_SHARED_MEMORY TempStorage private_storage;
+        return private_storage;
+    }
+
+public:
     enum
     {
         /// Number of bin-starting offsets tracked per thread
-        BINS_TRACKED_PER_THREAD = rocprim::maximum<int>()(1, (RADIX_DIGITS + BLOCK_THREADS - 1) / BLOCK_THREADS),
+        BINS_TRACKED_PER_THREAD = base_type::digits_per_thread,
     };
-
-private:
-
-    /// BlockScan type
-    typedef BlockScan<
-            DigitCounterT,
-            BLOCK_THREADS,
-            INNER_SCAN_ALGORITHM,
-            BLOCK_DIM_Y,
-            BLOCK_DIM_Z,
-            ARCH>
-        BlockScanT;
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
-    /// Shared memory storage layout type for BlockRadixRank
-    struct __align__(16) _TempStorage
-    {
-        typename BlockScanT::TempStorage            block_scan;
-
-        union __align__(16) Aliasable
-        {
-            volatile DigitCounterT                  warp_digit_counters[RADIX_DIGITS * PADDED_WARPS];
-            DigitCounterT                           raking_grid[BLOCK_THREADS * PADDED_RAKING_SEGMENT];
-
-        } aliasable;
-    };
-#endif
-
-    /******************************************************************************
-     * Thread fields
-     ******************************************************************************/
-
-    /// Shared storage reference
-    _TempStorage &temp_storage;
-
-    /// Linear thread-id
-    unsigned int linear_tid;
-
-
-
-public:
-
-    /// \smemstorage{BlockScan}
-    struct TempStorage : Uninitialized<_TempStorage> {};
-
 
     /******************************************************************//**
      * \name Collective constructors
      *********************************************************************/
     //@{
 
+    /**
+     * \brief Collective constructor using a private static allocation of shared memory as temporary storage.
+     */
+    HIPCUB_DEVICE inline BlockRadixRankMatch() : temp_storage_(PrivateStorage()) {}
 
     /**
      * \brief Collective constructor using the specified memory allocation as temporary storage.
      */
     HIPCUB_DEVICE inline BlockRadixRankMatch(
-        TempStorage &temp_storage)             ///< [in] Reference to memory allocation having layout type TempStorage
-    :
-        temp_storage(temp_storage.Alias()),
-        linear_tid(RowMajorTid(BLOCK_DIM_X, BLOCK_DIM_Y, BLOCK_DIM_Z))
+        TempStorage&
+            temp_storage) ///< [in] Reference to memory allocation having layout type TempStorage
+        : temp_storage_(temp_storage)
     {}
-
 
     //@}  end member group
     /******************************************************************//**
@@ -344,127 +295,62 @@ public:
     /**
      * \brief Rank keys.
      */
-    template <
-        typename        UnsignedBits,
-        int             KEYS_PER_THREAD,
-        typename        DigitExtractorT>
+    template<typename UnsignedBits,
+             int KEYS_PER_THREAD,
+             typename DigitExtractorT>
     __device__ __forceinline__ void RankKeys(
-        UnsignedBits    (&keys)[KEYS_PER_THREAD],           ///< [in] Keys for this tile
-        int             (&ranks)[KEYS_PER_THREAD],          ///< [out] For each key, the local rank within the tile
-        DigitExtractorT digit_extractor)                    ///< [in] The digit extractor
+        UnsignedBits (&keys)[KEYS_PER_THREAD], ///< [in] Keys for this tile
+        int (&ranks)[KEYS_PER_THREAD], ///< [out] For each key, the local rank within the tile
+        DigitExtractorT digit_extractor) ///< [in] The digit extractor
     {
-        // Initialize shared digit counters
-
-        #pragma unroll
-        for (int ITEM = 0; ITEM < PADDED_RAKING_SEGMENT; ++ITEM)
-            temp_storage.aliasable.raking_grid[linear_tid * PADDED_RAKING_SEGMENT + ITEM] = 0;
-
-        ::rocprim::syncthreads();
-
-        // Each warp will strip-mine its section of input, one strip at a time
-
-        volatile DigitCounterT  *digit_counters[KEYS_PER_THREAD];
-        uint32_t                warp_id         = linear_tid >> LOG_WARP_THREADS;
-        uint32_t                lane_mask_lt    = LaneMaskLt();
-
-        #pragma unroll
-        for (int ITEM = 0; ITEM < KEYS_PER_THREAD; ++ITEM)
-        {
-            // My digit
-            uint32_t digit = digit_extractor.Digit(keys[ITEM]);
-
-            if (IS_DESCENDING)
-                digit = RADIX_DIGITS - digit - 1;
-
-            // Mask of peers who have same digit as me
-            uint32_t peer_mask = rocprim::MatchAny<RADIX_BITS>(digit);
-
-            // Pointer to smem digit counter for this key
-            digit_counters[ITEM] = &temp_storage.aliasable.warp_digit_counters[digit * PADDED_WARPS + warp_id];
-
-            // Number of occurrences in previous strips
-            DigitCounterT warp_digit_prefix = *digit_counters[ITEM];
-
-            // Warp-sync
-            WARP_SYNC(0xFFFFFFFF);
-
-            // Number of peers having same digit as me
-            int32_t digit_count = __popc(peer_mask);
-
-            // Number of lower-ranked peers having same digit seen so far
-            int32_t peer_digit_prefix = __popc(peer_mask & lane_mask_lt);
-
-            if (peer_digit_prefix == 0)
-            {
-                // First thread for each digit updates the shared warp counter
-                *digit_counters[ITEM] = DigitCounterT(warp_digit_prefix + digit_count);
-            }
-
-            // Warp-sync
-            WARP_SYNC(0xFFFFFFFF);
-
-            // Number of prior keys having same digit
-            ranks[ITEM] = warp_digit_prefix + DigitCounterT(peer_digit_prefix);
-        }
-
-        ::rocprim::syncthreads();
-
-        // Scan warp counters
-
-        DigitCounterT scan_counters[PADDED_RAKING_SEGMENT];
-
-        #pragma unroll
-        for (int ITEM = 0; ITEM < PADDED_RAKING_SEGMENT; ++ITEM)
-            scan_counters[ITEM] = temp_storage.aliasable.raking_grid[linear_tid * PADDED_RAKING_SEGMENT + ITEM];
-
-        BlockScanT(temp_storage.block_scan).ExclusiveSum(scan_counters, scan_counters);
-
-        #pragma unroll
-        for (int ITEM = 0; ITEM < PADDED_RAKING_SEGMENT; ++ITEM)
-            temp_storage.aliasable.raking_grid[linear_tid * PADDED_RAKING_SEGMENT + ITEM] = scan_counters[ITEM];
-
-        ::rocprim::syncthreads();
-
-        // Seed ranks with counter values from previous warps
-        #pragma unroll
-        for (int ITEM = 0; ITEM < KEYS_PER_THREAD; ++ITEM)
-            ranks[ITEM] += *digit_counters[ITEM];
+        base_type::rank_keys(keys,
+                             reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
+                             temp_storage_,
+                             [&](const UnsignedBits key)
+                             {
+                                 UnsignedBits digit = digit_extractor.Digit(key);
+                                 if(IS_DESCENDING)
+                                 {
+                                     // Flip digit bits
+                                     digit ^= (1 << RADIX_BITS) - 1;
+                                 }
+                                 return digit;
+                             });
     }
-
 
     /**
      * \brief Rank keys.  For the lower \p RADIX_DIGITS threads, digit counts for each digit are provided for the corresponding thread.
      */
-    template <
-        typename        UnsignedBits,
-        int             KEYS_PER_THREAD,
-        typename        DigitExtractorT>
+    template<typename UnsignedBits,
+             int KEYS_PER_THREAD,
+             typename DigitExtractorT>
     __device__ __forceinline__ void RankKeys(
-        UnsignedBits    (&keys)[KEYS_PER_THREAD],           ///< [in] Keys for this tile
-        int             (&ranks)[KEYS_PER_THREAD],          ///< [out] For each key, the local rank within the tile (out parameter)
-        DigitExtractorT digit_extractor,                    ///< [in] The digit extractor
-        int             (&exclusive_digit_prefix)[BINS_TRACKED_PER_THREAD])            ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
+        UnsignedBits (&keys)[KEYS_PER_THREAD], ///< [in] Keys for this tile
+        int (&ranks)
+            [KEYS_PER_THREAD], ///< [out] For each key, the local rank within the tile (out parameter)
+        DigitExtractorT digit_extractor, ///< [in] The digit extractor
+        int (&exclusive_digit_prefix)
+            [BINS_TRACKED_PER_THREAD]) ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
     {
-        RankKeys(keys, ranks, digit_extractor);
-
-        // Get exclusive count for each digit
-        #pragma unroll
-        for (int track = 0; track < BINS_TRACKED_PER_THREAD; ++track)
-        {
-            int bin_idx = (linear_tid * BINS_TRACKED_PER_THREAD) + track;
-
-            if ((BLOCK_THREADS == RADIX_DIGITS) || (bin_idx < RADIX_DIGITS))
+        unsigned int counts[BINS_TRACKED_PER_THREAD];
+        base_type::rank_keys(
+            keys,
+            reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
+            temp_storage_,
+            [&](const UnsignedBits key)
             {
-                if (IS_DESCENDING)
-                    bin_idx = RADIX_DIGITS - bin_idx - 1;
-
-                exclusive_digit_prefix[track] = temp_storage.aliasable.warp_digit_counters[bin_idx * PADDED_WARPS];
-            }
-        }
+                UnsignedBits digit = digit_extractor.Digit(key);
+                if(IS_DESCENDING)
+                {
+                    // Flip digit bits
+                    digit ^= (1 << RADIX_BITS) - 1;
+                }
+                return digit;
+            },
+            reinterpret_cast<unsigned int(&)[BINS_TRACKED_PER_THREAD]>(exclusive_digit_prefix),
+            counts);
     }
 };
-
-
 
 END_HIPCUB_NAMESPACE
 
