@@ -317,12 +317,7 @@ TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMemoize)
 
 TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMatch)
 {
-// The hipCUB implementation of BlockRadixRankMatch is currently broken for the
-// rocPRIM backend, and does not pass the tests yet.
-#ifdef __HIP_PLATFORM_AMD__
-    GTEST_SKIP();
-#endif
-
+#ifdef __HIP_PLATFORM_NVIDIA__
     constexpr unsigned int block_size = TestFixture::params::block_size;
     if(block_size % HIPCUB_DEVICE_WARP_THREADS != 0)
     {
@@ -331,6 +326,7 @@ TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMatch)
         // https://github.com/NVIDIA/cub/issues/552.
         GTEST_SKIP();
     }
+#endif
 
     test_radix_rank<TestFixture, RadixRankAlgorithm::RADIX_RANK_MATCH>();
 }
