@@ -50,7 +50,29 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
+namespace detail
+{
+template<typename DigitExtractorT, typename UnsignedBits, int RADIX_BITS, bool IS_DESCENDING>
+struct DigitExtractorAdopter
+{
+    DigitExtractorT& digit_extractor_;
 
+    HIPCUB_DEVICE DigitExtractorAdopter(DigitExtractorT& digit_extractor)
+        : digit_extractor_(digit_extractor)
+    {}
+
+    HIPCUB_DEVICE inline UnsignedBits operator()(const UnsignedBits key)
+    {
+        UnsignedBits digit = digit_extractor_.Digit(key);
+        if(IS_DESCENDING)
+        {
+            // Flip digit bits
+            digit ^= (1 << RADIX_BITS) - 1;
+        }
+        return digit;
+    }
+};
+} // namespace detail
 
 /**
  * \brief BlockRadixRank provides operations for ranking unsigned integer types within a CUDA thread block.
@@ -172,19 +194,12 @@ public:
         int (&ranks)[KEYS_PER_THREAD], ///< [out] For each key, the local rank within the tile
         DigitExtractorT digit_extractor) ///< [in] The digit extractor
     {
+        detail::DigitExtractorAdopter<DigitExtractorT, UnsignedBits, RADIX_BITS, IS_DESCENDING>
+            digit_extractor_adopter(digit_extractor);
         base_type::rank_keys(keys,
                              reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
                              temp_storage_,
-                             [&](const UnsignedBits key)
-                             {
-                                 UnsignedBits digit = digit_extractor.Digit(key);
-                                 if(IS_DESCENDING)
-                                 {
-                                     // Flip digit bits
-                                     digit ^= (1 << RADIX_BITS) - 1;
-                                 }
-                                 return digit;
-                             });
+                             digit_extractor_adopter);
     }
 
     /**
@@ -202,20 +217,13 @@ public:
             [BINS_TRACKED_PER_THREAD]) ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
     {
         unsigned int counts[BINS_TRACKED_PER_THREAD];
+        detail::DigitExtractorAdopter<DigitExtractorT, UnsignedBits, RADIX_BITS, IS_DESCENDING>
+            digit_extractor_adopter(digit_extractor);
         base_type::rank_keys(
             keys,
             reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
             temp_storage_,
-            [&](const UnsignedBits key)
-            {
-                UnsignedBits digit = digit_extractor.Digit(key);
-                if(IS_DESCENDING)
-                {
-                    // Flip digit bits
-                    digit ^= (1 << RADIX_BITS) - 1;
-                }
-                return digit;
-            },
+            digit_extractor_adopter,
             reinterpret_cast<unsigned int(&)[BINS_TRACKED_PER_THREAD]>(exclusive_digit_prefix),
             counts);
     }
@@ -303,19 +311,12 @@ public:
         int (&ranks)[KEYS_PER_THREAD], ///< [out] For each key, the local rank within the tile
         DigitExtractorT digit_extractor) ///< [in] The digit extractor
     {
+        detail::DigitExtractorAdopter<DigitExtractorT, UnsignedBits, RADIX_BITS, IS_DESCENDING>
+            digit_extractor_adopter(digit_extractor);
         base_type::rank_keys(keys,
                              reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
                              temp_storage_,
-                             [&](const UnsignedBits key)
-                             {
-                                 UnsignedBits digit = digit_extractor.Digit(key);
-                                 if(IS_DESCENDING)
-                                 {
-                                     // Flip digit bits
-                                     digit ^= (1 << RADIX_BITS) - 1;
-                                 }
-                                 return digit;
-                             });
+                             digit_extractor_adopter);
     }
 
     /**
@@ -333,20 +334,13 @@ public:
             [BINS_TRACKED_PER_THREAD]) ///< [out] The exclusive prefix sum for the digits [(threadIdx.x * BINS_TRACKED_PER_THREAD) ... (threadIdx.x * BINS_TRACKED_PER_THREAD) + BINS_TRACKED_PER_THREAD - 1]
     {
         unsigned int counts[BINS_TRACKED_PER_THREAD];
+        detail::DigitExtractorAdopter<DigitExtractorT, UnsignedBits, RADIX_BITS, IS_DESCENDING>
+            digit_extractor_adopter(digit_extractor);
         base_type::rank_keys(
             keys,
             reinterpret_cast<unsigned int(&)[KEYS_PER_THREAD]>(ranks),
             temp_storage_,
-            [&](const UnsignedBits key)
-            {
-                UnsignedBits digit = digit_extractor.Digit(key);
-                if(IS_DESCENDING)
-                {
-                    // Flip digit bits
-                    digit ^= (1 << RADIX_BITS) - 1;
-                }
-                return digit;
-            },
+            digit_extractor_adopter,
             reinterpret_cast<unsigned int(&)[BINS_TRACKED_PER_THREAD]>(exclusive_digit_prefix),
             counts);
     }
