@@ -144,7 +144,7 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const KeyType* keys_inp
         = reinterpret_cast<UnsignedBits(&)[ItemsPerThread]>(keys);
 
 #pragma unroll
-    for(int KEY = 0; KEY < ItemsPerThread; KEY++)
+    for(unsigned int KEY = 0; KEY < ItemsPerThread; KEY++)
     {
         unsigned_keys[KEY] = KeyTraits::TwiddleIn(unsigned_keys[KEY]);
     }
