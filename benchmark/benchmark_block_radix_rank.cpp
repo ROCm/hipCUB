@@ -71,9 +71,9 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const T* keys_input, in
                                BenchmarkKind == RadixRankAlgorithm::RADIX_RANK_MEMOIZE>>;
 
 #pragma unroll
-    for(unsigned int KEY = 0; KEY < ItemsPerThread; KEY++)
+    for(unsigned int key = 0; key < ItemsPerThread; key++)
     {
-        unsigned_keys[KEY] = KeyTraits::TwiddleIn(unsigned_keys[KEY]);
+        unsigned_keys[key] = KeyTraits::TwiddleIn(unsigned_keys[key]);
     }
 
     int ranks[ItemsPerThread];

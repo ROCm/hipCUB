@@ -159,9 +159,9 @@ __global__ __launch_bounds__(BlockSize) void rank_kernel(const KeyType* keys_inp
         = reinterpret_cast<UnsignedBits(&)[ItemsPerThread]>(keys);
 
 #pragma unroll
-    for(unsigned int KEY = 0; KEY < ItemsPerThread; KEY++)
+    for(unsigned int key = 0; key < ItemsPerThread; key++)
     {
-        unsigned_keys[KEY] = KeyTraits::TwiddleIn(unsigned_keys[KEY]);
+        unsigned_keys[key] = KeyTraits::TwiddleIn(unsigned_keys[key]);
     }
 
     RankType             rank(storage.rank);
