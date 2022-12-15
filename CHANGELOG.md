@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 5.5.0
+## hipCUB-2.13.1 for ROCm 5.5.0
 ### Added
 - Benchmarks for `BlockShuffle`, `BlockLoad`, and `BlockStore`.
 ### Changed
