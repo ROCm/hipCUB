@@ -52,7 +52,8 @@ inline auto get_random_data(size_t size, T min, T max, size_t max_random_size = 
 {
     std::random_device rd;
     std::default_random_engine gen(rd());
-    std::uniform_int_distribution<T> distribution(min, max);
+    using distribution_type = typename std::conditional<(sizeof(T)==1), short, T>::type;	
+    std::uniform_int_distribution<distribution_type> distribution(min, max);
     std::vector<T> data(size);
     std::generate(
         data.begin(), data.begin() + std::min(size, max_random_size),
@@ -83,64 +84,6 @@ inline auto get_random_data(size_t size, T min, T max, size_t max_random_size = 
     }
     return data;
 }
-
-#if defined(_WIN32) && defined(__clang__)
-// get_random_data() generates only part of sequence and replicates it,
-// because benchmarks usually do not need "true" random sequence.
-template<>
-inline std::vector<unsigned char> get_random_data(size_t size, unsigned char min, unsigned char max, size_t max_random_size)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    std::uniform_int_distribution<int> distribution(min, max);
-    std::vector<unsigned char> data(size);
-    std::generate(
-        data.begin(), data.begin() + std::min(size, max_random_size),
-        [&]() { return distribution(gen); }
-    );
-    for(size_t i = max_random_size; i < size; i += max_random_size)
-    {
-        std::copy_n(data.begin(), std::min(size - i, max_random_size), data.begin() + i);
-    }
-    return data;
-}
-
-template<>
-inline std::vector<signed char> get_random_data(size_t size, signed char min, signed char max, size_t max_random_size)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    std::uniform_int_distribution<int> distribution(min, max);
-    std::vector<signed char> data(size);
-    std::generate(
-        data.begin(), data.begin() + std::min(size, max_random_size),
-        [&]() { return distribution(gen); }
-    );
-    for(size_t i = max_random_size; i < size; i += max_random_size)
-    {
-        std::copy_n(data.begin(), std::min(size - i, max_random_size), data.begin() + i);
-    }
-    return data;
-}
-
-template<>
-inline std::vector<char> get_random_data(size_t size, char min, char max, size_t max_random_size)
-{
-    std::random_device rd;
-    std::default_random_engine gen(rd());
-    std::uniform_int_distribution<int> distribution(min, max);
-    std::vector<char> data(size);
-    std::generate(
-        data.begin(), data.begin() + std::min(size, max_random_size),
-        [&]() { return distribution(gen); }
-    );
-    for(size_t i = max_random_size; i < size; i += max_random_size)
-    {
-        std::copy_n(data.begin(), std::min(size - i, max_random_size), data.begin() + i);
-    }
-    return data;
-}
-#endif
 
 template<class T>
 inline std::vector<T> get_random_data01(size_t size, float p, size_t max_random_size = default_max_random_size)
