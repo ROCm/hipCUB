@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -533,19 +533,18 @@ public:
     using params = Params;
 };
 
-typedef ::testing::Types<
-    params3<int, 4, 3, 2000, 0, 2000>,
-    params3<int, 2, 1, 10, 0, 10>,
-    params3<int, 3, 3, 128, 0, 256>,
-    params3<unsigned int, 1, 1, 12345, 10, 12355, short>,
-    params3<unsigned short, 4, 4, 65536, 0, 65536, int>,
-    params3<unsigned char, 3, 1, 10, 20, 240, unsigned char, unsigned int>,
-    params3<unsigned char, 2, 2, 256, 0, 256, short>,
+typedef ::testing::Types<params3<int, 4, 3, 2000, 0, 2000>,
+                         params3<int, 2, 1, 10, 0, 10>,
+                         params3<int, 3, 3, 128, 0, 256>,
+                         params3<unsigned int, 1, 1, 12345, 10, 12355, short>,
+                         params3<unsigned int, 4, 4, 65536, 0, 65536, int>,
+                         params3<unsigned char, 3, 1, 10, 20, 240, unsigned char, unsigned int>,
+                         params3<unsigned char, 2, 2, 256, 0, 256, short>,
 
-    params3<double, 4, 2, 10, 0, 1000, double, int>,
-    params3<int, 3, 2, 123, 100, 5635, int>,
-    params3<double, 4, 3, 55, -123, +123, double>
-> Params3;
+                         params3<double, 4, 2, 10, 0, 1000, double, int>,
+                         params3<int, 3, 2, 123, 100, 5635, int>,
+                         params3<double, 4, 3, 55, -123, +123, double>>
+    Params3;
 
 TYPED_TEST_SUITE(HipcubDeviceHistogramMultiEven, Params3);
 
