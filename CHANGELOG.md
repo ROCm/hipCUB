@@ -2,6 +2,15 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
+## (Unreleased) hipCUB-2.13.1 for ROCm 6.0.0
+### Changed
+- CUB backend references CUB and Thrust version 2.0.1.
+### Known Issues
+- `debug_synchronous` no longer works on CUDA platform. `CUB_DEBUG_SYNC` should be used to enable those checks.
+- `DeviceReduce::Sum` does not compile on CUDA platform for mixed extended-floating-point/floating-point InputT and OutputT types.
+- `DeviceHistogram::HistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int]`.
+- `DeviceHistogram::MultiHistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int/unsigned short/float/double]` and `[LevelT, SampleIteratorT] = [float, double]`.
+
 ## (Unreleased) hipCUB-2.13.1 for ROCm 5.5.0
 ### Added
 - Benchmarks for `BlockShuffle`, `BlockLoad`, and `BlockStore`.

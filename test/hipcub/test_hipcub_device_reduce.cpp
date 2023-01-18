@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -55,20 +55,24 @@ typedef ::testing::Types<
     DeviceReduceParams<unsigned long>,
     DeviceReduceParams<short>,
     DeviceReduceParams<short, float>,
-    DeviceReduceParams<int, double>,
-    DeviceReduceParams<test_utils::half, float>,
-    DeviceReduceParams<test_utils::bfloat16, float>
-    #ifdef __HIP_PLATFORM_AMD__
+    DeviceReduceParams<int, double>
+#ifdef __HIP_PLATFORM_AMD__
     ,
-    DeviceReduceParams<test_utils::bfloat16, test_utils::bfloat16> // Kernel crash on NVIDIA / CUB, failing Reduce::Sum test on AMD due to rounding.
-    #endif
-    #ifdef HIPCUB_ROCPRIM_API
+    DeviceReduceParams<test_utils::half, float>, // Doesn't compile in CUB 2.0.1
+    DeviceReduceParams<test_utils::bfloat16, float>, // Doesn't compile in CUB 2.0.1
+    DeviceReduceParams<
+        test_utils::bfloat16,
+        test_utils::
+            bfloat16> // Kernel crash on NVIDIA / CUB, failing Reduce::Sum test on AMD due to rounding.
+#endif
+#ifdef HIPCUB_ROCPRIM_API
     ,
     DeviceReduceParams<test_utils::custom_test_type<float>, test_utils::custom_test_type<float>>,
     DeviceReduceParams<test_utils::custom_test_type<int>, test_utils::custom_test_type<float>>
-    #endif
+#endif
 
-> HipcubDeviceReduceTestsParams;
+    >
+    HipcubDeviceReduceTestsParams;
 
 std::vector<size_t> get_sizes()
 {
