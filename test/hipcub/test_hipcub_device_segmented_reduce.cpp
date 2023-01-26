@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 
 // hipcub API
 #include "hipcub/device/device_segmented_reduce.hpp"
+#include "test_utils_data_generation.hpp"
 
 std::vector<size_t> get_sizes()
 {
@@ -49,10 +50,10 @@ template<
 >
 struct params1
 {
-    using input_type = Input;
-    using output_type = Output;
-    using reduce_op_type = ReduceOp;
-    static constexpr input_type init = Init;
+    using input_type                                 = Input;
+    using output_type                                = Output;
+    using reduce_op_type                             = ReduceOp;
+    static constexpr int          init               = Init;
     static constexpr unsigned int min_segment_length = MinSegmentLength;
     static constexpr unsigned int max_segment_length = MaxSegmentLength;
 };
@@ -63,15 +64,20 @@ public:
     using params = Params;
 };
 
-typedef ::testing::Types<
-    params1<unsigned int, unsigned int, hipcub::Sum>,
-    params1<int, int, hipcub::Sum, -100, 0, 10000>,
-    params1<double, double, hipcub::Min, 1000, 0, 10000>,
-    params1<int, short, hipcub::Max, 10, 1000, 10000>,
-    params1<short, double, hipcub::Sum, 5, 1, 1000>,
-    params1<float, double, hipcub::Max, 50, 2, 10>,
-    params1<float, float, hipcub::Sum, 123, 100, 200>
-> Params1;
+typedef ::testing::Types<params1<unsigned int, unsigned int, hipcub::Sum>,
+                         params1<int, int, hipcub::Sum, -100, 0, 10000>,
+                         params1<double, double, hipcub::Min, 1000, 0, 10000>,
+                         params1<int, short, hipcub::Max, 10, 1000, 10000>,
+                         params1<short, double, hipcub::Sum, 5, 1, 1000>,
+                         params1<float, double, hipcub::Max, 50, 2, 10>,
+                         params1<float, float, hipcub::Sum, 123, 100, 200>
+#ifdef __HIP_PLATFORM_AMD__
+                         ,
+                         params1<test_utils::half, test_utils::half, hipcub::Max, 50, 2, 10>,
+                         params1<test_utils::bfloat16, test_utils::bfloat16, hipcub::Max, 50, 2, 10>
+#endif
+                         >
+    Params1;
 
 TYPED_TEST_SUITE(HipcubDeviceSegmentedReduceOp, Params1);
 
@@ -88,7 +94,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
     using result_type = output_type;
     using offset_type = unsigned int;
 
-    constexpr input_type init = TestFixture::params::init;
+    const input_type init = test_utils::convert_to_device<input_type>(TestFixture::params::init);
     const bool debug_synchronous = false;
     reduce_op_type reduce_op;
 
@@ -213,14 +219,17 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
             {
                 if(std::is_integral<output_type>::value)
                 {
-                    ASSERT_EQ(aggregates_output[i], aggregates_expected[i]);
+                    ASSERT_EQ(test_utils::convert_to_native(aggregates_output[i]),
+                              test_utils::convert_to_native(aggregates_expected[i]));
                 }
                 else
                 {
-                    auto diff = std::max<output_type>(
-                        std::abs(0.01 * aggregates_expected[i]), output_type(0.01)
-                    );
-                    ASSERT_NEAR(aggregates_output[i], aggregates_expected[i], diff);
+                    auto diff = std::max<test_utils::convert_to_fundamental_t<output_type>>(
+                        std::abs(0.01 * test_utils::convert_to_fundemental(aggregates_expected[i])),
+                        output_type(0.01));
+                    ASSERT_NEAR(test_utils::convert_to_native(aggregates_output[i]),
+                                test_utils::convert_to_native(aggregates_expected[i]),
+                                diff);
                 }
             }
         }
