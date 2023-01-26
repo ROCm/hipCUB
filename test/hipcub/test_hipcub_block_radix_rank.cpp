@@ -2,7 +2,7 @@
 /******************************************************************************
 * Copyright (c) 2011, Duane Merrill.  All rights reserved.
 * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
-* Modifications Copyright (c) 2021-2022, Advanced Micro Devices, Inc.  All rights reserved.
+* Modifications Copyright (c) 2021-2023, Advanced Micro Devices, Inc.  All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions are met:
@@ -66,6 +66,7 @@ typedef ::testing::Types<
     // Power of 2 BlockSize
     params<unsigned int, 64U, 1>,
     params<test_utils::half, 128U, 1>,
+    params<test_utils::bfloat16, 128U, 1>,
     params<float, 256U, 1>,
     params<unsigned short, 512U, 1, true>,
 
@@ -87,6 +88,7 @@ typedef ::testing::Types<
     params<char, 464U, 2, true>,
     params<unsigned short, 100U, 3>,
     params<test_utils::half, 234U, 9>,
+    params<test_utils::bfloat16, 234U, 9>,
 
     // StartBit and MaxRadixBits
     params<unsigned long long, 64U, 1, false, 8, 5>,
@@ -95,7 +97,8 @@ typedef ::testing::Types<
 
     // RadixBits < MaxRadixBits
     params<unsigned int, 162U, 2, true, 3, 6, 2>,
-    params<test_utils::half, 193U, 2, true, 1, 4, 3>>
+    params<test_utils::half, 193U, 2, true, 1, 4, 3>,
+    params<test_utils::bfloat16, 193U, 2, true, 1, 4, 3>>
     Params;
 
 TYPED_TEST_SUITE(HipcubBlockRadixRank, Params);
@@ -218,19 +221,21 @@ void test_radix_rank()
 
         // Generate data
         std::vector<key_type> keys_input;
-        if(std::is_floating_point<key_type>::value)
+        if(test_utils::is_floating_point<key_type>::value)
         {
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               static_cast<key_type>(-1000),
-                                                               static_cast<key_type>(+1000),
-                                                               seed_value);
+            keys_input = test_utils::get_random_data<key_type>(
+                size,
+                test_utils::convert_to_device<key_type>(-1000),
+                test_utils::convert_to_device<key_type>(+1000),
+                seed_value);
         }
         else
         {
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               std::numeric_limits<key_type>::min(),
-                                                               std::numeric_limits<key_type>::max(),
-                                                               seed_value);
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value);
         }
 
         test_utils::add_special_values(keys_input, seed_value);
