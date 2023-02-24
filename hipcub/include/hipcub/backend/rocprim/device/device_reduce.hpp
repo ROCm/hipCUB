@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2017-2020, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2017-2023, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -180,11 +180,16 @@ public:
                       bool debug_synchronous = false)
     {
         return ::rocprim::reduce(
-            d_temp_storage, temp_storage_bytes,
-            d_in, d_out, init, num_items,
-            ::hipcub::detail::convert_result_type<InputIteratorT, OutputIteratorT>(reduction_op),
-            stream, debug_synchronous
-        );
+            d_temp_storage,
+            temp_storage_bytes,
+            d_in,
+            d_out,
+            init,
+            num_items,
+            ::hipcub::detail::convert_binary_result_type<T, InputIteratorT, OutputIteratorT>(
+                reduction_op),
+            stream,
+            debug_synchronous);
     }
 
     template <
@@ -200,12 +205,18 @@ public:
                    hipStream_t stream = 0,
                    bool debug_synchronous = false)
     {
-        using T = typename std::iterator_traits<InputIteratorT>::value_type;
-        return Reduce(
-            d_temp_storage, temp_storage_bytes,
-            d_in, d_out, num_items, ::hipcub::Sum(), T(0),
-            stream, debug_synchronous
-        );
+        using InputT  = typename std::iterator_traits<InputIteratorT>::value_type;
+        using OutputT = typename std::iterator_traits<OutputIteratorT>::value_type;
+        using InitT   = hipcub::detail::non_void_value_t<OutputT, InputT>;
+        return Reduce(d_temp_storage,
+                      temp_storage_bytes,
+                      d_in,
+                      d_out,
+                      num_items,
+                      ::hipcub::Sum(),
+                      InitT(0),
+                      stream,
+                      debug_synchronous);
     }
 
     template <
@@ -245,12 +256,7 @@ public:
         using OffsetT = int;
         using T = typename std::iterator_traits<InputIteratorT>::value_type;
         using O = typename std::iterator_traits<OutputIteratorT>::value_type;
-        using OutputTupleT =
-            typename std::conditional<
-                std::is_same<O, void>::value,
-                KeyValuePair<OffsetT, T>,
-                O
-            >::type;
+        using OutputTupleT = hipcub::detail::non_void_value_t<O, KeyValuePair<OffsetT, T>>;
 
         using OutputValueT = typename OutputTupleT::Value;
         using IteratorT = ArgIndexInputIterator<InputIteratorT, OffsetT, OutputValueT>;
@@ -306,12 +312,7 @@ public:
         using OffsetT = int;
         using T = typename std::iterator_traits<InputIteratorT>::value_type;
         using O = typename std::iterator_traits<OutputIteratorT>::value_type;
-        using OutputTupleT =
-            typename std::conditional<
-                std::is_same<O, void>::value,
-                KeyValuePair<OffsetT, T>,
-                O
-            >::type;
+        using OutputTupleT = hipcub::detail::non_void_value_t<O, KeyValuePair<OffsetT, T>>;
 
         using OutputValueT = typename OutputTupleT::Value;
         using IteratorT = ArgIndexInputIterator<InputIteratorT, OffsetT, OutputValueT>;
@@ -353,14 +354,18 @@ public:
     {
         using key_compare_op =
             ::rocprim::equal_to<typename std::iterator_traits<KeysInputIteratorT>::value_type>;
-        return ::rocprim::reduce_by_key(
-            d_temp_storage, temp_storage_bytes,
-            d_keys_in, d_values_in, num_items,
-            d_unique_out, d_aggregates_out, d_num_runs_out,
-            ::hipcub::detail::convert_result_type<ValuesInputIteratorT, AggregatesOutputIteratorT>(reduction_op),
-            key_compare_op(),
-            stream, debug_synchronous
-        );
+        return ::rocprim::reduce_by_key(d_temp_storage,
+                                        temp_storage_bytes,
+                                        d_keys_in,
+                                        d_values_in,
+                                        num_items,
+                                        d_unique_out,
+                                        d_aggregates_out,
+                                        d_num_runs_out,
+                                        reduction_op,
+                                        key_compare_op(),
+                                        stream,
+                                        debug_synchronous);
     }
 };
 
