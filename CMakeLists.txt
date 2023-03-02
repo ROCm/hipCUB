@@ -76,8 +76,8 @@ include(cmake/Dependencies.cmake)
 
 # Setup GPU targets for rocm platform
 if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
-  if (NOT DEFINED AMDGPU_TARGETS)
-      set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
+  if(NOT DEFINED AMDGPU_TARGETS)
+    set(GPU_TARGETS "all" CACHE STRING "GPU architectures to compile for")
   else()
     set(GPU_TARGETS "${AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for")
   endif()
@@ -92,7 +92,7 @@ if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQ
 endif()
 
 # Verify that hip-clang is used on ROCM platform
-if (NOT WIN32)
+if(NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 endif()
 
