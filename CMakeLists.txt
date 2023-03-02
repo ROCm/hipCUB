@@ -40,6 +40,16 @@ else()
 endif()
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm ${ROCM_ROOT}/llvm ${ROCM_ROOT} ${ROCM_ROOT}/hip)
 
+# Build options
+option(BUILD_TEST "Build tests (requires googletest)" OFF)
+option(DOWNLOAD_ROCPRIM "Download rocPRIM and do not search for rocPRIM package" OFF)
+option(DOWNLOAD_CUB "Download CUB and thrust. Do not search for CUB package" OFF)
+option(BUILD_BENCHMARK "Build benchmarks" OFF)
+option(BUILD_EXAMPLE "Build Examples" OFF)
+option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
+
+# Set the header wrapper ON by default.
+option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
@@ -56,18 +66,13 @@ endif()
 
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Add paths to linker search and installed rpath")
 
-# rocm-cmake contains common cmake code for rocm projects to help
-# setup and install
-include(cmake/RocmCmakeDependence.cmake)
+# Set CXX flags
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-include( ROCMSetupVersion )
-include( ROCMCreatePackage )
-include( ROCMInstallTargets )
-include( ROCMPackageConfigHelpers )
-include( ROCMInstallSymlinks )
-include( ROCMHeaderWrapper )
-include( ROCMCheckTargetIds )
-include( ROCMClients )
+# Get dependencies (required here to get rocm-cmake)
+include(cmake/Dependencies.cmake)
 
 # Setup GPU targets for rocm platform
 if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
@@ -91,29 +96,11 @@ if (NOT WIN32)
   include(cmake/VerifyCompiler.cmake)
 endif()
 
-# Set CXX flags
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# Build options
-option(BUILD_TEST "Build tests (requires googletest)" OFF)
-option(DOWNLOAD_ROCPRIM "Download rocPRIM and do not search for rocPRIM package" OFF)
-option(DOWNLOAD_CUB "Download CUB and thrust. Do not search for CUB package" OFF)
-option(BUILD_BENCHMARK "Build benchmarks" OFF)
-option(BUILD_EXAMPLE "Build Examples" OFF)
-option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
-#Set the header wrapper ON by default. 
-option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
-
 if(BUILD_ADDRESS_SANITIZER)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
   add_link_options(-fuse-ld=lld)
 endif()
-
-# Get dependencies
-include(cmake/Dependencies.cmake)
 
 # Setup VERSION
 set(VERSION_STRING "2.13.1")
