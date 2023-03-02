@@ -33,10 +33,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
-#ifdef WIN32
 #include <numeric>
-#endif
 
 // Google Test
 #include <gtest/gtest.h>
