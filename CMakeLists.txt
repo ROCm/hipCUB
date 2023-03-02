@@ -32,14 +32,19 @@ list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm ${ROCM_PATH})
 # hipCUB project
 project(hipcub LANGUAGES CXX)
 
-#Adding CMAKE_PREFIX_PATH
-list(APPEND CMAKE_PREFIX_PATH /opt/rocm)
+# Adding CMAKE_PREFIX_PATH
+if(WIN32)
+  set(ROCM_ROOT "$ENV{HIP_PATH}" CACHE PATH "Root directory of the ROCm installation")
+else()
+  set(ROCM_ROOT "/opt/rocm" CACHE PATH "Root directory of the ROCm installation")
+endif()
+list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm ${ROCM_ROOT}/llvm ${ROCM_ROOT} ${ROCM_ROOT}/hip)
+
 
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  ${HIP_PATH}/cmake /opt/rocm/hip/cmake # FindHIP.cmake
-  ${ROCM_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip # FindHIP.cmake
+  ${ROCM_PATH}/lib/cmake/hip ${HIP_PATH}/cmake ${ROCM_ROOT}/lib/cmake/hip ${ROCM_ROOT}/hip/cmake # FindHIP.cmake
 )
 
 # Set a default build type if none was specified
