@@ -71,6 +71,11 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Verify that hip-clang is used on ROCM platform
+if(NOT WIN32)
+  include(cmake/VerifyCompiler.cmake)
+endif()
+
 # Get dependencies (required here to get rocm-cmake)
 include(cmake/Dependencies.cmake)
 
@@ -89,11 +94,6 @@ if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQ
     )
     set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
   endif()
-endif()
-
-# Verify that hip-clang is used on ROCM platform
-if(NOT WIN32)
-  include(cmake/VerifyCompiler.cmake)
 endif()
 
 if(BUILD_ADDRESS_SANITIZER)
