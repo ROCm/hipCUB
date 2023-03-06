@@ -8,6 +8,8 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 ### Changed
 - CUB backend references CUB and Thrust version 1.17.2.
 - Improved benchmark coverage of `BlockScan` by adding `ExclusiveScan`, benchmark coverage of `BlockRadixSort` by adding `SortBlockedToStriped`, and benchmark coverage of `WarpScan` by adding `Broadcast`.
+### Fixed
+- Windows HIP SDK support
 ### Known Issues
 - `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
 - `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
