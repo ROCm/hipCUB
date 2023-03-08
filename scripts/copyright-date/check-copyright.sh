@@ -58,7 +58,6 @@ if [ -n "${diff_hash}" ]; then
 else
     diff_hash="HEAD"
 fi
-diff_origin="$(git diff "${diff_hash}" --cached --name-only)"
 
 # Current year
 year="$(date +%Y)"
@@ -68,7 +67,7 @@ uptodate_copyright=()
 notfound_copyright=()
 
 printf "Checking if copyright statements are up-to-date... "
-for i in $diff_origin; do
+while IFS= read -r -d $'\0' i; do
     # If copyright exists:
     if grep -q -E "$preamble([0-9]{4}-)?[0-9]{4}$postamble" -i "$i"; then
         #                    .----^---.  .---^--.
@@ -84,7 +83,7 @@ for i in $diff_origin; do
     else
         notfound_copyright+=("$i")
     fi
-done
+done < <(git diff-index -z --name-only "$diff_hash")
 
 printf "\033[32mDone!\033[0m\n\n"
 if $verbose; then
