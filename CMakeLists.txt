@@ -26,9 +26,6 @@ cmake_policy(VERSION 3.16...3.25)
 # Install prefix
 set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 
-#Adding CMAKE_PREFIX_PATH
-list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm ${ROCM_PATH})
-
 # hipCUB project
 project(hipcub LANGUAGES CXX)
 
@@ -38,7 +35,9 @@ if(WIN32)
 else()
   set(ROCM_ROOT "/opt/rocm" CACHE PATH "Root directory of the ROCm installation")
 endif()
-list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH} ${ROCM_PATH}/hip ${ROCM_PATH}/llvm ${ROCM_ROOT}/llvm ${ROCM_ROOT} ${ROCM_ROOT}/hip)
+
+# Adding CMAKE_PREFIX_PATH
+list(APPEND CMAKE_PREFIX_PATH "${ROCM_ROOT}")
 
 # Build options
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
@@ -54,7 +53,7 @@ option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg wit
 # CMake modules
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  ${ROCM_PATH}/lib/cmake/hip ${HIP_PATH}/cmake ${ROCM_ROOT}/lib/cmake/hip ${ROCM_ROOT}/hip/cmake # FindHIP.cmake
+  "${ROCM_ROOT}/hip/cmake" # FindHIP.cmake
 )
 
 # Set a default build type if none was specified

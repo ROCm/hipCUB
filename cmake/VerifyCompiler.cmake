@@ -20,10 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
 if(CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    list(APPEND CMAKE_MODULE_PATH /opt/rocm/hip/cmake)
-    find_package(hip QUIET CONFIG PATHS /opt/rocm)
+    find_package(hip QUIET CONFIG)
     if(NOT hip_FOUND)
         find_package(HIP REQUIRED)
     endif()
@@ -32,7 +30,7 @@ if(CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "
        set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
     endif()
 else()
-  find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
+  find_package(hip REQUIRED CONFIG)
 endif()
 
 if(HIP_COMPILER STREQUAL "nvcc")
