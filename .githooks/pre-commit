@@ -12,7 +12,13 @@ if ! "$(git rev-parse --show-toplevel)/scripts/code-format/check-format.sh" HEAD
 fi
 
 # Do the copyright check
-if ! "$(git rev-parse --show-toplevel)/scripts/copyright-date/check-copyright.sh"; then
+# update & apply copyright when hook config is set, otherwise just verify
+opts="-qc"
+if [ "$(git config --get --type bool --default false hooks.updateCopyright)" = "true" ]; then
+    opts="-qca"
+fi
+
+if ! "$(git rev-parse --show-toplevel)/scripts/copyright-date/check-copyright.sh" "$opts" 1>&2; then
     printf "\n\033[31mFailed\033[0m: copyright date check.\n"
     check_failed=true
 fi
