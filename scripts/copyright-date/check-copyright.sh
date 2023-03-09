@@ -100,7 +100,8 @@ if $verbose; then
         LANG=C.UTF-8 comm -z -23 - <(printf -- '%s\0' "${found_copyright[@]}"))
 
     if (( ${#notfound_copyright[@]} )); then
-        printf -- "\033[36mCouldn't find a copyright statement in the following files:\033[0m\n"
+        printf -- "\033[36mCouldn't find a copyright statement in %d file(s):\033[0m\n" \
+            "${#notfound_copyright[@]}"
         printf -- '  - %q\n' "${notfound_copyright[@]}"
     fi
 
@@ -110,7 +111,8 @@ if $verbose; then
         LANG=C.UTF-8 comm -z -23 - <(printf -- '%s\0' "${outdated_copyright[@]}"))
 
     if (( ${#uptodate_copyright[@]} )); then
-        printf -- "\033[36mThe copyright statement was already up to date in the following files:\033[0m\n"
+        printf -- "\033[36mThe copyright statement was already up to date in %d file(s):\033[0m\n" \
+            "${#uptodate_copyright[@]}"
         printf -- '  - %q\n' "${uptodate_copyright[@]}"
     fi
 fi
@@ -121,7 +123,7 @@ fi
 
 printf -- \
 "\033[31m==== COPYRIGHT OUT OF DATE ====\033[0m
-\033[36mThe following files need to be updated:\033[0m\n"
+\033[36m%d file(s) need(s) to be updated:\033[0m\n" "${#outdated_copyright[@]}"
 printf -- '  - %q\n' "${outdated_copyright[@]}"
 
 # If we don't need to update, we early exit.
