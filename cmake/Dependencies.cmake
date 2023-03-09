@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # ###########################
-# rocPRIM dependencies
+# hipCUB dependencies
 # ###########################
 
 # NOTE1: the reason we don't scope global state meddling using add_subdirectory
