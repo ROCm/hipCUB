@@ -60,8 +60,8 @@ list(JOIN CXX_FLAGS_LIST " " CMAKE_CXX_FLAGS)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Global flag to cause add_library() to create shared libraries if on." FORCE)
 
 foreach(SHARED_OPTION BUILD_TEST BUILD_BENCHMARK BUILD_EXAMPLE)
-  set(USER_${SHARED_OPTION} ${${BUILD_TEST}})
-  set(${BUILD_TEST} OFF)
+  set(USER_${SHARED_OPTION} ${${SHARED_OPTION}})
+  set(${SHARED_OPTION} OFF)
 endforeach()
 
 include(FetchContent)
@@ -243,7 +243,7 @@ else()
 endif()
 
 foreach(SHARED_OPTION BUILD_TEST BUILD_BENCHMARK BUILD_EXAMPLE)
-  set(${BUILD_TEST} USER_${SHARED_OPTION})
+  set(${SHARED_OPTION} USER_${SHARED_OPTION})
 endforeach()
 
 # Restore user global state
