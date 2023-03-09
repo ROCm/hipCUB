@@ -169,18 +169,21 @@ finish () {
 # feature
 trap finish EXIT
 
-# Update the outdated files in the temporary index
-for i in "${outdated_copyright[@]}"; do
-    # Read in the current mode of the file (permissions, etc)
-    IFS=' ' read -r -d $'\0' mode < <(git ls-files -z --stage --cached -- "$i" |
-        cut -z --delimiter=' ' --fields=1)
+# Update the outdated files in the temporary index. Reads the format of `git-ls-files`
+# and prints format suitable for git-update-index.
+update_files() {
+    # format is <mode> <object>(ignored) <stage>(ignored)<TAB><file>
+    while IFS=$' \t' read -r -d $'\0' mode _ _ file; do
+        # Run sed on it to fix the copyright and save to a blob, remember the new blob name
+        blob="$(git cat-file blob ":$file" | "${sed[@]}" | git hash-object -w --path "$file" --stdin)"
 
-    # Run sed on it to fix the copyright and save to a blob
-    blob="$(git cat-file blob ":$i" | "${sed[@]}" | git hash-object -w --path "$i" --stdin)"
+        # Output the blob, its mode and its path, to add it to the index
+        printf -- '%s blob %s\t%s\0' "$mode" "$blob" "$file"
+    done 
+}
 
-    # Output the blob, its mode and its path, to add it to the index
-    printf -- '%s blob %s\t%s\0' "$mode" "$blob" "$i"
-done | GIT_INDEX_FILE="$temp_index" git update-index -z --index-info
+update_files < <(git ls-files -z --stage --cached -- "${outdated_copyright[@]}") | \
+    GIT_INDEX_FILE="$temp_index" git update-index -z --index-info
 
 # Write out the temporary to a tree, so that patches can be generated from it
 if ! new_tree="$(GIT_INDEX_FILE="$temp_index" git write-tree)"; then
