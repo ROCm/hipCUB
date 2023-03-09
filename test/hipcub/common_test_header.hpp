@@ -27,13 +27,13 @@
 #include <functional>
 #include <iostream>
 #include <limits>
+#include <numeric>
 #include <random>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <numeric>
 
 // Google Test
 #include <gtest/gtest.h>
