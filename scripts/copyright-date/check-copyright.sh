@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 
 # Start of configuration
-preamble="Copyright +\([cC]\) +"
-postamble=",? +Advanced +Micro +Devices, +Inc\. +All +rights +reserved\."
+preamble="Copyright +(\([cC]\) +)?"
+postamble=",? +Advanced +Micro +Devices, +Inc\."
+find_pattern="$preamble([0-9]{4}-)?[0-9]{4}$postamble"
+# printf format string, receives the current year as a parameter
+uptodate_pattern="$preamble([0-9]{4}-)?%d$postamble"
+# <pattern>/<replacement> interpreted with sed syntax, also passed to printf
+# printf interprets '\' escape sequences so they must be escaped
+replace_pattern="($preamble)([0-9]{4})(-[0-9]{4})?($postamble)/\\\1\\\3-%d\\\5"
 # End of configuration
 
 print_help() { printf -- \
@@ -74,18 +80,21 @@ fi
 mapfile -d $'\0' changed_files < <(git diff-index "${diff_opts[@]}" "$diff_hash" | LANG=C.UTF-8 sort -z)
 
 if (( ${#changed_files[@]} )); then
-    mapfile -d $'\0' found_copyright < <(                                                                \
-        git grep "${git_grep_opts[@]}" --files-with-matches -e "$preamble([0-9]{4}-)?[0-9]{4}$postamble" \
-            -- "${changed_files[@]}" |                                                                   \
+    mapfile -d $'\0' found_copyright < <(                                      \
+        git grep "${git_grep_opts[@]}" --files-with-matches -e "$find_pattern" \
+            -- "${changed_files[@]}" |                                         \
         LANG=C.UTF-8 sort -z)
 else
     found_copyright=()
 fi
 
 if (( ${#found_copyright[@]} )); then
-    mapfile -d $'\0' outdated_copyright < <(                                                           \
-        git grep "${git_grep_opts[@]}" --files-without-match -e "$preamble([0-9]{4}-)?$year$postamble" \
-            -- "${found_copyright[@]}" |                                                               \
+    # uptodate_pattern variable holds the format string using it as such is intentional
+    # shellcheck disable=SC2059
+    printf -v uptodate_pattern -- "$uptodate_pattern" "$year"
+    mapfile -d $'\0' outdated_copyright < <(                                        \
+        git grep "${git_grep_opts[@]}" --files-without-match -e "$uptodate_pattern" \
+            -- "${found_copyright[@]}" |                                            \
         LANG=C.UTF-8 sort -z)
 else
     outdated_copyright=()
@@ -140,10 +149,12 @@ else
     ! $quiet && printf -- "Updating copyrights... "
 fi
 
-sed=(sed --regexp-extended --separate "s/($preamble)([0-9]{4})(-[0-9]{4})?($postamble)/\1\2-$year\4/gi")
+# replace_pattern variable holds a format string, using it as such is intentional
+# shellcheck disable=SC2059
+printf -v replace_pattern -- "$replace_pattern" "$year"
 # Just update the files in place if only touching the working-tree
 if ! $apply; then
-    "${sed[@]}" -i "${outdated_copyright[@]}"
+    sed --regexp-extended --separate "s/$replace_pattern/g" -i "${outdated_copyright[@]}"
     printf -- "\033[32mDone!\033[0m\n"
     exit 0
 fi
@@ -156,7 +167,7 @@ generate_patch() {
                   # Print removed line by prepending '-' to it
                   ;s/^/-/;p
                   # Print added line, replace the '-' with '+' and replace the copyright statement
-                  s/^-/+/;s/($preamble)([0-9]{4})(-[0-9]{4})?($postamble)/\1\2-$year\4/gi}"
+                  s/^-/+/;s/$replace_pattern/g}"
 
     # Run file-names through git ls-files, just to get a (possibly) quoted name for each
     mapfile -t -d $'\n' quoted_files < <(git ls-files --cached -- "${outdated_copyright[@]}")
@@ -171,8 +182,8 @@ generate_patch() {
         printf -- "diff --git %s %s\n--- %s\n+++ %s\n" "$a" "$b" "$a" "$b"
  
         # Print line number and line for each line with a copyright statement
-        git cat-file blob ":$file" |                                                             \
-            sed --quiet --regexp-extended "/${preamble}[0-9]{4}(-[0-9]{4})?${postamble}/{=;p}" | \
+        git cat-file blob ":$file" |                               \
+            sed --quiet --regexp-extended "/$find_pattern/{=;p}" | \
             sed --regexp-extended "$to_hunk_cmd"
     done 
 }
