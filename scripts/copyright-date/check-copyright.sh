@@ -8,6 +8,11 @@ find_pattern="$preamble([0-9]{4}-)?[0-9]{4}$postamble"
 uptodate_pattern="$preamble([0-9]{4}-)?%d$postamble"
 # <pattern>/<replacement> interpreted with sed syntax, also passed to printf
 # printf interprets '\' escape sequences so they must be escaped
+# The capture groups are as follows:
+#   - \1 is the whole preamble text
+#   - \3 is the start year, \2 is skipped because it is used for an optional part of the preamble
+#   - \5 is the end of the copyright statement after the end year, \4 would be the original end year
+#     as written in the file, it is replaced by the current year instead. 
 replace_pattern="($preamble)([0-9]{4})(-[0-9]{4})?($postamble)/\\\1\\\3-%d\\\5"
 # End of configuration
 
@@ -18,7 +23,7 @@ print_help() { printf -- \
   \033[34m-h\033[0m       Displays this message.
   \033[34m-u\033[0m       Automatically updates the copyright year
   \033[34m-a\033[0m       Automatically applies applies the changes to current staging environment. Implies '-u' and '-c'.
-  \033[34m-a\033[0m       Compare files to the index instead of the working tree.
+  \033[34m-c\033[0m       Compare files to the index instead of the working tree.
   \033[34m-d <SHA>\033[0m Compare using the diff of a hash.
   \033[34m-k\033[0m       Compare using the fork point: where this branch and 'remotes/origin/HEAD' diverge.
   \033[34m-q\033[0m       Suppress updates about progress.
@@ -92,6 +97,7 @@ mapfile -d $'\0' found_copyright < <(                                      \
         -- "${changed_files[@]}" |                                         \
     LANG=C.UTF-8 sort -z)
 
+outdated_copyright=()
 if (( ${#found_copyright[@]} )); then
     # uptodate_pattern variable holds the format string using it as such is intentional
     # shellcheck disable=SC2059
@@ -100,14 +106,12 @@ if (( ${#found_copyright[@]} )); then
         git grep "${git_grep_opts[@]}" --files-without-match -e "$uptodate_pattern" \
             -- "${found_copyright[@]}" |                                            \
         LANG=C.UTF-8 sort -z)
-else
-    outdated_copyright=()
 fi
 
 ! $quiet && printf -- "\033[32mDone!\033[0m\n"
 if $verbose; then
     # Compute the files that don't have a copyright as the set difference of
-    # `changed_files - `found_copyright`
+    # `changed_files and `found_copyright`
     mapfile -d $'\0' notfound_copyright < <(                                   \
         printf -- '%s\0' "${changed_files[@]}" |                               \
         LANG=C.UTF-8 comm -z -23 - <(printf -- '%s\0' "${found_copyright[@]}"))
