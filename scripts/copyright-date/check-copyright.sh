@@ -81,14 +81,16 @@ fi
 ! $quiet && printf -- "Checking if copyright statements are up-to-date... "
 mapfile -d $'\0' changed_files < <(git diff-index "${diff_opts[@]}" "$diff_hash" | LANG=C.UTF-8 sort -z)
 
-if (( ${#changed_files[@]} )); then
-    mapfile -d $'\0' found_copyright < <(                                      \
-        git grep "${git_grep_opts[@]}" --files-with-matches -e "$find_pattern" \
-            -- "${changed_files[@]}" |                                         \
-        LANG=C.UTF-8 sort -z)
-else
-    found_copyright=()
-fi
+if ! (( ${#changed_files[@]} )); then
+    ! $quiet && printf -- "\033[32mDone!\033[0m\n"
+    $verbose && printf -- "\033[36mNo changed files found.\033[0m\n"
+    exit 0
+fi;
+
+mapfile -d $'\0' found_copyright < <(                                      \
+    git grep "${git_grep_opts[@]}" --files-with-matches -e "$find_pattern" \
+        -- "${changed_files[@]}" |                                         \
+    LANG=C.UTF-8 sort -z)
 
 if (( ${#found_copyright[@]} )); then
     # uptodate_pattern variable holds the format string using it as such is intentional
