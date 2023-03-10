@@ -69,7 +69,9 @@ fi
 # Current year
 year="$(date +%Y)"
 
-diff_opts=(-z --name-only)
+# Enable rename detection with full matches only, this skips copyright checks for file name only 
+# changes.
+diff_opts=(-z --name-only '--diff-filter=MA' '--find-renames=100%')
 git_grep_opts=(-z --extended-regexp --ignore-case --no-recursive -I)
 if $cached; then
     diff_opts+=(--cached)
