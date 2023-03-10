@@ -148,55 +148,53 @@ if ! $apply; then
     exit 0
 fi
 
-# Make a tree out of the current contents of the index, as the base for the updates
-if ! old_tree="$(git write-tree)"; then
-    printf -- "\033[31mFailed to write out current index, is merge in progress?\033[0m"
-    exit 1
-fi
+generate_patch() {
+    # Sed command to create a hunk for a copyright statement fix
+    # expects input to be line number then copyright statement on the next line
+    to_hunk_cmd="{# Print hunk header, move to the next line
+                  s/.+/@@ -&,1 +&,1 @@/;n
+                  # Print removed line by prepending '-' to it
+                  ;s/^/-/;p
+                  # Print added line, replace the '-' with '+' and replace the copyright statement
+                  s/^-/+/;s/($preamble)([0-9]{4})(-[0-9]{4})?($postamble)/\1\2-$year\4/gi}"
 
-# Make a separate index so we're not messing up what's already cached, creating a new tree is more
-# convenient through an index.
-temp_index="$(git rev-parse --git-dir)/copyright-check-index"
-if ! git read-tree "--index-output=$temp_index" "$old_tree"; then
-    exit 1
-fi
+    # Run file-names through git ls-files, just to get a (possibly) quoted name for each
+    mapfile -t -d $'\n' quoted_files < <(git ls-files --cached -- "${outdated_copyright[@]}")
+    for ((i = 0;i < ${#outdated_copyright[@]}; i++)); do
+        file="${outdated_copyright["$i"]}"
+        quoted="${quoted_files["$i"]}"
+        # Drop the quote from the start and end (to avoid quoting twice)
+        escaped="${quoted#\"}"; escaped="${escaped%\"}"
+        a="\"a/$escaped\""
+        b="\"b/$escaped\""
 
-# Cleanup temp_index when the script exits
+        printf -- "diff --git %s %s\n--- %s\n+++ %s\n" "$a" "$b" "$a" "$b"
+ 
+        # Print line number and line for each line with a copyright statement
+        git cat-file blob ":$file" |                                                             \
+            sed --quiet --regexp-extended "/${preamble}[0-9]{4}(-[0-9]{4})?${postamble}/{=;p}" | \
+            sed --regexp-extended "$to_hunk_cmd"
+    done 
+}
+
+patch_file="$(git rev-parse --git-dir)/copyright-fix.patch"
+generate_patch > "$patch_file"
+
+# Cleanup patch file when the script exits
 finish () {
-    rm -f "$temp_index"
+    rm -f "$patch_file"
 }
 # The trap will be invoked whenever the script exits, even due to a signal, this is a bash only
 # feature
 trap finish EXIT
 
-# Update the outdated files in the temporary index. Reads the format of `git-ls-files`
-# and prints format suitable for git-update-index.
-update_files() {
-    # format is <mode> <object>(ignored) <stage>(ignored)<TAB><file>
-    while IFS=$' \t' read -r -d $'\0' mode _ _ file; do
-        # Run sed on it to fix the copyright and save to a blob, remember the new blob name
-        blob="$(git cat-file blob ":$file" | "${sed[@]}" | git hash-object -w --path "$file" --stdin)"
-
-        # Output the blob, its mode and its path, to add it to the index
-        printf -- '%s blob %s\t%s\0' "$mode" "$blob" "$file"
-    done 
-}
-
-update_files < <(git ls-files -z --stage --cached -- "${outdated_copyright[@]}") | \
-    GIT_INDEX_FILE="$temp_index" git update-index -z --index-info
-
-# Write out the temporary to a tree, so that patches can be generated from it
-if ! new_tree="$(GIT_INDEX_FILE="$temp_index" git write-tree)"; then
-    exit 1;
-fi
-
-if ! git diff-tree -U0 "$old_tree" "$new_tree" | git apply --unidiff-zero; then
+if ! git apply --unidiff-zero < "$patch_file"; then
     printf -- "\033[31mFailed to apply changes to working tree.
 Perhaps the fix is already applied, but not yet staged?\n\033[0m"
     exit 1
 fi
 
-if ! git diff-tree -U0 "$old_tree" "$new_tree" | git apply --unidiff-zero --cached; then
+if ! git apply --cached --unidiff-zero < "$patch_file"; then
     printf -- "\033[31mFailed to apply change to the index.\n\033[0m"
     exit 1
 fi
