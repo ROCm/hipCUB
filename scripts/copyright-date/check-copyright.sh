@@ -22,7 +22,7 @@ print_help() { printf -- \
 \033[36moptions\033[0m:
   \033[34m-h\033[0m       Displays this message.
   \033[34m-u\033[0m       Automatically updates the copyright year
-  \033[34m-a\033[0m       Automatically applies applies the changes to current staging environment. Implies '-u' and '-c'.
+  \033[34m-a\033[0m       Automatically applies the changes to current staging environment. Implies '-u' and '-c'.
   \033[34m-c\033[0m       Compare files to the index instead of the working tree.
   \033[34m-d <SHA>\033[0m Compare using the diff of a hash.
   \033[34m-k\033[0m       Compare using the fork point: where this branch and 'remotes/origin/HEAD' diverge.
