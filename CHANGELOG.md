@@ -2,17 +2,21 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.13.0 for ROCm 5.4.0
+## hipCUB-2.13.1 for ROCm 5.4.4
+### Fixed
+- Fixed compilation and execution issues for benchmarks with HIP on Windows
+
+## hipCUB-2.13.0 for ROCm 5.4.0
 ### Added
 - CMake functionality to improve build parallelism of the test suite that splits compilation units by
 function or by parameters.
 - New overload for `BlockAdjacentDifference::SubtractLeftPartialTile` that takes a predecessor item.
 ### Changed
-- Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
+- Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`,
 `DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
 - CUB backend references CUB and thrust version 1.17.1.
 
-## (Unreleased) hipCUB-2.12.0 for ROCm 5.3.0
+## hipCUB-2.12.0 for ROCm 5.3.0
 ### Added
 - UniqueByKey device algorithm
 - SubtractLeft, SubtractLeftPartialTile, SubtractRight, SubtractRightPartialTile overloads in BlockAdjacentDifference.
