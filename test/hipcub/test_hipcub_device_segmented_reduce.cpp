@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "common_test_header.hpp"
+#include "test_utils_argminmax.hpp"
 
 // hipcub API
 #include "hipcub/device/device_segmented_reduce.hpp"
@@ -554,4 +555,360 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
             }
         }
     }
+}
+
+struct ArgMinDispatch
+{
+    template<typename InputIteratorT, typename OutputIteratorT, typename OffsetIteratorT>
+    auto operator()(void*           d_temp_storage,
+                    size_t&         temp_storage_bytes,
+                    InputIteratorT  d_in,
+                    OutputIteratorT d_out,
+                    int             num_segments,
+                    OffsetIteratorT d_begin_offsets,
+                    OffsetIteratorT d_end_offsets,
+                    hipStream_t     stream,
+                    bool            debug_synchronous)
+    {
+        return hipcub::DeviceSegmentedReduce::ArgMin(d_temp_storage,
+                                                     temp_storage_bytes,
+                                                     d_in,
+                                                     d_out,
+                                                     num_segments,
+                                                     d_begin_offsets,
+                                                     d_end_offsets,
+                                                     stream,
+                                                     debug_synchronous);
+    }
+};
+
+struct ArgMaxDispatch
+{
+    template<typename InputIteratorT, typename OutputIteratorT, typename OffsetIteratorT>
+    auto operator()(void*           d_temp_storage,
+                    size_t&         temp_storage_bytes,
+                    InputIteratorT  d_in,
+                    OutputIteratorT d_out,
+                    int             num_segments,
+                    OffsetIteratorT d_begin_offsets,
+                    OffsetIteratorT d_end_offsets,
+                    hipStream_t     stream,
+                    bool            debug_synchronous)
+    {
+        return hipcub::DeviceSegmentedReduce::ArgMax(d_temp_storage,
+                                                     temp_storage_bytes,
+                                                     d_in,
+                                                     d_out,
+                                                     num_segments,
+                                                     d_begin_offsets,
+                                                     d_end_offsets,
+                                                     stream,
+                                                     debug_synchronous);
+    }
+};
+
+template<typename TestFixture, typename DispatchFunction, typename HostOp>
+void test_argminmax(typename TestFixture::params::input_type empty_value)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using input_type  = typename TestFixture::params::input_type;
+    using Iterator    = typename hipcub::ArgIndexInputIterator<input_type*, int>;
+    using key_value   = typename Iterator::value_type;
+    using offset_type = unsigned int;
+
+    DispatchFunction                      function;
+    const bool                            debug_synchronous = false;
+    std::random_device                    rd;
+    std::default_random_engine            gen(rd());
+    std::uniform_int_distribution<size_t> segment_length_dis(
+        TestFixture::params::min_segment_length,
+        TestFixture::params::max_segment_length);
+
+    const std::vector<size_t> sizes = get_sizes();
+    for(size_t size : sizes)
+    {
+        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        {
+            unsigned int seed_value
+                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            hipStream_t stream = 0; // default
+
+            // Generate data and calculate expected results
+            std::vector<key_value> aggregates_expected;
+
+            std::vector<input_type> values_input
+                = test_utils::get_random_data<input_type>(size, 0, 100, seed_value);
+
+            HostOp                   host_op{};
+            std::vector<offset_type> offsets;
+            unsigned int             segments_count = 0;
+            size_t                   offset         = 0;
+            while(offset < size)
+            {
+                const size_t segment_length = segment_length_dis(gen);
+                offsets.push_back(offset);
+                Iterator x(&values_input[offset]);
+
+                const size_t end = std::min(size, offset + segment_length);
+                if(offset < end)
+                {
+                    key_value aggregate(0, values_input[offset]);
+                    for(size_t i = 0; i < end - offset; i++)
+                    {
+                        aggregate = host_op(aggregate, x[i]);
+                    }
+                    aggregates_expected.push_back(aggregate);
+                }
+                else
+                {
+                    // empty segments produce a special value
+                    key_value aggregate(1, empty_value);
+                    aggregates_expected.push_back(aggregate);
+                }
+
+                segments_count++;
+                offset += segment_length;
+            }
+            offsets.push_back(size);
+
+            input_type* d_values_input;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            HIP_CHECK(hipMemcpy(d_values_input,
+                                values_input.data(),
+                                size * sizeof(input_type),
+                                hipMemcpyHostToDevice));
+
+            offset_type* d_offsets;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_offsets,
+                                                   (segments_count + 1) * sizeof(offset_type)));
+            HIP_CHECK(hipMemcpy(d_offsets,
+                                offsets.data(),
+                                (segments_count + 1) * sizeof(offset_type),
+                                hipMemcpyHostToDevice));
+
+            key_value* d_aggregates_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output,
+                                                         segments_count * sizeof(key_value)));
+
+            size_t temporary_storage_bytes{};
+            void*  d_temporary_storage{};
+            HIP_CHECK(function(nullptr,
+                               temporary_storage_bytes,
+                               d_values_input,
+                               d_aggregates_output,
+                               segments_count,
+                               d_offsets,
+                               d_offsets + 1,
+                               stream,
+                               debug_synchronous));
+
+            // temp_storage_size_bytes must be > 0
+            ASSERT_GT(temporary_storage_bytes, 0U);
+
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+            HIP_CHECK(hipDeviceSynchronize());
+
+            HIP_CHECK(function(d_temporary_storage,
+                               temporary_storage_bytes,
+                               d_values_input,
+                               d_aggregates_output,
+                               segments_count,
+                               d_offsets,
+                               d_offsets + 1,
+                               stream,
+                               debug_synchronous));
+            HIP_CHECK(hipPeekAtLastError());
+            HIP_CHECK(hipDeviceSynchronize());
+
+            std::vector<key_value> aggregates_output(segments_count);
+            HIP_CHECK(hipMemcpy(aggregates_output.data(),
+                                d_aggregates_output,
+                                segments_count * sizeof(key_value),
+                                hipMemcpyDeviceToHost));
+
+            HIP_CHECK(hipFree(d_values_input));
+            HIP_CHECK(hipFree(d_offsets));
+            HIP_CHECK(hipFree(d_aggregates_output));
+            HIP_CHECK(hipFree(d_temporary_storage));
+
+            for(size_t i = 0; i < segments_count; i++)
+            {
+                ASSERT_EQ(aggregates_output[i].key, aggregates_expected[i].key);
+                ASSERT_EQ(aggregates_output[i].value, aggregates_expected[i].value);
+            }
+        }
+    }
+}
+
+TYPED_TEST(HipcubDeviceSegmentedReduce, ArgMin)
+{
+    using T = typename TestFixture::params::input_type;
+    // Because NVIDIA's hipcub::ArgMin doesn't work with bfloat16 (HOST-SIDE)
+    using HostOp = typename ArgMinSelector<T>::type;
+    test_argminmax<TestFixture, ArgMinDispatch, HostOp>(test_utils::numeric_limits<T>::max());
+}
+
+TYPED_TEST(HipcubDeviceSegmentedReduce, ArgMax)
+{
+    using T = typename TestFixture::params::input_type;
+    // Because NVIDIA's hipcub::ArgMax doesn't work with bfloat16 (HOST-SIDE)
+    using HostOp = typename ArgMaxSelector<T>::type;
+    test_argminmax<TestFixture, ArgMaxDispatch, HostOp>(test_utils::numeric_limits<T>::lowest());
+}
+
+template<class T>
+class HipcubDeviceReduceArgMinMaxSpecialTests : public testing::Test
+{};
+
+using HipcubDeviceReduceArgMinMaxSpecialTestsParams
+    = ::testing::Types<float, test_utils::half, test_utils::bfloat16>;
+TYPED_TEST_SUITE(HipcubDeviceReduceArgMinMaxSpecialTests,
+                 HipcubDeviceReduceArgMinMaxSpecialTestsParams);
+
+template<typename TypeParam, typename DispatchFunction>
+void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using input_type  = TypeParam;
+    using Iterator    = typename hipcub::ArgIndexInputIterator<input_type*, int>;
+    using key_value   = typename Iterator::value_type;
+    using offset_type = unsigned int;
+
+    constexpr bool             debug_synchronous = false;
+    hipStream_t                stream            = 0; // default
+    DispatchFunction           function;
+    std::random_device         rd;
+    std::default_random_engine gen(rd());
+    // include empty segments
+    std::uniform_int_distribution<size_t> segment_length_dis(0, 1000);
+    const size_t                          size = 100'000;
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        // Generate data and calculate expected results
+        std::vector<key_value> aggregates_expected;
+
+        std::vector<input_type> values_input(size, value);
+
+        std::vector<offset_type> offsets;
+        unsigned int             segments_count = 0;
+        size_t                   offset         = 0;
+        while(offset < size)
+        {
+            const size_t segment_length = segment_length_dis(gen);
+            offsets.push_back(offset);
+            segments_count++;
+            offset += segment_length;
+        }
+        offsets.push_back(size);
+
+        input_type* d_values_input;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+        HIP_CHECK(hipMemcpy(d_values_input,
+                            values_input.data(),
+                            size * sizeof(input_type),
+                            hipMemcpyHostToDevice));
+
+        offset_type* d_offsets;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_offsets,
+                                                     (segments_count + 1) * sizeof(offset_type)));
+        HIP_CHECK(hipMemcpy(d_offsets,
+                            offsets.data(),
+                            (segments_count + 1) * sizeof(offset_type),
+                            hipMemcpyHostToDevice));
+
+        key_value* d_aggregates_output;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output,
+                                                     segments_count * sizeof(key_value)));
+
+        size_t temporary_storage_bytes{};
+        void*  d_temporary_storage{};
+
+        HIP_CHECK(function(nullptr,
+                           temporary_storage_bytes,
+                           d_values_input,
+                           d_aggregates_output,
+                           segments_count,
+                           d_offsets,
+                           d_offsets + 1,
+                           stream,
+                           debug_synchronous));
+
+        // temp_storage_size_bytes must be > 0
+        ASSERT_GT(temporary_storage_bytes, 0U);
+
+        HIP_CHECK(
+            test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+        HIP_CHECK(hipDeviceSynchronize());
+
+        HIP_CHECK(function(d_temporary_storage,
+                           temporary_storage_bytes,
+                           d_values_input,
+                           d_aggregates_output,
+                           segments_count,
+                           d_offsets,
+                           d_offsets + 1,
+                           stream,
+                           debug_synchronous));
+
+        std::vector<key_value> aggregates_output(segments_count);
+        HIP_CHECK(hipMemcpy(aggregates_output.data(),
+                            d_aggregates_output,
+                            segments_count * sizeof(key_value),
+                            hipMemcpyDeviceToHost));
+
+        HIP_CHECK(hipFree(d_values_input));
+        HIP_CHECK(hipFree(d_offsets));
+        HIP_CHECK(hipFree(d_aggregates_output));
+        HIP_CHECK(hipFree(d_temporary_storage));
+
+        for(size_t i = 0; i < segments_count; i++)
+        {
+            if(offsets[i] < offsets[i + 1])
+            {
+                // all +/- infinity should produce +/- infinity
+                ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(aggregates_output[i].key, 0));
+                ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(aggregates_output[i].value, value));
+            }
+            else
+            {
+                // empty input should produce a special value
+                ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(aggregates_output[i].key, 1));
+                ASSERT_NO_FATAL_FAILURE(
+                    test_utils::assert_eq(aggregates_output[i].value, empty_value));
+            }
+        }
+    }
+}
+
+/// ArgMin with all +Inf should result in +Inf.
+TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMinInf)
+{
+    test_argminmax_allinf<TypeParam, ArgMinDispatch>(
+        test_utils::numeric_limits<TypeParam>::infinity(),
+        test_utils::numeric_limits<TypeParam>::max());
+}
+
+/// ArgMax with all -Inf should result in -Inf.
+TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMaxInf)
+{
+    test_argminmax_allinf<TypeParam, ArgMaxDispatch>(
+        test_utils::numeric_limits<TypeParam>::infinity_neg(),
+        test_utils::numeric_limits<TypeParam>::lowest());
 }

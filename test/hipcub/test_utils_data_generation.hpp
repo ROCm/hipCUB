@@ -35,6 +35,16 @@
 namespace test_utils
 {
 
+template<typename T>
+HIPCUB_HOST_DEVICE T set_half_bits(uint16_t value)
+{
+    T              half_value{};
+    unsigned char* char_representation = reinterpret_cast<unsigned char*>(&half_value);
+    char_representation[0]             = value;
+    char_representation[1]             = value >> 8;
+    return half_value;
+}
+
 // Numeric limits which also supports custom_test_type<U> classes
 template<class T>
 struct numeric_limits : std::numeric_limits<T>
@@ -47,44 +57,68 @@ template<> struct numeric_limits<test_utils::half> : public std::numeric_limits<
     static inline T min() {
         return T(0.00006104f);
     };
-    static inline T max() {
-        return T(65504.0f);
+    static inline T max()
+    {
+        return set_half_bits<T>(0x7bff);
     };
-    static inline T lowest() {
-        return T(-65504.0f);
+    static inline T lowest()
+    {
+        return set_half_bits<T>(0xfbff);
     };
-    static inline T infinity() {
-        return T(std::numeric_limits<float>::infinity());
+    static inline T infinity()
+    {
+        return set_half_bits<T>(0x7c00);
     };
     static inline T quiet_NaN() {
         return T(std::numeric_limits<float>::quiet_NaN());
     };
     static inline T signaling_NaN() {
         return T(std::numeric_limits<float>::signaling_NaN());
+    };
+    static inline T infinity_neg()
+    {
+        return set_half_bits<T>(0xfc00);
     };
 };
 
 template<> class numeric_limits<test_utils::bfloat16> : public std::numeric_limits<test_utils::bfloat16> {
     public:
     using T = test_utils::bfloat16;
-
-    static inline T max() {
-        return T(3.38953138925e+38f);
+    static inline T max()
+    {
+        return set_half_bits<T>(0x7f7f);
     };
-    static inline T min() {
+    static inline T min()
+    {
         return T(std::numeric_limits<float>::min());
     };
-    static inline T lowest() {
-        return T(-3.38953138925e+38f);
+    static inline T lowest()
+    {
+        return set_half_bits<T>(0xff7f);
     };
-    static inline T infinity() {
-        return T(std::numeric_limits<float>::infinity());
+    static inline T infinity()
+    {
+        return set_half_bits<T>(0x7f80);
     };
     static inline T quiet_NaN() {
         return T(std::numeric_limits<float>::quiet_NaN());
     };
     static inline T signaling_NaN() {
         return T(std::numeric_limits<float>::signaling_NaN());
+    };
+    static inline T infinity_neg()
+    {
+        return set_half_bits<T>(0xff80);
+    };
+};
+
+template<>
+class numeric_limits<float> : public std::numeric_limits<float>
+{
+public:
+    static inline float infinity_neg()
+    {
+        return -std::numeric_limits<float>::infinity();
     };
 };
 // End of extended numeric_limits
