@@ -66,88 +66,8 @@ endforeach()
 
 include(FetchContent)
 
-# CUB (only for CUDA platform)
-if(HIP_COMPILER STREQUAL "nvcc")
-
-  if(NOT DOWNLOAD_CUB)
-    find_package(cub QUIET)
-    find_package(thrust QUIET)
-  endif()
-
-  if(NOT DEFINED CUB_INCLUDE_DIR)
-    file(
-      DOWNLOAD https://github.com/NVIDIA/cub/archive/2.0.1.zip
-      ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1.zip
-      STATUS cub_download_status LOG cub_download_log
-    )
-    list(GET cub_download_status 0 cub_download_error_code)
-    if(cub_download_error_code)
-      message(FATAL_ERROR "Error: downloading "
-        "https://github.com/NVIDIA/cub/archive/2.0.1.zip failed "
-        "error_code: ${cub_download_error_code} "
-        "log: ${cub_download_log} "
-      )
-    endif()
-
-    execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1.zip
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      RESULT_VARIABLE cub_unpack_error_code
-    )
-    if(cub_unpack_error_code)
-      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1.zip failed")
-    endif()
-    set(CUB_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1/ CACHE PATH "")
-  endif()
-
-  if(NOT DEFINED THRUST_INCLUDE_DIR)
-    file(
-      DOWNLOAD https://github.com/NVIDIA/thrust/archive/2.0.1.zip
-      ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1.zip
-      STATUS thrust_download_status LOG thrust_download_log
-    )
-    list(GET thrust_download_status 0 thrust_download_error_code)
-    if(thrust_download_error_code)
-      message(FATAL_ERROR "Error: downloading "
-        "https://github.com/NVIDIA/thrust/archive/2.0.1.zip failed "
-        "error_code: ${thrust_download_error_code} "
-        "log: ${thrust_download_log} "
-      )
-    endif()
-
-    execute_process(
-      COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1.zip
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      RESULT_VARIABLE thrust_unpack_error_code
-    )
-    if(thrust_unpack_error_code)
-      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1.zip failed")
-    endif()
-    set(THRUST_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1/ CACHE PATH "")
-  endif()
-else()
-  # rocPRIM (only for ROCm platform)
-  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    find_package(rocprim CONFIG REQUIRED)
-  endif()
-  if(NOT TARGET roc::rocprim)
-    message(STATUS "rocPRIM not found. Fetching...")
-    FetchContent_Declare(
-      prim
-      GIT_REPOSITORY https://github.com/ROCmSoftwarePlatform/rocPRIM.git
-      GIT_TAG        develop
-    )
-    FetchContent_MakeAvailable(prim)
-    if(NOT TARGET roc::rocprim)
-      add_library(roc::rocprim ALIAS rocprim)
-    endif()
-  else()
-    find_package(rocprim CONFIG REQUIRED)
-  endif()
-endif()
-
 # Test dependencies
-if(BUILD_TEST)
+if(USER_BUILD_TEST)
   # NOTE1: Google Test has created a mess with legacy FindGTest.cmake and newer GTestConfig.cmake
   #
   # FindGTest.cmake defines:   GTest::GTest, GTest::Main, GTEST_FOUND
@@ -180,7 +100,7 @@ if(BUILD_TEST)
       FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG        e2239ee6043f73722e7aa812a459f54a28552929 # release-1.11.0
+        GIT_TAG        release-1.11.0
       )
     endif()
     FetchContent_MakeAvailable(googletest)
@@ -193,9 +113,9 @@ if(BUILD_TEST)
       add_library(GTest::Main  ALIAS GTest::gtest_main)
     endif()
   endif()
-endif(BUILD_TEST)
+endif(USER_BUILD_TEST)
 
-if(BUILD_BENCHMARK)
+if(USER_BUILD_BENCHMARK)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
     find_package(benchmark CONFIG QUIET)
   endif()
@@ -206,7 +126,7 @@ if(BUILD_BENCHMARK)
     FetchContent_Declare(
       googlebench
       GIT_REPOSITORY https://github.com/google/benchmark.git
-      GIT_TAG        d17ea665515f0c54d100c6fc973632431379f64b # v1.6.1
+      GIT_TAG        v1.5.5
     )
     set(HAVE_STD_REGEX ON)
     set(RUN_HAVE_STD_REGEX 1)
@@ -217,7 +137,7 @@ if(BUILD_BENCHMARK)
   else()
     find_package(benchmark CONFIG REQUIRED)
   endif()
-endif(BUILD_BENCHMARK)
+endif(USER_BUILD_BENCHMARK)
 
 if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
   find_package(ROCM 0.7.3 CONFIG QUIET PATHS "${ROCM_ROOT}")
@@ -242,8 +162,91 @@ else()
   find_package(ROCM 0.7.3 CONFIG REQUIRED PATHS "${ROCM_ROOT}")
 endif()
 
+# CUB (only for CUDA platform)
+if(HIP_COMPILER STREQUAL "nvcc")
+
+  if(NOT DOWNLOAD_CUB)
+    find_package(cub QUIET)
+    find_package(thrust QUIET)
+  endif()
+
+  if(NOT DEFINED CUB_INCLUDE_DIR)
+    file(
+            DOWNLOAD https://github.com/NVIDIA/cub/archive/2.0.1.zip
+            ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1.zip
+            STATUS cub_download_status LOG cub_download_log
+    )
+    list(GET cub_download_status 0 cub_download_error_code)
+    if(cub_download_error_code)
+      message(FATAL_ERROR "Error: downloading "
+              "https://github.com/NVIDIA/cub/archive/2.0.1.zip failed "
+              "error_code: ${cub_download_error_code} "
+              "log: ${cub_download_log} "
+              )
+    endif()
+
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1.zip
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            RESULT_VARIABLE cub_unpack_error_code
+    )
+    if(cub_unpack_error_code)
+      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1.zip failed")
+    endif()
+    set(CUB_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/cub-2.0.1/ CACHE PATH "")
+  endif()
+
+  if(NOT DEFINED THRUST_INCLUDE_DIR)
+    file(
+            DOWNLOAD https://github.com/NVIDIA/thrust/archive/2.0.1.zip
+            ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1.zip
+            STATUS thrust_download_status LOG thrust_download_log
+    )
+    list(GET thrust_download_status 0 thrust_download_error_code)
+    if(thrust_download_error_code)
+      message(FATAL_ERROR "Error: downloading "
+              "https://github.com/NVIDIA/thrust/archive/2.0.1.zip failed "
+              "error_code: ${thrust_download_error_code} "
+              "log: ${thrust_download_log} "
+              )
+    endif()
+
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1.zip
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            RESULT_VARIABLE thrust_unpack_error_code
+    )
+    if(thrust_unpack_error_code)
+      message(FATAL_ERROR "Error: unpacking ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1.zip failed")
+    endif()
+    set(THRUST_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/thrust-2.0.1/ CACHE PATH "")
+  endif()
+else()
+  # rocPRIM (only for ROCm platform)
+  if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
+    find_package(rocprim CONFIG REQUIRED)
+  endif()
+  if(NOT TARGET roc::rocprim)
+    message(STATUS "rocPRIM not found. Fetching...")
+    FetchContent_Declare(
+            prim
+            GIT_REPOSITORY https://github.com/ROCmSoftwarePlatform/rocPRIM.git
+            GIT_TAG        develop
+    )
+    FetchContent_MakeAvailable(prim)
+    if(NOT TARGET roc::rocprim)
+      add_library(roc::rocprim ALIAS rocprim)
+    endif()
+    if(NOT TARGET roc::rocprim_hip)
+      add_library(roc::rocprim_hip ALIAS rocprim_hip)
+    endif()
+  else()
+    find_package(rocprim CONFIG REQUIRED)
+  endif()
+endif()
+
 foreach(SHARED_OPTION BUILD_TEST BUILD_BENCHMARK BUILD_EXAMPLE)
-  set(${SHARED_OPTION} USER_${SHARED_OPTION})
+  set(${SHARED_OPTION} ${USER_${SHARED_OPTION}})
 endforeach()
 
 # Restore user global state

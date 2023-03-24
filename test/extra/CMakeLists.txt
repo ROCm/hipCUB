@@ -35,10 +35,13 @@ else()
 endif()
 
 # CMake modules
-list(APPEND CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake
-  "${ROCM_ROOT}/hip/cmake" # FindHIP.cmake
-)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
+if(WIN32)
+  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/cmake") # FindHIP.cmake
+else()
+  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/lib/cmake") # hip-config.cmake (ROCM)
+  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/hip/cmake") # FindHIP.cmake    (CUDA)
+endif()
 
 # Verify that hip-clang is used on ROCM platform
 include(VerifyCompiler)

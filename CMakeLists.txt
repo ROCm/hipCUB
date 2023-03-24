@@ -41,7 +41,7 @@ list(APPEND CMAKE_PREFIX_PATH "${ROCM_ROOT}")
 
 # Build options
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
-option(DOWNLOAD_ROCPRIM "Download rocPRIM and do not search for rocPRIM package" OFF)
+option(DEPENDENCIES_FORCE_DOWNLOAD "Download dependencies and do not search for packages" OFF)
 option(DOWNLOAD_CUB "Download CUB and thrust. Do not search for CUB package" OFF)
 option(BUILD_BENCHMARK "Build benchmarks" OFF)
 option(BUILD_EXAMPLE "Build Examples" OFF)
@@ -51,10 +51,13 @@ option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 
 # CMake modules
-list(APPEND CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-  "${ROCM_ROOT}/hip/cmake" # FindHIP.cmake
-)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+if(WIN32)
+  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/cmake") # FindHIP.cmake
+else()
+  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/lib/cmake") # hip-config.cmake (ROCM)
+  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/hip/cmake") # FindHIP.cmake    (CUDA)
+endif()
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
