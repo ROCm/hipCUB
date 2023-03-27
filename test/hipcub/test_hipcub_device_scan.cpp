@@ -244,7 +244,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             for(size_t i = 0; i < output.size(); i++)
             {
                 auto diff
-                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundemental(expected[i])),
+                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundamental(expected[i])),
                                   V(0.01f));
                 if(std::is_integral<V>::value)
                     diff = 0;
@@ -398,7 +398,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
             {
                 // to fundemental instead of native as native will be implicitely casted to fundemental anyway
                 auto diff
-                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundemental(expected[i])),
+                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundamental(expected[i])),
                                   V(0.01f));
                 if(std::is_integral<V>::value)
                 {
@@ -715,7 +715,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
             for (size_t i = 0; i < output.size(); i++)
             {
                 auto diff
-                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundemental(expected[i])),
+                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundamental(expected[i])),
                                   V(0.01f));
                 if(std::is_integral<V>::value)
                 {
@@ -1104,7 +1104,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
             for(size_t i = 0; i < output.size(); i++)
             {
                 auto diff
-                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundemental(expected[i])),
+                    = std::max<V>(std::abs(0.01f * test_utils::convert_to_fundamental(expected[i])),
                                   V(0.01f));
                 if(std::is_integral<U>::value)
                     diff = 0;

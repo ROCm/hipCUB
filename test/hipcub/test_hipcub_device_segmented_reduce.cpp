@@ -225,7 +225,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
                 else
                 {
                     auto diff = std::max<test_utils::convert_to_fundamental_t<output_type>>(
-                        std::abs(0.01 * test_utils::convert_to_fundemental(aggregates_expected[i])),
+                        std::abs(0.01 * test_utils::convert_to_fundamental(aggregates_expected[i])),
                         output_type(0.01));
                     ASSERT_NEAR(test_utils::convert_to_native(aggregates_output[i]),
                                 test_utils::convert_to_native(aggregates_expected[i]),

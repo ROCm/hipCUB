@@ -201,7 +201,7 @@ using convert_to_fundamental_t
     = std::conditional_t<is_half<T>::value || is_bfloat16<T>::value, float, T>;
 
 template<class T>
-inline auto convert_to_fundemental(T value)
+inline auto convert_to_fundamental(T value)
 {
     return static_cast<convert_to_fundamental_t<T>>(value);
 }
