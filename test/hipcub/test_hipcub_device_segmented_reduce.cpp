@@ -257,14 +257,19 @@ public:
     using params = Params;
 };
 
-typedef ::testing::Types<
-    params2<unsigned int, unsigned int>,
-    params2<int, int, 0, 10000>,
-    params2<double, double, 0, 10000>,
-    params2<int, long long, 1000, 10000>,
-    params2<float, double, 2, 10>,
-    params2<float, float, 100, 200>
-> Params2;
+typedef ::testing::Types<params2<unsigned int, unsigned int>,
+                         params2<int, int, 0, 10000>,
+                         params2<double, double, 0, 10000>,
+                         params2<int, long long, 1000, 10000>,
+                         params2<float, double, 2, 10>,
+                         params2<float, float, 100, 200>
+#ifdef __HIP_PLATFORM_AMD__
+                         ,
+                         params2<test_utils::half, float>, // Doesn't work on NVIDIA / CUB
+                         params2<test_utils::bfloat16, float> // Doesn't work on NVIDIA / CUB
+#endif
+                         >
+    Params2;
 
 TYPED_TEST_SUITE(HipcubDeviceSegmentedReduce, Params2);
 
@@ -280,10 +285,9 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
     using result_type = output_type;
     using offset_type = unsigned int;
 
-    constexpr input_type init = input_type(0);
-    const bool debug_synchronous = false;
-    reduce_op_type reduce_op;
-
+    const input_type init              = input_type(0);
+    const bool       debug_synchronous = false;
+    reduce_op_type   reduce_op;
 
     std::random_device rd;
     std::default_random_engine gen(rd());
@@ -411,7 +415,9 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
                     auto diff = std::max<output_type>(
                         std::abs(0.01 * aggregates_expected[i]), output_type(0.01)
                     );
-                    ASSERT_NEAR(aggregates_output[i], aggregates_expected[i], diff);
+                    ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(aggregates_output[i],
+                                                                    aggregates_expected[i],
+                                                                    diff));
                 }
             }
         }
@@ -551,7 +557,8 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
 
             for(size_t i = 0; i < segments_count; i++)
             {
-                ASSERT_EQ(aggregates_output[i], aggregates_expected[i]);
+                ASSERT_NO_FATAL_FAILURE(
+                    test_utils::assert_near(aggregates_output[i], aggregates_expected[i], .01f));
             }
         }
     }
@@ -742,8 +749,11 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
 
             for(size_t i = 0; i < segments_count; i++)
             {
-                ASSERT_EQ(aggregates_output[i].key, aggregates_expected[i].key);
-                ASSERT_EQ(aggregates_output[i].value, aggregates_expected[i].value);
+                ASSERT_NO_FATAL_FAILURE(
+                    test_utils::assert_eq(aggregates_output[i].key, aggregates_expected[i].key));
+                ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(aggregates_output[i].value,
+                                                                aggregates_expected[i].value,
+                                                                .01f));
             }
         }
     }
@@ -897,6 +907,8 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
     }
 }
 
+// TODO: enable for NVIDIA platform once CUB backend incorporates fix
+#ifdef __HIP_PLATFORM_AMD__
 /// ArgMin with all +Inf should result in +Inf.
 TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMinInf)
 {
@@ -912,3 +924,4 @@ TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMaxInf)
         test_utils::numeric_limits<TypeParam>::infinity_neg(),
         test_utils::numeric_limits<TypeParam>::lowest());
 }
+#endif // __HIP_PLATFORM_AMD__

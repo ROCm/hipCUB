@@ -530,6 +530,8 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
     }
 }
 
+// TODO: enable for NVIDIA platform once CUB backend incorporates fix
+#ifdef __HIP_PLATFORM_AMD__
 /// ArgMin with all +Inf should result in +Inf.
 TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMinInf)
 {
@@ -545,3 +547,4 @@ TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMaxInf)
         test_utils::numeric_limits<TypeParam>::infinity_neg(),
         test_utils::numeric_limits<TypeParam>::lowest());
 }
+#endif // __HIP_PLATFORM_AMD__
