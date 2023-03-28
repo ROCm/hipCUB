@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 5.5.0
+## hipCUB-2.13.1 for ROCm 5.5.0
 ### Added
 - Benchmarks for `BlockShuffle`, `BlockLoad`, and `BlockStore`.
 ### Changed
@@ -12,7 +12,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 - `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
 - `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
 
-## (Unreleased) hipCUB-2.13.0 for ROCm 5.4.0
+## hipCUB-2.13.0 for ROCm 5.4.0
 ### Added
 - CMake functionality to improve build parallelism of the test suite that splits compilation units by
 function or by parameters.
