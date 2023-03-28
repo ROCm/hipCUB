@@ -188,6 +188,11 @@ test:rocm:
       --benchmark_gpu_name "${GPU}"
       --benchmark_filename_regex "${BENCHMARK_FILENAME_REGEX}"
       --benchmark_filter_regex "${BENCHMARK_FILTER_REGEX}"
+      --no_upload
+  artifacts:
+    paths:
+      - ${CI_PROJECT_DIR}/build/benchmark/*.json
+    expire_in: 1 week
 
 benchmark:rocm:
   extends:
