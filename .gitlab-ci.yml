@@ -228,7 +228,6 @@ benchmark:rocm:
       fi
     - cmake
       -G Ninja
-      -D rocprim_DIR="/opt/rocm/rocprim"
       -D CMAKE_CXX_FLAGS="-Wall -Wextra -Werror"
       "$GPU_TARGETS_ARG"
       -S $CI_PROJECT_DIR/test/extra

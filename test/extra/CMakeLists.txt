@@ -27,23 +27,17 @@ cmake_policy(VERSION 3.16...3.21)
 # hipCUB is installed from package or using `make install`
 project(hipCUB_package_install_test CXX)
 
-# Adding CMAKE_PREFIX_PATH
+# Set the ROCM install directory.
 if(WIN32)
   set(ROCM_ROOT "$ENV{HIP_PATH}" CACHE PATH "Root directory of the ROCm installation")
 else()
   set(ROCM_ROOT "/opt/rocm" CACHE PATH "Root directory of the ROCm installation")
 endif()
 
-# CMake modules
+# Add hipCUB's CMake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
-if(WIN32)
-  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/cmake") # FindHIP.cmake
-else()
-  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/lib/cmake") # hip-config.cmake (ROCM)
-  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/hip/cmake") # FindHIP.cmake    (CUDA)
-endif()
 
-# Verify that hip-clang is used on ROCM platform
+# Find and verify HIP.
 include(VerifyCompiler)
 
 # CUB (only for CUDA platform)
@@ -108,7 +102,8 @@ if(HIP_COMPILER STREQUAL "nvcc")
 else()
   # rocPRIM (only for ROCm platform)
   if(NOT DEPENDENCIES_FORCE_DOWNLOAD)
-    find_package(rocprim CONFIG REQUIRED)
+    # Add default install location for WIN32 and non-WIN32 as hint
+    find_package(rocprim CONFIG REQUIRED PATHS "${ROCM_ROOT}/lib/cmake/rocprim")
   endif()
   if(NOT TARGET roc::rocprim)
     message(STATUS "rocPRIM not found. Fetching...")

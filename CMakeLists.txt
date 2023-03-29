@@ -29,15 +29,12 @@ set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended 
 # hipCUB project
 project(hipcub LANGUAGES CXX)
 
-# Adding CMAKE_PREFIX_PATH
+# Set the ROCM install directory.
 if(WIN32)
   set(ROCM_ROOT "$ENV{HIP_PATH}" CACHE PATH "Root directory of the ROCm installation")
 else()
   set(ROCM_ROOT "/opt/rocm" CACHE PATH "Root directory of the ROCm installation")
 endif()
-
-# Adding CMAKE_PREFIX_PATH
-list(APPEND CMAKE_PREFIX_PATH "${ROCM_ROOT}")
 
 # Build options
 option(BUILD_TEST "Build tests (requires googletest)" OFF)
@@ -50,14 +47,8 @@ option(BUILD_ADDRESS_SANITIZER "Build with address sanitizer enabled" OFF)
 # Set the header wrapper ON by default.
 option(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY "Build with file/folder reorg with backward compatibility enabled" ON)
 
-# CMake modules
+# Add hipCUB's CMake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-if(WIN32)
-  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/cmake") # FindHIP.cmake
-else()
-  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/lib/cmake") # hip-config.cmake (ROCM)
-  list(APPEND CMAKE_MODULE_PATH "${ROCM_ROOT}/hip/cmake") # FindHIP.cmake    (CUDA)
-endif()
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -73,13 +64,11 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Verify that hip-clang is used on ROCM platform
-if(NOT WIN32)
-  include(cmake/VerifyCompiler.cmake)
-endif()
+# Find and verify HIP.
+include(VerifyCompiler)
 
 # Get dependencies (required here to get rocm-cmake)
-include(cmake/Dependencies.cmake)
+include(Dependencies)
 
 # Setup GPU targets for rocm platform
 if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
