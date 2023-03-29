@@ -69,7 +69,7 @@ __global__ __launch_bounds__(
                                                 end_offsets,
                                                 reduce_op,
                                                 initial_value);
-    __syncthreads();
+    // no synchronization is needed since thread 0 writes to output
 
     const unsigned int flat_id    = ::rocprim::detail::block_thread_id<0>();
     const unsigned int segment_id = ::rocprim::detail::block_id<0>();
