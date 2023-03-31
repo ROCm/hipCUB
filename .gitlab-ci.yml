@@ -20,6 +20,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+include:
+    - project: amd/ci-templates
+      ref: main
+      file:
+        - /defaults.yaml
+        - /deps-cmake.yaml
+        - /deps-docs.yaml
+        - /deps-rocm.yaml
+        - /deps-nvcc.yaml
+        - /gpus-rocm.yaml
+        - /gpus-nvcc.yaml
+        - /rules.yaml
+
 stages:
   - build
   - test          # Tests if unit tests are passing (CTest)
@@ -492,15 +505,9 @@ test:doc:
     - rocm # Do it on rocm machine
   image: rocm/rocm-terminal:latest
   stage: test
-  needs: []
-  before_script:
-    - $SUDO_CMD rm /etc/apt/sources.list.d/rocm.list
-    - $SUDO_CMD apt-get update -qq
-    # Do we need all of this?
-    - $SUDO_CMD apt-get install -y -qq wget git tar xz-utils bzip2 texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended latexmk python-pip python3-sphinx doxygen
-    - $SUDO_CMD -H pip install sphinx_rtd_theme breathe==4.12.0 exhale
-    - $SUDO_CMD wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | $SUDO_CMD apt-key add -
-    - $SUDO_CMD echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ ubuntu main' | sudo tee /etc/apt/sources.list.d/rocm.list
-    - $SUDO_CMD apt-get update -qq
-  script:
-    - bash -x ./docs/run_doc.sh
+  extends:
+    - .rules:test
+    - .build:docs
+
+scheduled-check-changes:
+  extends: .rules:scheduled-check-changes
