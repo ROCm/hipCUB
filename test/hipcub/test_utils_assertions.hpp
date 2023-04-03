@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2023 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -238,5 +238,11 @@ inline void assert_bit_eq(const std::vector<T>& result, const std::vector<T>& ex
     }
 }
 
+/// Compile-time assertion for type equality of two objects.
+template<class ExpectedT, class ActualT>
+inline void assert_type(ExpectedT /*obj1*/, ActualT /*obj2*/)
+{
+    testing::StaticAssertTypeEq<ExpectedT, ActualT>();
+}
 }
 #endif  // HIPCUB_TEST_HIPCUB_TEST_UTILS_ASSERTIONS_HPP_
