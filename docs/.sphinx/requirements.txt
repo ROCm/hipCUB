@@ -21,9 +21,13 @@ babel==2.12.1
 backcall==0.2.0
     # via ipython
 beautifulsoup4==4.11.2
-    # via pydata-sphinx-theme
+    # via
+    #   exhale
+    #   pydata-sphinx-theme
 breathe==4.34.0
-    # via rocm-docs-core
+    # via
+    #   exhale
+    #   rocm-docs-core
 certifi==2022.12.7
     # via requests
 cffi==1.15.1
@@ -45,12 +49,15 @@ deprecated==1.2.13
 docutils==0.16
     # via
     #   breathe
+    #   exhale
     #   myst-parser
     #   pydata-sphinx-theme
     #   rocm-docs-core
     #   sphinx
 executing==1.2.0
     # via stack-data
+exhale==0.3.6
+    # via -r .sphinx/requirements.in
 fastjsonschema==2.16.3
     # via nbformat
 gitdb==4.0.10
@@ -94,6 +101,8 @@ jupyter-core==5.3.0
     #   nbformat
 linkify-it-py==1.0.3
     # via myst-parser
+lxml==4.9.2
+    # via exhale
 markdown-it-py==2.2.0
     # via
     #   mdit-py-plugins
@@ -187,6 +196,7 @@ rocm-docs-core==0.2.0
 six==1.16.0
     # via
     #   asttokens
+    #   exhale
     #   python-dateutil
 smmap==5.0.0
     # via gitdb
@@ -197,6 +207,7 @@ soupsieve==2.4
 sphinx==4.3.1
     # via
     #   breathe
+    #   exhale
     #   myst-nb
     #   myst-parser
     #   pydata-sphinx-theme
