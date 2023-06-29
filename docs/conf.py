@@ -6,6 +6,9 @@
 
 from rocm_docs import ROCmDocs
 
+
+external_projects_current_project = "hipcub"
+
 docs_core = ROCmDocs("hipCUB Documentation")
 docs_core.run_doxygen()
 docs_core.enable_api_reference()
