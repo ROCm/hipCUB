@@ -2,6 +2,10 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
+## (Unreleased) hipCUB-2.13.1 for ROCm 6.0
+### Changed
+- CUB backend references CUB and Thrust version 2.1.0.
+
 ## (Unreleased) hipCUB-2.13.1 for ROCm 5.7.0
 ### Changed
 - CUB backend references CUB and Thrust version 2.0.1.
