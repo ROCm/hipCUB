@@ -613,6 +613,7 @@ inline void sort_keys_over_4g()
 
     hipDeviceProp_t dev_prop;
     HIP_CHECK(hipGetDeviceProperties(&dev_prop, device_id));
+    
     // Radix sort requires 2 buffers of `size`, so a minimum of 8 GB of vram for this test.
     // This is more than some cards provide.
     if(static_cast<size_t>(dev_prop.totalGlobalMem * 0.9) < size * 2 * sizeof(key_type))
