@@ -162,22 +162,20 @@ inline hip_bfloat16 get_max_special_value<hip_bfloat16>()
 class DeviceReduce
 {
 public:
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT,
-        typename ReduceOpT,
-        typename T
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Reduce(void *d_temp_storage,
-                      size_t &temp_storage_bytes,
-                      InputIteratorT d_in,
-                      OutputIteratorT d_out,
-                      int num_items,
-                      ReduceOpT reduction_op,
-                      T init,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template<typename InputIteratorT,
+             typename OutputIteratorT,
+             typename ReduceOpT,
+             typename T,
+             typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Reduce(void*           d_temp_storage,
+                                                     size_t&         temp_storage_bytes,
+                                                     InputIteratorT  d_in,
+                                                     OutputIteratorT d_out,
+                                                     NumItemsT       num_items,
+                                                     ReduceOpT       reduction_op,
+                                                     T               init,
+                                                     hipStream_t     stream            = 0,
+                                                     bool            debug_synchronous = false)
     {
         return ::rocprim::reduce(
             d_temp_storage,
@@ -192,18 +190,14 @@ public:
             debug_synchronous);
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Sum(void *d_temp_storage,
-                   size_t &temp_storage_bytes,
-                   InputIteratorT d_in,
-                   OutputIteratorT d_out,
-                   int num_items,
-                   hipStream_t stream = 0,
-                   bool debug_synchronous = false)
+    template<typename InputIteratorT, typename OutputIteratorT, typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Sum(void*           d_temp_storage,
+                                                  size_t&         temp_storage_bytes,
+                                                  InputIteratorT  d_in,
+                                                  OutputIteratorT d_out,
+                                                  NumItemsT       num_items,
+                                                  hipStream_t     stream            = 0,
+                                                  bool            debug_synchronous = false)
     {
         using InputT  = typename std::iterator_traits<InputIteratorT>::value_type;
         using OutputT = typename std::iterator_traits<OutputIteratorT>::value_type;
@@ -219,18 +213,14 @@ public:
                       debug_synchronous);
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Min(void *d_temp_storage,
-                   size_t &temp_storage_bytes,
-                   InputIteratorT d_in,
-                   OutputIteratorT d_out,
-                   int num_items,
-                   hipStream_t stream = 0,
-                   bool debug_synchronous = false)
+    template<typename InputIteratorT, typename OutputIteratorT, typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Min(void*           d_temp_storage,
+                                                  size_t&         temp_storage_bytes,
+                                                  InputIteratorT  d_in,
+                                                  OutputIteratorT d_out,
+                                                  NumItemsT       num_items,
+                                                  hipStream_t     stream            = 0,
+                                                  bool            debug_synchronous = false)
     {
         using T = typename std::iterator_traits<InputIteratorT>::value_type;
         return Reduce(
@@ -240,20 +230,16 @@ public:
         );
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ArgMin(void *d_temp_storage,
-                      size_t &temp_storage_bytes,
-                      InputIteratorT d_in,
-                      OutputIteratorT d_out,
-                      int num_items,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template<typename InputIteratorT, typename OutputIteratorT, typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t ArgMin(void*           d_temp_storage,
+                                                     size_t&         temp_storage_bytes,
+                                                     InputIteratorT  d_in,
+                                                     OutputIteratorT d_out,
+                                                     NumItemsT       num_items,
+                                                     hipStream_t     stream            = 0,
+                                                     bool            debug_synchronous = false)
     {
-        using OffsetT = int;
+        using OffsetT      = NumItemsT;
         using T = typename std::iterator_traits<InputIteratorT>::value_type;
         using O = typename std::iterator_traits<OutputIteratorT>::value_type;
         using OutputTupleT = hipcub::detail::non_void_value_t<O, KeyValuePair<OffsetT, T>>;
@@ -275,18 +261,14 @@ public:
         );
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t Max(void *d_temp_storage,
-                   size_t &temp_storage_bytes,
-                   InputIteratorT d_in,
-                   OutputIteratorT d_out,
-                   int num_items,
-                   hipStream_t stream = 0,
-                   bool debug_synchronous = false)
+    template<typename InputIteratorT, typename OutputIteratorT, typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t Max(void*           d_temp_storage,
+                                                  size_t&         temp_storage_bytes,
+                                                  InputIteratorT  d_in,
+                                                  OutputIteratorT d_out,
+                                                  NumItemsT       num_items,
+                                                  hipStream_t     stream            = 0,
+                                                  bool            debug_synchronous = false)
     {
         using T = typename std::iterator_traits<InputIteratorT>::value_type;
         return Reduce(
@@ -296,20 +278,16 @@ public:
         );
     }
 
-    template <
-        typename InputIteratorT,
-        typename OutputIteratorT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ArgMax(void *d_temp_storage,
-                      size_t &temp_storage_bytes,
-                      InputIteratorT d_in,
-                      OutputIteratorT d_out,
-                      int num_items,
-                      hipStream_t stream = 0,
-                      bool debug_synchronous = false)
+    template<typename InputIteratorT, typename OutputIteratorT, typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t ArgMax(void*           d_temp_storage,
+                                                     size_t&         temp_storage_bytes,
+                                                     InputIteratorT  d_in,
+                                                     OutputIteratorT d_out,
+                                                     NumItemsT       num_items,
+                                                     hipStream_t     stream            = 0,
+                                                     bool            debug_synchronous = false)
     {
-        using OffsetT = int;
+        using OffsetT      = NumItemsT;
         using T = typename std::iterator_traits<InputIteratorT>::value_type;
         using O = typename std::iterator_traits<OutputIteratorT>::value_type;
         using OutputTupleT = hipcub::detail::non_void_value_t<O, KeyValuePair<OffsetT, T>>;
@@ -331,26 +309,25 @@ public:
         );
     }
 
-    template<
-        typename KeysInputIteratorT,
-        typename UniqueOutputIteratorT,
-        typename ValuesInputIteratorT,
-        typename AggregatesOutputIteratorT,
-        typename NumRunsOutputIteratorT,
-        typename ReductionOpT
-    >
-    HIPCUB_RUNTIME_FUNCTION static
-    hipError_t ReduceByKey(void * d_temp_storage,
-                           size_t& temp_storage_bytes,
-                           KeysInputIteratorT d_keys_in,
-                           UniqueOutputIteratorT d_unique_out,
-                           ValuesInputIteratorT d_values_in,
-                           AggregatesOutputIteratorT d_aggregates_out,
-                           NumRunsOutputIteratorT d_num_runs_out,
-                           ReductionOpT reduction_op,
-                           int num_items,
-                           hipStream_t stream = 0,
-                           bool debug_synchronous = false)
+    template<typename KeysInputIteratorT,
+             typename UniqueOutputIteratorT,
+             typename ValuesInputIteratorT,
+             typename AggregatesOutputIteratorT,
+             typename NumRunsOutputIteratorT,
+             typename ReductionOpT,
+             typename NumItemsT>
+    HIPCUB_RUNTIME_FUNCTION static hipError_t
+        ReduceByKey(void*                     d_temp_storage,
+                    size_t&                   temp_storage_bytes,
+                    KeysInputIteratorT        d_keys_in,
+                    UniqueOutputIteratorT     d_unique_out,
+                    ValuesInputIteratorT      d_values_in,
+                    AggregatesOutputIteratorT d_aggregates_out,
+                    NumRunsOutputIteratorT    d_num_runs_out,
+                    ReductionOpT              reduction_op,
+                    NumItemsT                 num_items,
+                    hipStream_t               stream            = 0,
+                    bool                      debug_synchronous = false)
     {
         using key_compare_op =
             ::rocprim::equal_to<typename std::iterator_traits<KeysInputIteratorT>::value_type>;

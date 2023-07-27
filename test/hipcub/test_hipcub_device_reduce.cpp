@@ -27,6 +27,8 @@
 
 // hipcub API
 #include "hipcub/device/device_reduce.hpp"
+#include "hipcub/iterator/constant_input_iterator.hpp"
+
 #include <bitset>
 
 // Params for tests
@@ -554,3 +556,109 @@ TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMaxInf)
         test_utils::numeric_limits<TypeParam>::lowest());
 }
 #endif // __HIP_PLATFORM_AMD__
+
+// ---------------------------------------------------------
+// Test for large indices
+// ---------------------------------------------------------
+
+template<class Params>
+class HipcubDeviceReduceLargeIndicesTests : public ::testing::Test
+{
+public:
+    using input_type                        = typename Params::input_type;
+    using output_type                       = typename Params::output_type;
+    static constexpr bool debug_synchronous = false;
+};
+
+typedef ::testing::Types<DeviceReduceParams<short, size_t>,
+                         DeviceReduceParams<int, size_t>,
+                         DeviceReduceParams<unsigned int, size_t>,
+                         DeviceReduceParams<unsigned long, size_t>,
+                         DeviceReduceParams<float, size_t>,
+                         DeviceReduceParams<double, size_t>>
+    HipcubDeviceReduceLargeIndicesTestsParams;
+
+TYPED_TEST_SUITE(HipcubDeviceReduceLargeIndicesTests, HipcubDeviceReduceLargeIndicesTestsParams);
+
+TYPED_TEST(HipcubDeviceReduceLargeIndicesTests, LargeIndices)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T                      = typename TestFixture::input_type;
+    using U                      = typename TestFixture::output_type;
+    const bool debug_synchronous = TestFixture::debug_synchronous;
+    using IteratorType           = hipcub::ConstantInputIterator<T>;
+
+    const std::vector<size_t> exponents = {30, 31, 32, 33, 34};
+    for(auto exponent : exponents)
+    {
+        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        {
+            const size_t size = 1ll << exponent;
+            unsigned int seed_value
+                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            hipStream_t stream = 0; // default
+
+            // Generate data
+            IteratorType   d_input(T{1});
+            std::vector<U> output(1, (U)0.0f);
+
+            U* d_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Calculate expected results on host
+            const U expected = static_cast<U>(size);
+
+            // Temp storage
+            size_t temp_storage_size_bytes;
+            void*  d_temp_storage = nullptr;
+
+            // Get size of d_temp_storage
+            hipcub::DeviceReduce::Sum(d_temp_storage,
+                                      temp_storage_size_bytes,
+                                      d_input,
+                                      d_output,
+                                      size,
+                                      stream,
+                                      debug_synchronous);
+
+            // temp_storage_size_bytes must be >0
+            ASSERT_GT(temp_storage_size_bytes, 0U);
+
+            // Allocate temporary storage
+            HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_size_bytes));
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Run
+            hipcub::DeviceReduce::Sum(d_temp_storage,
+                                      temp_storage_size_bytes,
+                                      d_input,
+                                      d_output,
+                                      size,
+                                      stream,
+                                      debug_synchronous);
+            HIP_CHECK(hipPeekAtLastError());
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Copy output to host
+            HIP_CHECK(hipMemcpy(output.data(),
+                                d_output,
+                                output.size() * sizeof(U),
+                                hipMemcpyDeviceToHost));
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Check if output values are as expected
+            const std::size_t result = output[0];
+            ASSERT_EQ(result, size);
+
+            HIP_CHECK(hipFree(d_output));
+            HIP_CHECK(hipFree(d_temp_storage));
+        }
+    }
+}
