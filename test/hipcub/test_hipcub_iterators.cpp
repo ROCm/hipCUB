@@ -348,8 +348,7 @@ TYPED_TEST(HipcubIteratorTests, TestTexObj)
     std::string deviceName = std::string(props.gcnArchName);
     if (deviceName.rfind("gfx94", 0) == 0) {
         // This is a gfx94x device, so skip this test
-        SCOPED_TRACE(testing::Message() << "Skipping texture cache text for " << deviceName);
-        return;
+        GTEST_SKIP() << "Test not run on gfx94x as texture cache API is not supported";
     }
 
     HIP_CHECK(hipSetDevice(device_id));
@@ -416,8 +415,7 @@ TYPED_TEST(HipcubIteratorTests, TestTexRef)
     std::string deviceName = std::string(props.gcnArchName);
     if (deviceName.rfind("gfx94", 0) == 0) {
         // This is a gfx94x device, so skip this test
-        SCOPED_TRACE(testing::Message() << "Skipping texture cache text for " << deviceName);
-        return;
+        GTEST_SKIP() << "Test not run on gfx94x as texture cache API is not supported";
     }
 
     HIP_CHECK(hipSetDevice(device_id));
@@ -488,8 +486,7 @@ TYPED_TEST(HipcubIteratorTests, TestTexTransform)
     std::string deviceName = std::string(props.gcnArchName);
     if (deviceName.rfind("gfx94", 0) == 0) {
         // This is a gfx94x device, so skip this test
-        SCOPED_TRACE(testing::Message() << "Skipping texture cache text for " << deviceName);
-        return;
+        GTEST_SKIP() << "Test not run on gfx94x as texture cache API is not supported";
     }
 
     HIP_CHECK(hipSetDevice(device_id));
@@ -542,6 +539,6 @@ TYPED_TEST(HipcubIteratorTests, TestTexTransform)
         g_allocator.DeviceFree(d_data);
     }
 }
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-#pragma message "Skipping texture cache iterator test compilation for gfx94x as it is not supported."
-#else
+#endif
+
+
