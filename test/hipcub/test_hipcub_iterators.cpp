@@ -540,5 +540,3 @@ TYPED_TEST(HipcubIteratorTests, TestTexTransform)
     }
 }
 #endif
-
-
