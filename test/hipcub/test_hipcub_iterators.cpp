@@ -335,9 +335,7 @@ TYPED_TEST(HipcubIteratorTests, TestTransform)
 
     g_allocator.DeviceFree(d_data);
 }
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-#pragma message "Skipping texture cache iterator test compilation for gfx94x as it is not supported."
-#else
+
 TYPED_TEST(HipcubIteratorTests, TestTexObj)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -539,4 +537,3 @@ TYPED_TEST(HipcubIteratorTests, TestTexTransform)
         g_allocator.DeviceFree(d_data);
     }
 }
-#endif
