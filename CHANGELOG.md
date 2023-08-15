@@ -6,6 +6,7 @@ See README.md on how to build the hipCUB documentation using Doxygen.
 ### Changed
 - CUB backend references CUB and Thrust version 2.1.0.
 - Updated `HIPCUB_HOST_WARP_THREADS` macro definition to match `host_warp_size` changes from rocPRIM 3.0.
+- Implemented `__int128_t` and `__uint128_t` support for radix_sort.
 
 ## (Unreleased) hipCUB-2.13.1 for ROCm 5.7.0
 ### Changed
