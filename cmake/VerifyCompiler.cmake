@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2018-2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-list(APPEND CMAKE_PREFIX_PATH /opt/rocm /opt/rocm/hip)
-if(CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    list(APPEND CMAKE_MODULE_PATH /opt/rocm/hip/cmake)
-    find_package(hip QUIET CONFIG PATHS /opt/rocm)
-    if(NOT hip_FOUND)
-        find_package(HIP REQUIRED)
-    endif()
-    if(HIP_COMPILER STREQUAL "clang")
-       # TODO: The HIP package on NVIDIA platform is incorrect at few versions
-       set(HIP_COMPILER "nvcc" CACHE STRING "HIP Compiler" FORCE)
-    endif()
-else()
-  find_package(hip REQUIRED CONFIG PATHS /opt/rocm)
-endif()
+# HIP supports config-mode search for both NVIDIA and AMD platforms as of 5.7
+find_package(hip REQUIRED CONFIG PATHS "${ROCM_ROOT}/lib/cmake/hip")
 
 if(HIP_COMPILER STREQUAL "nvcc")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
