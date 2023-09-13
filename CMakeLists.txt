@@ -64,11 +64,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Find and verify HIP.
-include(VerifyCompiler)
-
-# Get dependencies (required here to get rocm-cmake)
-include(Dependencies)
+include(ROCmCMakeBuildToolsDependency)
 
 # Setup GPU targets for rocm platform
 if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"))
@@ -86,6 +82,12 @@ if(NOT (CMAKE_CXX_COMPILER MATCHES ".*nvcc$" OR "${CMAKE_CXX_COMPILER_ID}" STREQ
     set(GPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "GPU architectures to compile for" FORCE)
   endif()
 endif()
+
+# Find and verify HIP.
+include(VerifyCompiler)
+
+# Get dependencies (required here to get rocm-cmake)
+include(Dependencies)
 
 if(BUILD_ADDRESS_SANITIZER)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
