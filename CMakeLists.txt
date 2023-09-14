@@ -64,6 +64,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# rocm-cmake has to be included early so that it's available to set GPU_TARGETS
+# If hip is included prior to setting that then it defaults to building only for the current architecture
 include(ROCmCMakeBuildToolsDependency)
 
 # Setup GPU targets for rocm platform
@@ -86,7 +88,7 @@ endif()
 # Find and verify HIP.
 include(VerifyCompiler)
 
-# Get dependencies (required here to get rocm-cmake)
+# Get dependencies (except rocm-cmake, included earlier)
 include(Dependencies)
 
 if(BUILD_ADDRESS_SANITIZER)
