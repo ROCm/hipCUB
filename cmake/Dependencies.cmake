@@ -126,7 +126,7 @@ if(USER_BUILD_BENCHMARK)
     FetchContent_Declare(
       googlebench
       GIT_REPOSITORY https://github.com/google/benchmark.git
-      GIT_TAG        v1.6.1
+      GIT_TAG        v1.8.0
     )
     FetchContent_MakeAvailable(googlebench)
     if(NOT TARGET benchmark::benchmark)
