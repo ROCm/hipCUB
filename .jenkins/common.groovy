@@ -38,7 +38,7 @@ def runTestCommand (platform, project, settings)
     if (settings.addressSanitizer)
     {
         LD_PATH = """
-                    export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.      asan-x86_64.so)
+                    export ASAN_LIB_PATH=\$(/opt/rocm/llvm/bin/clang -print-file-name=libclang_rt.asan-x86_64.so)
                     export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$(dirname "\${ASAN_LIB_PATH}")
                   """
     }
