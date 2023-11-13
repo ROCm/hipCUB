@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 6.0
+## (Unreleased) hipCUB-2.13.1 for ROCm 6.1.0
 ### Changed
 - CUB backend references CUB and Thrust version 2.1.0.
 - Updated `HIPCUB_HOST_WARP_THREADS` macro definition to match `host_warp_size` changes from rocPRIM 3.0.
