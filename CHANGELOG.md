@@ -2,7 +2,7 @@
 
 See README.md on how to build the hipCUB documentation using Doxygen.
 
-## hipCUB-2.14.0 for ROCm 6.0.0
+## hipCUB-3.0.0 for ROCm 6.0.0
 ### Changed
 - Removed `DOWNLOAD_ROCPRIM`, forcing rocPRIM to download can be done with `DEPENDENCIES_FORCE_DOWNLOAD`.
 
