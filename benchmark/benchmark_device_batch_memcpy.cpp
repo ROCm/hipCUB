@@ -223,8 +223,7 @@ BatchMemcpyData<ValueType, BufferSizeType> prepare_data(const int32_t num_tlev_b
     {
         src_offsets = shuffled_exclusive_scan<offset_type>(h_buffer_num_elements, rng);
         dst_offsets = shuffled_exclusive_scan<offset_type>(h_buffer_num_elements, rng);
-    }
-    else
+    } else
     {
         src_offsets = std::vector<offset_type>(num_buffers);
         dst_offsets = std::vector<offset_type>(num_buffers);
