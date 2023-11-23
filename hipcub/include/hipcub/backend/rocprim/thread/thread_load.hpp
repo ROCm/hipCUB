@@ -89,7 +89,7 @@ ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cg, "sc1", "");
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cv, "sc0 sc1", "vmcnt");
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_volatile, "sc0 sc1", "vmcnt");
 #elif defined(__gfx1200__) ||  defined(__gfx1201__)
-ROCPRIM_ASM_THREAD_LOAD_GROUP(load_ca, "scope:COPE_DEV", "");
+ROCPRIM_ASM_THREAD_LOAD_GROUP(load_ca, "scope:SCOPE_DEV", "");
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cg, "th:TH_DEFAULT scope:SCOPE_DEV", "");
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cv, "th:TH_DEFAULT scope:SCOPE_DEV", "vmcnt");
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_volatile, "th:TH_DEFAULT scope:SCOPE_DEV", "vmcnt");
