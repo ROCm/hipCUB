@@ -94,15 +94,15 @@ HIPCUB_ASM_THREAD_STORE_GROUP(STORE_CG, "sc0 nt", "");
 HIPCUB_ASM_THREAD_STORE_GROUP(STORE_WT, "sc0", "vmcnt");
 HIPCUB_ASM_THREAD_STORE_GROUP(STORE_VOLATILE, "sc0", "vmcnt");
 #elif defined(__gfx1200__) ||  defined(__gfx1201__)
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_wb, "scope:SCOPE_DEV", "");
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_cg, "th:TH_DEFAULT scope:SCOPE_DEV", "");
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_wt, "scope:SCOPE_DEV", "vmcnt");
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_volatile, "scope:SCOPE_DEV", "vmcnt");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_wb, "scope:SCOPE_DEV", "");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_cg, "th:TH_DEFAULT scope:SCOPE_DEV", "");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_wt, "scope:SCOPE_DEV", "vmcnt");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_volatile, "scope:SCOPE_DEV", "vmcnt");
 #else
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_wb, "glc", "");
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_cg, "glc slc", "");
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_wt, "glc", "vmcnt");
-ROCPRIM_ASM_THREAD_STORE_GROUP(store_volatile, "glc", "vmcnt");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_wb, "glc", "");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_cg, "glc slc", "");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_wt, "glc", "vmcnt");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_volatile, "glc", "vmcnt");
 #endif
 // TODO find correct modifiers to match these
 HIPCUB_ASM_THREAD_STORE_GROUP(STORE_CS, "", "");
