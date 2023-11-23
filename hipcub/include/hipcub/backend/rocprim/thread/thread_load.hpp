@@ -94,15 +94,15 @@ HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CG, "sc0 nt", "");
 HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CV, "sc0", "vmcnt");
 HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_VOLATILE, "sc0", "vmcnt");
 #elif defined(__gfx1200__) ||  defined(__gfx1201__)
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_ca, "scope:SCOPE_DEV", "");
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_cg, "th:TH_DEFAULT scope:SCOPE_DEV", "");
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_cv, "th:TH_DEFAULT scope:SCOPE_DEV", "vmcnt");
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_volatile, "th:TH_DEFAULT scope:SCOPE_DEV", "vmcnt");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CA, "scope:SCOPE_DEV", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CG, "th:TH_DEFAULT scope:SCOPE_DEV", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CV, "th:TH_DEFAULT scope:SCOPE_DEV", "vmcnt");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_VOLATILE, "th:TH_DEFAULT scope:SCOPE_DEV", "vmcnt");
 #else
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_ca, "glc", "");
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_cg, "glc slc", "");
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_cv, "glc", "vmcnt");
-HIPCUB_ASM_THREAD_LOAD_GROUP(load_volatile, "glc", "vmcnt");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CA, "glc", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CG, "glc slc", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CV, "glc", "vmcnt");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_VOLATILE, "glc", "vmcnt");
 #endif
 
 // TODO find correct modifiers to match these
