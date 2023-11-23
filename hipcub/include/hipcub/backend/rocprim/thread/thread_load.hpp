@@ -83,11 +83,16 @@ HIPCUB_DEVICE __forceinline__ T AsmThreadLoad(void * ptr)
     HIPCUB_ASM_THREAD_LOAD(cache_modifier, llvm_cache_modifier, uint64_t, uint64_t, flat_load_dwordx2, v, wait_cmd); \
     HIPCUB_ASM_THREAD_LOAD(cache_modifier, llvm_cache_modifier, double, uint64_t, flat_load_dwordx2, v, wait_cmd);
 
-#if defined(__gfx940__) || defined(__gfx941__) || defined(__gfx942__)
-ROCPRIM_ASM_THREAD_LOAD_GROUP(load_ca, "sc0", "");
-ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cg, "sc1", "");
-ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cv, "sc0 sc1", "vmcnt");
-ROCPRIM_ASM_THREAD_LOAD_GROUP(load_volatile, "sc0 sc1", "vmcnt");
+#if defined(__gfx940__) || defined(__gfx941__)
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CA, "sc0", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CG, "sc1", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CV, "sc0 sc1", "vmcnt");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_VOLATILE, "sc0 sc1", "vmcnt");
+#elif defined(__gfx942__)
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CA, "sc0", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CG, "sc0 nt", "");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_CV, "sc0", "vmcnt");
+HIPCUB_ASM_THREAD_LOAD_GROUP(LOAD_VOLATILE, "sc0", "vmcnt");
 #elif defined(__gfx1200__) ||  defined(__gfx1201__)
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_ca, "scope:SCOPE_DEV", "");
 ROCPRIM_ASM_THREAD_LOAD_GROUP(load_cg, "th:TH_DEFAULT scope:SCOPE_DEV", "");

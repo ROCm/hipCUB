@@ -1,5 +1,5 @@
 # MIT License #
-# Copyright (c) 2017-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -206,6 +206,7 @@ add_hipcub_test("hipcub.BlockScan" test_hipcub_block_scan.cpp)
 add_hipcub_test("hipcub.BlockShuffle" test_hipcub_block_shuffle.cpp)
 add_hipcub_test("hipcub.DeviceAdjacentDifference" test_hipcub_device_adjacent_difference.cpp)
 add_hipcub_test("hipcub.DeviceHistogram" test_hipcub_device_histogram.cpp)
+add_hipcub_test("hipcub.DeviceMemcpy" test_hipcub_device_memcpy.cpp)
 add_hipcub_test("hipcub.DeviceMergeSort" test_hipcub_device_merge_sort.cpp)
 add_hipcub_test_parallel("hipcub.DeviceRadixSort" test_hipcub_device_radix_sort.cpp.in)
 add_hipcub_test("hipcub.DeviceReduce" test_hipcub_device_reduce.cpp)
@@ -225,6 +226,6 @@ add_hipcub_test("hipcub.WarpMergeSort" test_hipcub_warp_merge_sort.cpp)
 add_hipcub_test("hipcub.WarpReduce" test_hipcub_warp_reduce.cpp)
 add_hipcub_test("hipcub.WarpScan" test_hipcub_warp_scan.cpp)
 add_hipcub_test("hipcub.WarpStore" test_hipcub_warp_store.cpp)
-add_hipcub_test("hipcub.Iterator" test_hipcub_iterators.cpp)
-add_hipcub_test("hipcub.ThreadOperations" test_hipcub_thread.cpp)
+add_hipcub_test("hipcub.Iterators" test_hipcub_iterators.cpp)
+add_hipcub_test("hipcub.ThreadOperators" test_hipcub_thread_operators.cpp)
 add_hipcub_test("hipcub.ThreadSort" test_hipcub_thread_sort.cpp)
