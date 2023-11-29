@@ -98,7 +98,7 @@ function or parameters
 * `DeviceRadixSort` `num_items` parameter type is now templated instead of being an int
   * If an integral type with a maximum size of 4 bytes is passed (an int), the former logic applies;
     otherwise, the algorithm uses a larger indexing type that makes it possible to sort input data over
-    $2^32$ elements
+    $2^{32}$ elements
 
 ## hipCUB-2.11.1 for ROCm 5.2.0
 
