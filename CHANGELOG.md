@@ -21,7 +21,7 @@ Documentation for hipCUB is available at
 
 * Interface `DeviceMemcpy::Batched` for batched memcpy from rocPRIM and CUB
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 5.7.0
+## hipCUB-2.13.1 for ROCm 5.7.0
 
 ### Changes
 
@@ -38,7 +38,7 @@ Documentation for hipCUB is available at
 * `DeviceHistogram::HistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int]`.
 * `DeviceHistogram::MultiHistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int/unsigned short/float/double]` and `[LevelT, SampleIteratorT] = [float, double]`.
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 5.5.0
+## hipCUB-2.13.1 for ROCm 5.5.0
 
 ### Additions
 
@@ -59,7 +59,7 @@ Documentation for hipCUB is available at
 * `BlockRadixRankMatch` with a warp size that does not divide exactly by the block size is broken for
   the CUB backend
 
-## (Unreleased) hipCUB-2.13.0 for ROCm 5.4.0
+## hipCUB-2.13.0 for ROCm 5.4.0
 
 ### Additions
 
