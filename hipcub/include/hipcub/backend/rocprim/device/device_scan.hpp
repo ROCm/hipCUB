@@ -136,7 +136,9 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        using acc_t = typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>, ScanOpT>::type;
+        using acc_t =
+            typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>,
+                                                        ScanOpT>::type;
 
         return ::rocprim::exclusive_scan<::rocprim::default_config,
                                          InputIteratorT,
@@ -172,7 +174,9 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        using acc_t = typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>, ScanOpT>::type;
+        using acc_t =
+            typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>,
+                                                        ScanOpT>::type;
 
         return ::rocprim::exclusive_scan<::rocprim::default_config,
                                          InputIteratorT,
@@ -243,7 +247,9 @@ public:
                                   hipStream_t stream = 0,
                                   bool debug_synchronous = false)
     {
-        using acc_t = typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>, ScanOpT>::type;
+        using acc_t =
+            typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>,
+                                                        ScanOpT>::type;
 
         return ::rocprim::exclusive_scan_by_key<::rocprim::default_config,
                                                 KeysInputIteratorT,
@@ -334,7 +340,6 @@ public:
                                                        stream,
                                                        debug_synchronous);
     }
-
 };
 
 END_HIPCUB_NAMESPACE
