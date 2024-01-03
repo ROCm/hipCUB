@@ -34,7 +34,9 @@
 #include "../../../config.hpp"
 
 #include "../thread/thread_operators.hpp"
+#include "rocprim/types/future_value.hpp"
 
+#include <rocprim/device/config_types.hpp>
 #include <rocprim/device/device_scan.hpp>
 #include <rocprim/device/device_scan_by_key.hpp>
 
@@ -78,12 +80,22 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        return ::rocprim::inclusive_scan(
-            d_temp_storage, temp_storage_bytes,
-            d_in, d_out, num_items,
-            scan_op,
-            stream, debug_synchronous
-        );
+        using acc_t = typename rocprim::detail::match_result_type<
+            typename std::iterator_traits<InputIteratorT>::value_type,
+            ScanOpT>::type;
+
+        return ::rocprim::inclusive_scan<::rocprim::default_config,
+                                         InputIteratorT,
+                                         OutputIteratorT,
+                                         ScanOpT,
+                                         acc_t>(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_in,
+                                                d_out,
+                                                num_items,
+                                                scan_op,
+                                                stream,
+                                                debug_synchronous);
     }
 
     template <
@@ -124,12 +136,22 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        return ::rocprim::exclusive_scan(
-            d_temp_storage, temp_storage_bytes,
-            d_in, d_out, init_value, num_items,
-            scan_op,
-            stream, debug_synchronous
-        );
+        using acc_t = typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>, ScanOpT>::type;
+
+        return ::rocprim::exclusive_scan<::rocprim::default_config,
+                                         InputIteratorT,
+                                         OutputIteratorT,
+                                         InitValueT,
+                                         ScanOpT,
+                                         acc_t>(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_in,
+                                                d_out,
+                                                init_value,
+                                                num_items,
+                                                scan_op,
+                                                stream,
+                                                debug_synchronous);
     }
 
     template <
@@ -150,12 +172,22 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        return ::rocprim::exclusive_scan(
-            d_temp_storage, temp_storage_bytes,
-            d_in, d_out, init_value, num_items,
-            scan_op,
-            stream, debug_synchronous
-        );
+        using acc_t = typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>, ScanOpT>::type;
+
+        return ::rocprim::exclusive_scan<::rocprim::default_config,
+                                         InputIteratorT,
+                                         OutputIteratorT,
+                                         InitValueT,
+                                         ScanOpT,
+                                         acc_t>(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_in,
+                                                d_out,
+                                                init_value,
+                                                num_items,
+                                                scan_op,
+                                                stream,
+                                                debug_synchronous);
     }
 
     template <
@@ -211,12 +243,26 @@ public:
                                   hipStream_t stream = 0,
                                   bool debug_synchronous = false)
     {
-        return ::rocprim::exclusive_scan_by_key(
-            d_temp_storage, temp_storage_bytes,
-            d_keys_in, d_values_in, d_values_out,
-            init_value, static_cast<size_t>(num_items),
-            scan_op, equality_op, stream, debug_synchronous
-        );
+        using acc_t = typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>, ScanOpT>::type;
+
+        return ::rocprim::exclusive_scan_by_key<::rocprim::default_config,
+                                                KeysInputIteratorT,
+                                                ValuesInputIteratorT,
+                                                ValuesOutputIteratorT,
+                                                InitValueT,
+                                                ScanOpT,
+                                                EqualityOpT,
+                                                acc_t>(d_temp_storage,
+                                                       temp_storage_bytes,
+                                                       d_keys_in,
+                                                       d_values_in,
+                                                       d_values_out,
+                                                       init_value,
+                                                       static_cast<size_t>(num_items),
+                                                       scan_op,
+                                                       equality_op,
+                                                       stream,
+                                                       debug_synchronous);
     }
 
     template <
@@ -267,12 +313,26 @@ public:
                                   hipStream_t stream = 0,
                                   bool debug_synchronous = false)
     {
-        return ::rocprim::inclusive_scan_by_key(
-            d_temp_storage, temp_storage_bytes,
-            d_keys_in, d_values_in, d_values_out,
-            static_cast<size_t>(num_items), scan_op,
-            equality_op, stream, debug_synchronous
-        );
+        using acc_t = typename rocprim::detail::match_result_type<
+            typename std::iterator_traits<ValuesInputIteratorT>::value_type,
+            ScanOpT>::type;
+
+        return ::rocprim::inclusive_scan_by_key<::rocprim::default_config,
+                                                KeysInputIteratorT,
+                                                ValuesInputIteratorT,
+                                                ValuesOutputIteratorT,
+                                                ScanOpT,
+                                                EqualityOpT,
+                                                acc_t>(d_temp_storage,
+                                                       temp_storage_bytes,
+                                                       d_keys_in,
+                                                       d_values_in,
+                                                       d_values_out,
+                                                       static_cast<size_t>(num_items),
+                                                       scan_op,
+                                                       equality_op,
+                                                       stream,
+                                                       debug_synchronous);
     }
 
 };
