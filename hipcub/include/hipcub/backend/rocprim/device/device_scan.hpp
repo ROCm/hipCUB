@@ -177,12 +177,17 @@ public:
     {
         using in_value_type = typename std::iterator_traits<ValuesInputIteratorT>::value_type;
 
-        return ::rocprim::exclusive_scan_by_key(
-            d_temp_storage, temp_storage_bytes,
-            d_keys_in, d_values_in, d_values_out,
-            static_cast<in_value_type>(0), static_cast<size_t>(num_items),
-            ::hipcub::Sum(), equality_op, stream, debug_synchronous
-        );
+        return ExclusiveScanByKey(d_temp_storage,
+                                  temp_storage_bytes,
+                                  d_keys_in,
+                                  d_values_in,
+                                  d_values_out,
+                                  ::hipcub::Sum(),
+                                  static_cast<in_value_type>(0),
+                                  static_cast<size_t>(num_items),
+                                  equality_op,
+                                  stream,
+                                  debug_synchronous);
     }
 
     template <
@@ -231,12 +236,16 @@ public:
                                  hipStream_t stream = 0,
                                  bool debug_synchronous = false)
     {
-        return ::rocprim::inclusive_scan_by_key(
-            d_temp_storage, temp_storage_bytes,
-            d_keys_in, d_values_in, d_values_out,
-            static_cast<size_t>(num_items), ::hipcub::Sum(),
-            equality_op, stream, debug_synchronous
-        );
+        return InclusiveScanByKey(d_temp_storage,
+                                  temp_storage_bytes,
+                                  d_keys_in,
+                                  d_values_in,
+                                  d_values_out,
+                                  ::hipcub::Sum(),
+                                  num_items,
+                                  equality_op,
+                                  stream,
+                                  debug_synchronous);
     }
 
     template <
@@ -265,6 +274,7 @@ public:
             equality_op, stream, debug_synchronous
         );
     }
+
 };
 
 END_HIPCUB_NAMESPACE
