@@ -30,15 +30,14 @@
 #ifndef HIPCUB_ROCPRIM_DEVICE_DEVICE_SCAN_HPP_
 #define HIPCUB_ROCPRIM_DEVICE_DEVICE_SCAN_HPP_
 
-#include <iostream>
 #include "../../../config.hpp"
-
 #include "../thread/thread_operators.hpp"
-#include "rocprim/types/future_value.hpp"
 
 #include <rocprim/device/config_types.hpp>
 #include <rocprim/device/device_scan.hpp>
 #include <rocprim/device/device_scan_by_key.hpp>
+#include <rocprim/type_traits.hpp>
+#include <rocprim/types/future_value.hpp>
 
 BEGIN_HIPCUB_NAMESPACE
 
@@ -80,9 +79,9 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        using acc_t = typename rocprim::detail::match_result_type<
+        using acc_t = ::rocprim::invoke_result_binary_op_t<
             typename std::iterator_traits<InputIteratorT>::value_type,
-            ScanOpT>::type;
+            ScanOpT>;
 
         return ::rocprim::inclusive_scan<::rocprim::default_config,
                                          InputIteratorT,
@@ -136,9 +135,9 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        using acc_t =
-            typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>,
-                                                        ScanOpT>::type;
+        using acc_t
+            = ::rocprim::invoke_result_binary_op_t<rocprim::detail::input_type_t<InitValueT>,
+                                                   ScanOpT>;
 
         return ::rocprim::exclusive_scan<::rocprim::default_config,
                                          InputIteratorT,
@@ -174,9 +173,9 @@ public:
                              hipStream_t stream = 0,
                              bool debug_synchronous = false)
     {
-        using acc_t =
-            typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>,
-                                                        ScanOpT>::type;
+        using acc_t
+            = ::rocprim::invoke_result_binary_op_t<rocprim::detail::input_type_t<InitValueT>,
+                                                   ScanOpT>;
 
         return ::rocprim::exclusive_scan<::rocprim::default_config,
                                          InputIteratorT,
@@ -247,9 +246,8 @@ public:
                                   hipStream_t stream = 0,
                                   bool debug_synchronous = false)
     {
-        using acc_t =
-            typename rocprim::detail::match_result_type<rocprim::detail::input_type_t<InitValueT>,
-                                                        ScanOpT>::type;
+        using acc_t = rocprim::invoke_result_binary_op_t<rocprim::detail::input_type_t<InitValueT>,
+                                                         ScanOpT>;
 
         return ::rocprim::exclusive_scan_by_key<::rocprim::default_config,
                                                 KeysInputIteratorT,
@@ -319,9 +317,9 @@ public:
                                   hipStream_t stream = 0,
                                   bool debug_synchronous = false)
     {
-        using acc_t = typename rocprim::detail::match_result_type<
+        using acc_t = ::rocprim::invoke_result_binary_op_t<
             typename std::iterator_traits<ValuesInputIteratorT>::value_type,
-            ScanOpT>::type;
+            ScanOpT>;
 
         return ::rocprim::inclusive_scan_by_key<::rocprim::default_config,
                                                 KeysInputIteratorT,
