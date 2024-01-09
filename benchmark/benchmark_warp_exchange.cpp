@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2021-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #include "common_benchmark_header.hpp"
 
 // HIP API
+#include "hipcub/backend/rocprim/warp/warp_exchange.hpp"
 #include "hipcub/warp/warp_exchange.hpp"
 
 
@@ -30,16 +31,13 @@
 const size_t DEFAULT_N = 1024 * 1024 * 32;
 #endif
 
-template<
-    class T,
-    unsigned BlockSize,
-    unsigned ItemsPerThread,
-    unsigned LogicalWarpSize,
-    template<class, unsigned, unsigned> class Op
->
-__global__
-__launch_bounds__(BlockSize)
-void warp_exchange_kernel(T* d_output)
+template<class T,
+         unsigned                        BlockSize,
+         unsigned                        ItemsPerThread,
+         unsigned                        LogicalWarpSize,
+         ::hipcub::WarpExchangeAlgorithm Algorithm,
+         class Op>
+__global__ __launch_bounds__(BlockSize) void warp_exchange_kernel(T* d_output)
 {
     T thread_data[ItemsPerThread];
     #pragma unroll
@@ -48,27 +46,23 @@ void warp_exchange_kernel(T* d_output)
         thread_data[i] = static_cast<T>(i);
     }
 
-    using WarpExchangeT = ::hipcub::WarpExchange<
-        T,
-        ItemsPerThread,
-        ::benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
-    >;
+    using WarpExchangeT
+        = ::hipcub::WarpExchange<T,
+                                 ItemsPerThread,
+                                 ::benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value,
+                                 1, // ARCH
+                                 Algorithm>;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
-    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    const unsigned                                 warp_id = threadIdx.x / LogicalWarpSize;
 
     WarpExchangeT warp_exchange(temp_storage[warp_id]);
-    Op<
-        T,
-        ItemsPerThread,
-        ::benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
-    >{}(warp_exchange, thread_data);
+    Op{}(warp_exchange, thread_data);
 
     #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        const unsigned global_idx =
-            (BlockSize * hipBlockIdx_x + hipThreadIdx_x) * ItemsPerThread + i;
+        const unsigned global_idx = (BlockSize * blockIdx.x + threadIdx.x) * ItemsPerThread + i;
         d_output[global_idx] = thread_data[i];
     }
 }
@@ -84,7 +78,7 @@ __global__
 __launch_bounds__(BlockSize)
 void warp_exchange_scatter_to_striped_kernel(T* d_output)
 {
-    const unsigned warp_id = hipThreadIdx_x / LogicalWarpSize;
+    const unsigned warp_id = threadIdx.x / LogicalWarpSize;
     T thread_data[ItemsPerThread];
     OffsetT thread_ranks[ItemsPerThread];
     #pragma unroll
@@ -107,19 +101,18 @@ void warp_exchange_scatter_to_striped_kernel(T* d_output)
     #pragma unroll
     for (unsigned i = 0; i < ItemsPerThread; ++i)
     {
-        const unsigned striped_global_idx =
-            BlockSize * ItemsPerThread * hipBlockIdx_x + BlockSize * i + hipThreadIdx_x;
+        const unsigned striped_global_idx
+            = BlockSize * ItemsPerThread * blockIdx.x + BlockSize * i + threadIdx.x;
         d_output[striped_global_idx] = thread_data[i];
     }
 }
 
-template<
-    class T,
-    unsigned BlockSize,
-    unsigned ItemsPerThread,
-    unsigned LogicalWarpSize,
-    template<class, unsigned, unsigned> class Op
->
+template<class T,
+         unsigned                        BlockSize,
+         unsigned                        ItemsPerThread,
+         unsigned                        LogicalWarpSize,
+         ::hipcub::WarpExchangeAlgorithm Algorithm,
+         class Op>
 void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 {
     constexpr unsigned trials = 100;
@@ -135,17 +128,8 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 
         for (size_t i = 0; i < trials; ++i)
         {
-            hipLaunchKernelGGL(
-                HIP_KERNEL_NAME(warp_exchange_kernel<
-                    T,
-                    BlockSize,
-                    ItemsPerThread,
-                    LogicalWarpSize,
-                    Op
-                    >
-                ),
-                dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_output
-            );
+            warp_exchange_kernel<T, BlockSize, ItemsPerThread, LogicalWarpSize, Algorithm, Op>
+                <<<dim3(size / items_per_block), dim3(BlockSize), 0, stream>>>(d_output);
         }
 
         HIP_CHECK(hipPeekAtLastError())
@@ -183,17 +167,12 @@ void run_benchmark_scatter_to_striped(benchmark::State& state, hipStream_t strea
 
         for (size_t i = 0; i < trials; ++i)
         {
-            hipLaunchKernelGGL(
-              HIP_KERNEL_NAME(warp_exchange_scatter_to_striped_kernel<
-                    T,
-                    OffsetT,
-                    BlockSize,
-                    ItemsPerThread,
-                    LogicalWarpSize
-                    >
-                ),
-                dim3(size / items_per_block), dim3(BlockSize), 0, stream, d_output
-            );
+            warp_exchange_scatter_to_striped_kernel<T,
+                                                    OffsetT,
+                                                    BlockSize,
+                                                    ItemsPerThread,
+                                                    LogicalWarpSize>
+                <<<dim3(size / items_per_block), dim3(BlockSize), 0, stream>>>(d_output);
         }
 
         HIP_CHECK(hipPeekAtLastError())
@@ -209,52 +188,39 @@ void run_benchmark_scatter_to_striped(benchmark::State& state, hipStream_t strea
     HIP_CHECK(hipFree(d_output));
 }
 
-template<
-    class T,
-    unsigned ItemsPerThread,
-    unsigned LogicalWarpSize
->
 struct StripedToBlockedOp
 {
-    __device__ void operator()(
-        ::hipcub::WarpExchange<T, ItemsPerThread, LogicalWarpSize> &warp_exchange,
-        T (&thread_data)[ItemsPerThread]
-    ) const
+    template<class WarpExchangeT, class T, unsigned ItemsPerThread>
+    __device__ void operator()(WarpExchangeT& warp_exchange, T (&thread_data)[ItemsPerThread]) const
     {
         warp_exchange.StripedToBlocked(thread_data, thread_data);
     }
 };
 
-template<
-    class T,
-    unsigned ItemsPerThread,
-    unsigned LogicalWarpSize
->
 struct BlockedToStripedOp
 {
-    __device__ void operator()(
-        ::hipcub::WarpExchange<T, ItemsPerThread, LogicalWarpSize> &warp_exchange,
-        T (&thread_data)[ItemsPerThread]
-    ) const
+    template<class WarpExchangeT, class T, unsigned ItemsPerThread>
+    __device__ void operator()(WarpExchangeT& warp_exchange, T (&thread_data)[ItemsPerThread]) const
     {
         warp_exchange.BlockedToStriped(thread_data, thread_data);
     }
 };
 
-#define CREATE_BENCHMARK_STRIPED_TO_BLOCKED(T, BS, IT, WS) \
-benchmark::RegisterBenchmark( \
-    "warp_exchange_striped_to_blocked<Datatype:" #T ",Block Size:" #BS ",Items Per Thread:" #IT ",Warp Size:" #WS ">.", \
-    &run_benchmark<T, BS, IT, WS, StripedToBlockedOp>, \
-    stream, size \
-)
+#define CREATE_BENCHMARK_STRIPED_TO_BLOCKED(T, BS, IT, WS, ALG)                                    \
+    benchmark::RegisterBenchmark("warp_exchange_striped_to_blocked<Datatype:" #T                   \
+                                 ",Block Size:" #BS ",Items Per Thread:" #IT ",Warp Size:" #WS     \
+                                 ",Algorithm:" #ALG ">.",                                          \
+                                 &run_benchmark<T, BS, IT, WS, ::hipcub::ALG, StripedToBlockedOp>, \
+                                 stream,                                                           \
+                                 size)
 
-#define CREATE_BENCHMARK_BLOCKED_TO_STRIPED(T, BS, IT, WS) \
-benchmark::RegisterBenchmark( \
-    "warp_exchange_blocked_to_striped<Datatype:" #T ",Block Size:" #BS ",Items Per Thread:" #IT ",Warp Size:" #WS ">.", \
-    &run_benchmark<T, BS, IT, WS, BlockedToStripedOp>, \
-    stream, size \
-)
-
+#define CREATE_BENCHMARK_BLOCKED_TO_STRIPED(T, BS, IT, WS, ALG)                                    \
+    benchmark::RegisterBenchmark("warp_exchange_blocked_to_striped<Datatype:" #T                   \
+                                 ",Block Size:" #BS ",Items Per Thread:" #IT ",Warp Size:" #WS     \
+                                 ",Algorithm:" #ALG ">.",                                          \
+                                 &run_benchmark<T, BS, IT, WS, ::hipcub::ALG, BlockedToStripedOp>, \
+                                 stream,                                                           \
+                                 size)
 
 #define CREATE_BENCHMARK_SCATTER_TO_STRIPED(T, OFFSET_T, BS, IT, WS) \
 benchmark::RegisterBenchmark( \
@@ -287,30 +253,39 @@ int main(int argc, char *argv[])
 
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks{
-        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 16),
-        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 16),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 16, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 16, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 16, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 16, WARP_EXCHANGE_SHUFFLE),
         CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 16),
 
-        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 32),
-        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 32),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 32, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 32, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 32, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 32, WARP_EXCHANGE_SHUFFLE),
         CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 32),
 
-        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32),
-        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32, WARP_EXCHANGE_SHUFFLE),
         CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 32),
     };
 
     if (::benchmark_utils::is_warp_size_supported(64))
     {
         std::vector<benchmark::internal::Benchmark*> additional_benchmarks{
-            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 64),
-            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 64),
+            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 64, WARP_EXCHANGE_SMEM),
+            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 64, WARP_EXCHANGE_SHUFFLE),
+            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 64, WARP_EXCHANGE_SMEM),
+            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 64, WARP_EXCHANGE_SHUFFLE),
             CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 64),
 
-            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 64),
-            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 64),
-            CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 64)
-        };
+            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 64, WARP_EXCHANGE_SMEM),
+            CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 64, WARP_EXCHANGE_SHUFFLE),
+            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 64, WARP_EXCHANGE_SMEM),
+            CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 64, WARP_EXCHANGE_SHUFFLE),
+            CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 64)};
         benchmarks.insert(
             benchmarks.end(),
             additional_benchmarks.begin(),
