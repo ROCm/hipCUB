@@ -10,6 +10,10 @@ Documentation for hipCUB is available at
 * Fixed the derivation for the accumulator type for device scan algorithms in the rocPRIM backend being different compared to CUB.
   It now derives the accumulator type as the result of the binary operator.
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.2.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+* In the rocPRIM backend, added `enum WarpExchangeAlgorithm`, which is used as the new optional template argument for `WarpExchange`.
+  * The potential values for the enum are `WARP_EXCHANGE_SMEM` and `WARP_EXCHANGE_SHUFFLE`.
+  * `WARP_EXCHANGE_SMEM` stands for the previous algorithm, while `WARP_EXCHANGE_SHUFFLE` performs the exchange via shuffle operations.
+  * `WARP_EXCHANGE_SHUFFLE` does not require any pre-allocated shared memory, but the `ItemsPerThread` must be a divisor of `WarpSize`.
 
 ## (Unreleased) hipCUB-3.1.0 for ROCm 6.1.0
 
