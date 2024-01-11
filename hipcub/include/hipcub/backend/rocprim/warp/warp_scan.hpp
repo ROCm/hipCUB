@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2017-2020, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2017-2024, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -103,8 +103,7 @@ public:
     HIPCUB_DEVICE inline
     void ExclusiveScan(T input, T& exclusive_output, ScanOp scan_op)
     {
-        base_type::inclusive_scan(input, exclusive_output, temp_storage_, scan_op);
-        base_type::to_exclusive(exclusive_output, exclusive_output, temp_storage_);
+        base_type::exclusive_scan(input, exclusive_output, temp_storage_, scan_op);
     }
 
     template<typename ScanOp>
@@ -121,10 +120,7 @@ public:
     HIPCUB_DEVICE inline
     void ExclusiveScan(T input, T& exclusive_output, ScanOp scan_op, T& warp_aggregate)
     {
-        base_type::inclusive_scan(
-            input, exclusive_output, warp_aggregate, temp_storage_, scan_op
-        );
-        base_type::to_exclusive(exclusive_output, exclusive_output, temp_storage_);
+        base_type::exclusive_scan(input, exclusive_output, temp_storage_, warp_aggregate, scan_op);
     }
 
     template<typename ScanOp>
