@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -79,8 +79,6 @@ inline void sort_keys()
 
     hipStream_t stream = 0;
 
-    const bool debug_synchronous = false;
-
     const std::vector<unsigned int> sizes = get_sizes();
     for(unsigned int size : sizes)
     {
@@ -134,25 +132,25 @@ inline void sort_keys()
 
             if(descending)
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortKeysDescending(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys_input, d_keys_output, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortKeysDescending(d_temporary_storage,
+                                                                      temporary_storage_bytes,
+                                                                      d_keys_input,
+                                                                      d_keys_output,
+                                                                      size,
+                                                                      start_bit,
+                                                                      end_bit,
+                                                                      stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortKeys(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys_input, d_keys_output, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortKeys(d_temporary_storage,
+                                                            temporary_storage_bytes,
+                                                            d_keys_input,
+                                                            d_keys_output,
+                                                            size,
+                                                            start_bit,
+                                                            end_bit,
+                                                            stream));
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -189,8 +187,6 @@ inline void sort_pairs()
     constexpr bool check_large_sizes = TestFixture::params::check_large_sizes;
 
     hipStream_t stream = 0;
-
-    const bool debug_synchronous = false;
 
     const std::vector<unsigned int> sizes = get_sizes();
     for(unsigned int size : sizes)
@@ -268,25 +264,29 @@ inline void sort_pairs()
 
             if(descending)
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortPairsDescending(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys_input, d_keys_output, d_values_input, d_values_output, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortPairsDescending(d_temporary_storage,
+                                                                       temporary_storage_bytes,
+                                                                       d_keys_input,
+                                                                       d_keys_output,
+                                                                       d_values_input,
+                                                                       d_values_output,
+                                                                       size,
+                                                                       start_bit,
+                                                                       end_bit,
+                                                                       stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortPairs(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys_input, d_keys_output, d_values_input, d_values_output, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(d_temporary_storage,
+                                                             temporary_storage_bytes,
+                                                             d_keys_input,
+                                                             d_keys_output,
+                                                             d_values_input,
+                                                             d_values_output,
+                                                             size,
+                                                             start_bit,
+                                                             end_bit,
+                                                             stream));
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -343,8 +343,6 @@ inline void sort_keys_double_buffer()
 
     hipStream_t stream = 0;
 
-    const bool debug_synchronous = false;
-
     const std::vector<unsigned int> sizes = get_sizes();
     for(unsigned int size : sizes)
     {
@@ -399,25 +397,23 @@ inline void sort_keys_double_buffer()
 
             if(descending)
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortKeysDescending(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortKeysDescending(d_temporary_storage,
+                                                                      temporary_storage_bytes,
+                                                                      d_keys,
+                                                                      size,
+                                                                      start_bit,
+                                                                      end_bit,
+                                                                      stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortKeys(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortKeys(d_temporary_storage,
+                                                            temporary_storage_bytes,
+                                                            d_keys,
+                                                            size,
+                                                            start_bit,
+                                                            end_bit,
+                                                            stream));
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -454,8 +450,6 @@ inline void sort_pairs_double_buffer()
     constexpr bool check_large_sizes = TestFixture::params::check_large_sizes;
 
     hipStream_t stream = 0;
-
-    const bool debug_synchronous = false;
 
     const std::vector<unsigned int> sizes = get_sizes();
     for(unsigned int size : sizes)
@@ -536,25 +530,25 @@ inline void sort_pairs_double_buffer()
 
             if(descending)
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortPairsDescending(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys, d_values, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortPairsDescending(d_temporary_storage,
+                                                                       temporary_storage_bytes,
+                                                                       d_keys,
+                                                                       d_values,
+                                                                       size,
+                                                                       start_bit,
+                                                                       end_bit,
+                                                                       stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceRadixSort::SortPairs(
-                        d_temporary_storage, temporary_storage_bytes,
-                        d_keys, d_values, size,
-                        start_bit, end_bit,
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceRadixSort::SortPairs(d_temporary_storage,
+                                                             temporary_storage_bytes,
+                                                             d_keys,
+                                                             d_values,
+                                                             size,
+                                                             start_bit,
+                                                             end_bit,
+                                                             stream));
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -605,8 +599,7 @@ inline void sort_keys_over_4g()
     using key_type = uint8_t;
     constexpr unsigned int start_bit = 0;
     constexpr unsigned int end_bit = 8ull * sizeof(key_type);
-    constexpr hipStream_t stream = 0;
-    constexpr bool debug_synchronous = false;
+    constexpr hipStream_t  stream                  = 0;
     constexpr size_t size = (1ull << 32) + 32;
     constexpr size_t number_of_possible_keys = 1ull << (8ull * sizeof(key_type));
     assert(std::is_unsigned<key_type>::value);
@@ -641,27 +634,27 @@ inline void sort_keys_over_4g()
     HIP_CHECK(hipMemcpy(d_keys_input_output, keys_input.data(), size * sizeof(key_type), hipMemcpyHostToDevice));
 
     size_t temporary_storage_bytes;
-    HIP_CHECK(
-        hipcub::DeviceRadixSort::SortKeys(
-            nullptr, temporary_storage_bytes,
-            d_keys_input_output, d_keys_input_output, size,
-            start_bit, end_bit,
-            stream, debug_synchronous
-        )
-    );
+    HIP_CHECK(hipcub::DeviceRadixSort::SortKeys(nullptr,
+                                                temporary_storage_bytes,
+                                                d_keys_input_output,
+                                                d_keys_input_output,
+                                                size,
+                                                start_bit,
+                                                end_bit,
+                                                stream));
 
     ASSERT_GT(temporary_storage_bytes, 0);
     void * d_temporary_storage;
     HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-    HIP_CHECK(
-        hipcub::DeviceRadixSort::SortKeys(
-            d_temporary_storage, temporary_storage_bytes,
-            d_keys_input_output, d_keys_input_output, size,
-            start_bit, end_bit,
-            stream, debug_synchronous
-        )
-    );
+    HIP_CHECK(hipcub::DeviceRadixSort::SortKeys(d_temporary_storage,
+                                                temporary_storage_bytes,
+                                                d_keys_input_output,
+                                                d_keys_input_output,
+                                                size,
+                                                start_bit,
+                                                end_bit,
+                                                stream));
 
     std::vector<key_type> output(keys_input.size());
     HIP_CHECK(hipMemcpy(output.data(), d_keys_input_output, size * sizeof(key_type), hipMemcpyDeviceToHost));
