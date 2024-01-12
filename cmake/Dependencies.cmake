@@ -193,7 +193,7 @@ else()
     message(STATUS "rocPRIM not found. Fetching...")
     FetchContent_Declare(
             prim
-            GIT_REPOSITORY https://github.com/ROCmSoftwarePlatform/rocPRIM.git
+            GIT_REPOSITORY https://github.com/ROCm/rocPRIM.git
             GIT_TAG        develop
     )
     FetchContent_MakeAvailable(prim)
