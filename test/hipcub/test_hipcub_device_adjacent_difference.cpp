@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -181,8 +181,7 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
     static constexpr std::integral_constant<bool, TestFixture::params::left> left_constant{};
     static constexpr std::integral_constant<bool, TestFixture::params::copy> copy_constant{};
     using output_type = std::conditional_t<copy_constant, input_type, typename TestFixture::params::output_type>;
-    static constexpr hipStream_t stream = 0;
-    static constexpr bool debug_synchronous = false;
+    static constexpr hipStream_t          stream = 0;
     static constexpr ::hipcub::Difference op;
 
     const auto sizes = get_sizes();
@@ -218,13 +217,15 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
             const auto expected = get_expected_result<output_type>(input, op, left_constant);
 
             size_t temporary_storage_bytes = 0;
-            HIP_CHECK(
-                dispatch_adjacent_difference(
-                    left_constant, copy_constant,
-                    nullptr, temporary_storage_bytes,
-                    d_input, d_output, size, op, stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(dispatch_adjacent_difference(left_constant,
+                                                   copy_constant,
+                                                   nullptr,
+                                                   temporary_storage_bytes,
+                                                   d_input,
+                                                   d_output,
+                                                   size,
+                                                   op,
+                                                   stream));
 
 #ifdef __HIP_PLATFORM_AMD__
             ASSERT_GT(temporary_storage_bytes, 0U);
@@ -233,13 +234,15 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            HIP_CHECK(
-                dispatch_adjacent_difference(
-                    left_constant, copy_constant,
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_input, d_output, size, op, stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(dispatch_adjacent_difference(left_constant,
+                                                   copy_constant,
+                                                   d_temporary_storage,
+                                                   temporary_storage_bytes,
+                                                   d_input,
+                                                   d_output,
+                                                   size,
+                                                   op,
+                                                   stream));
 
             std::vector<output_type> output(size);
             HIP_CHECK(
@@ -276,7 +279,6 @@ class HipcubDeviceAdjacentDifferenceLargeTests : public ::testing::Test
 public:
     static constexpr bool left              = Params::left;
     static constexpr bool copy              = Params::copy;
-    static constexpr bool debug_synchronous = false;
 };
 
 using HipcubDeviceAdjacentDifferenceLargeTestsParams
@@ -427,7 +429,6 @@ TYPED_TEST(HipcubDeviceAdjacentDifferenceLargeTests, LargeIndicesAndOpOnce)
     using OutputIterator                    = discard_iterator;
     static constexpr bool left              = TestFixture::left;
     static constexpr bool copy              = TestFixture::copy;
-    const bool            debug_synchronous = TestFixture::debug_synchronous;
 
     SCOPED_TRACE(testing::Message() << "left = " << left << ", copy = " << copy);
 
@@ -485,8 +486,7 @@ TYPED_TEST(HipcubDeviceAdjacentDifferenceLargeTests, LargeIndicesAndOpOnce)
                                                    output,
                                                    size,
                                                    flag_expected,
-                                                   stream,
-                                                   debug_synchronous));
+                                                   stream));
 
 #ifdef __HIP_PLATFORM_AMD__
             ASSERT_GT(temp_storage_size, 0U);
@@ -502,8 +502,7 @@ TYPED_TEST(HipcubDeviceAdjacentDifferenceLargeTests, LargeIndicesAndOpOnce)
                                                    output,
                                                    size,
                                                    flag_expected,
-                                                   stream,
-                                                   debug_synchronous));
+                                                   stream));
 
             // Copy output to host
             HIP_CHECK(hipMemcpy(flags, d_flags, sizeof(flags), hipMemcpyDeviceToHost));
