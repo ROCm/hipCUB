@@ -139,7 +139,7 @@ hipError_t Debug(
 END_HIPCUB_NAMESPACE
 
 #ifndef HipcubDebug
-    #define HipcubDebug(e) hipcub::Debug((hipError_t) (e), __FILE__, __LINE__)
+    #define HipcubDebug(e) ::hipcub::Debug((hipError_t)(e), __FILE__, __LINE__)
 #endif
 
 #if __cpp_if_constexpr
@@ -154,5 +154,33 @@ END_HIPCUB_NAMESPACE
         #define HIPCUB_IF_CONSTEXPR
     #endif
 #endif
+
+#ifdef DOXYGEN_SHOULD_SKIP_THIS // Documentation only
+
+    /// \def If defined, synchronizes the stream after every kernel launch and prints the launch information
+    /// to the standard output. If any of `CUB_DEBUG_SYNC`, `CUB_DEBUG_HOST_ASSERTIONS`, `CUB_DEBUG_DEVICE_ASSERTIONS`
+    /// or `CUB_DEBUG_ALL` is defined, this is also defined automatically.
+    #define HIPCUB_DEBUG_SYNC
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
+
+#if defined(HIPCUB_CUB_API) && defined(HIPCUB_DEBUG_SYNC) && !defined(CUB_DEBUG_SYNC)
+    #define CUB_DEBUG_SYNC
+#endif
+
+#if !defined(HIPCUB_DEBUG_SYNC)                                       \
+    && (defined(CUB_DEBUG_SYNC) || defined(CUB_DEBUG_HOST_ASSERTIONS) \
+        || defined(CUB_DEBUG_DEVICE_ASSERTIONS) || defined(CUB_DEBUG_ALL))
+    #define HIPCUB_DEBUG_SYNC
+#endif
+
+#ifdef HIPCUB_ROCPRIM_API
+    // TODO C++17: use an inline constexpr variable
+    #ifdef HIPCUB_DEBUG_SYNC
+        #define HIPCUB_DETAIL_DEBUG_SYNC_VALUE true
+    #else
+        #define HIPCUB_DETAIL_DEBUG_SYNC_VALUE false
+    #endif
+#endif // HIPCUB_ROCPRIM_API
 
 #endif // HIPCUB_CONFIG_HPP_
