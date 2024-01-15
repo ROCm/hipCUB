@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -57,8 +57,7 @@ public:
     using input_type = typename Params::input_type;
     using output_type = typename Params::output_type;
     using scan_op_type = typename Params::scan_op_type;
-    using key_type = typename Params::key_type;
-    const bool debug_synchronous = false;
+    using key_type     = typename Params::key_type;
 };
 
 typedef ::testing::Types<DeviceScanParams<int, long>,
@@ -129,8 +128,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
     using V                      = test_utils::convert_to_fundamental_t<U>;
-    using scan_op_type = typename TestFixture::scan_op_type;
-    const bool debug_synchronous = TestFixture::debug_synchronous;
+    using scan_op_type           = typename TestFixture::scan_op_type;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -180,23 +178,22 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             // Get size of d_temp_storage
             if(std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveSum(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveSum(d_temp_storage,
+                                                           temp_storage_size_bytes,
+                                                           d_input,
+                                                           d_output,
+                                                           input.size(),
+                                                           stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveScan(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, scan_op, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveScan(d_temp_storage,
+                                                            temp_storage_size_bytes,
+                                                            d_input,
+                                                            d_output,
+                                                            scan_op,
+                                                            input.size(),
+                                                            stream));
             }
 
             // temp_storage_size_bytes must be >0
@@ -209,23 +206,22 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             // Run
             if(std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveSum(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveSum(d_temp_storage,
+                                                           temp_storage_size_bytes,
+                                                           d_input,
+                                                           d_output,
+                                                           input.size(),
+                                                           stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveScan(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, scan_op, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveScan(d_temp_storage,
+                                                            temp_storage_size_bytes,
+                                                            d_input,
+                                                            d_output,
+                                                            scan_op,
+                                                            input.size(),
+                                                            stream));
             }
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -273,7 +269,6 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
     using K                             = typename TestFixture::key_type;
     using scan_op_type                  = typename TestFixture::scan_op_type;
     constexpr size_t max_segment_length = 100;
-    const bool       debug_synchronous  = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
     for (auto size : sizes)
@@ -333,23 +328,26 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
             // Get size of d_temp_storage
             if (std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveSumByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, static_cast<int>(input.size()),
-                        hipcub::Equality(), stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveSumByKey(d_temp_storage,
+                                                                temp_storage_size_bytes,
+                                                                d_keys,
+                                                                d_input,
+                                                                d_output,
+                                                                static_cast<int>(input.size()),
+                                                                hipcub::Equality(),
+                                                                stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveScanByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, scan_op, static_cast<int>(input.size()),
-                        hipcub::Equality(), stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveScanByKey(d_temp_storage,
+                                                                 temp_storage_size_bytes,
+                                                                 d_keys,
+                                                                 d_input,
+                                                                 d_output,
+                                                                 scan_op,
+                                                                 static_cast<int>(input.size()),
+                                                                 hipcub::Equality(),
+                                                                 stream));
             }
 
             // temp_storage_size_bytes must be >0
@@ -362,23 +360,26 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
             // Run
             if (std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveSumByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, static_cast<int>(input.size()),
-                        hipcub::Equality(), stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveSumByKey(d_temp_storage,
+                                                                temp_storage_size_bytes,
+                                                                d_keys,
+                                                                d_input,
+                                                                d_output,
+                                                                static_cast<int>(input.size()),
+                                                                hipcub::Equality(),
+                                                                stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::InclusiveScanByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, scan_op, static_cast<int>(input.size()),
-                        hipcub::Equality(), stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::InclusiveScanByKey(d_temp_storage,
+                                                                 temp_storage_size_bytes,
+                                                                 d_keys,
+                                                                 d_input,
+                                                                 d_output,
+                                                                 scan_op,
+                                                                 static_cast<int>(input.size()),
+                                                                 hipcub::Equality(),
+                                                                 stream));
             }
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -428,7 +429,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     using U                      = typename TestFixture::output_type;
     using V                      = test_utils::convert_to_fundamental_t<U>;
     using scan_op_type           = typename TestFixture::scan_op_type;
-    const bool debug_synchronous = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -485,23 +485,23 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
             // Get size of d_temp_storage
             if(std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveSum(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveSum(d_temp_storage,
+                                                           temp_storage_size_bytes,
+                                                           d_input,
+                                                           d_output,
+                                                           input.size(),
+                                                           stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveScan(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, scan_op, initial_value, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                            temp_storage_size_bytes,
+                                                            d_input,
+                                                            d_output,
+                                                            scan_op,
+                                                            initial_value,
+                                                            input.size(),
+                                                            stream));
             }
 
             // temp_storage_size_bytes must be >0
@@ -514,23 +514,23 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
             // Run
             if(std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveSum(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveSum(d_temp_storage,
+                                                           temp_storage_size_bytes,
+                                                           d_input,
+                                                           d_output,
+                                                           input.size(),
+                                                           stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveScan(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_input, d_output, scan_op, initial_value, input.size(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                            temp_storage_size_bytes,
+                                                            d_input,
+                                                            d_output,
+                                                            scan_op,
+                                                            initial_value,
+                                                            input.size(),
+                                                            stream));
             }
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -578,7 +578,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
     using K = typename TestFixture::key_type;
     using scan_op_type = typename TestFixture::scan_op_type;
     constexpr size_t max_segment_length = 100;
-    const bool debug_synchronous = TestFixture::debug_synchronous;
 
     const std::vector<size_t> sizes = get_sizes();
     for (auto size : sizes)
@@ -649,24 +648,27 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
             // Get size of d_temp_storage
             if (std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveSumByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, static_cast<int>(input.size()),
-                        hipcub::Equality(), stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveSumByKey(d_temp_storage,
+                                                                temp_storage_size_bytes,
+                                                                d_keys,
+                                                                d_input,
+                                                                d_output,
+                                                                static_cast<int>(input.size()),
+                                                                hipcub::Equality(),
+                                                                stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveScanByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, scan_op, initial_value,
-                        static_cast<int>(input.size()), hipcub::Equality(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveScanByKey(d_temp_storage,
+                                                                 temp_storage_size_bytes,
+                                                                 d_keys,
+                                                                 d_input,
+                                                                 d_output,
+                                                                 scan_op,
+                                                                 initial_value,
+                                                                 static_cast<int>(input.size()),
+                                                                 hipcub::Equality(),
+                                                                 stream));
             }
 
             // temp_storage_size_bytes must be >0
@@ -679,24 +681,27 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
             // Run
             if (std::is_same<scan_op_type, hipcub::Sum>::value)
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveSumByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, static_cast<int>(input.size()),
-                        hipcub::Equality(), stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveSumByKey(d_temp_storage,
+                                                                temp_storage_size_bytes,
+                                                                d_keys,
+                                                                d_input,
+                                                                d_output,
+                                                                static_cast<int>(input.size()),
+                                                                hipcub::Equality(),
+                                                                stream));
             }
             else
             {
-                HIP_CHECK(
-                    hipcub::DeviceScan::ExclusiveScanByKey(
-                        d_temp_storage, temp_storage_size_bytes,
-                        d_keys, d_input, d_output, scan_op, initial_value,
-                        static_cast<int>(input.size()), hipcub::Equality(),
-                        stream, debug_synchronous
-                    )
-                );
+                HIP_CHECK(hipcub::DeviceScan::ExclusiveScanByKey(d_temp_storage,
+                                                                 temp_storage_size_bytes,
+                                                                 d_keys,
+                                                                 d_input,
+                                                                 d_output,
+                                                                 scan_op,
+                                                                 initial_value,
+                                                                 static_cast<int>(input.size()),
+                                                                 hipcub::Equality(),
+                                                                 stream));
             }
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -811,8 +816,6 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     using InputIterator = typename hipcub::CountingInputIterator<T>;
     using OutputIterator = single_index_iterator<T>;
 
-    const bool debug_synchronous = false;
-
     const size_t size = (1ul << 31) + 1ul;
 
     hipStream_t stream = 0; // default
@@ -833,14 +836,13 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     void * d_temp_storage = nullptr;
 
     // Get temporary array size
-    HIP_CHECK(
-        hipcub::DeviceScan::InclusiveScan(
-            d_temp_storage, temp_storage_size_bytes,
-            input_begin, output_it,
-            ::hipcub::Sum(), size,
-            stream, debug_synchronous
-        )
-    );
+    HIP_CHECK(hipcub::DeviceScan::InclusiveScan(d_temp_storage,
+                                                temp_storage_size_bytes,
+                                                input_begin,
+                                                output_it,
+                                                ::hipcub::Sum(),
+                                                size,
+                                                stream));
 
     // temp_storage_size_bytes must be >0
     ASSERT_GT(temp_storage_size_bytes, 0);
@@ -850,14 +852,13 @@ TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Run
-    HIP_CHECK(
-        hipcub::DeviceScan::InclusiveScan(
-            d_temp_storage, temp_storage_size_bytes,
-            input_begin, output_it,
-            ::hipcub::Sum(), size,
-            stream, debug_synchronous
-        )
-    );
+    HIP_CHECK(hipcub::DeviceScan::InclusiveScan(d_temp_storage,
+                                                temp_storage_size_bytes,
+                                                input_begin,
+                                                output_it,
+                                                ::hipcub::Sum(),
+                                                size,
+                                                stream));
     HIP_CHECK(hipGetLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -890,7 +891,6 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     using T = unsigned int;
     using InputIterator = typename hipcub::CountingInputIterator<T>;
     using OutputIterator = single_index_iterator<T>;
-    const bool debug_synchronous = false;
 
     const size_t size = (1ul << 31) + 1ul;
 
@@ -913,15 +913,14 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     void * d_temp_storage = nullptr;
 
     // Get temporary array size
-    HIP_CHECK(
-        hipcub::DeviceScan::ExclusiveScan(
-            d_temp_storage, temp_storage_size_bytes,
-            input_begin, output_it,
-            ::hipcub::Sum(),
-            initial_value, size,
-            stream, debug_synchronous
-        )
-    );
+    HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                temp_storage_size_bytes,
+                                                input_begin,
+                                                output_it,
+                                                ::hipcub::Sum(),
+                                                initial_value,
+                                                size,
+                                                stream));
 
     // temp_storage_size_bytes must be >0
     ASSERT_GT(temp_storage_size_bytes, 0);
@@ -931,15 +930,14 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     HIP_CHECK(hipDeviceSynchronize());
 
     // Run
-    HIP_CHECK(
-        hipcub::DeviceScan::ExclusiveScan(
-            d_temp_storage, temp_storage_size_bytes,
-            input_begin, output_it,
-            ::hipcub::Sum(),
-            initial_value, size,
-            stream, debug_synchronous
-        )
-    );
+    HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                temp_storage_size_bytes,
+                                                input_begin,
+                                                output_it,
+                                                ::hipcub::Sum(),
+                                                initial_value,
+                                                size,
+                                                stream));
     HIP_CHECK(hipGetLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -988,8 +986,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
     using V                      = test_utils::convert_to_fundamental_t<U>;
-    using scan_op_type = typename TestFixture::scan_op_type;
-    const bool debug_synchronous = TestFixture::debug_synchronous;
+    using scan_op_type           = typename TestFixture::scan_op_type;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -1059,13 +1056,14 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
             size_t temp_storage_size_bytes;
             void* d_temp_storage = nullptr;
             // Get size of d_temp_storage
-            HIP_CHECK(
-                hipcub::DeviceScan::ExclusiveScan(
-                    d_temp_storage, temp_storage_size_bytes,
-                    d_input, d_output, scan_op, future_initial_value, input.size(),
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                        temp_storage_size_bytes,
+                                                        d_input,
+                                                        d_output,
+                                                        scan_op,
+                                                        future_initial_value,
+                                                        input.size(),
+                                                        stream));
 
             // temp_storage_size_bytes must be >0
             ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -1080,13 +1078,14 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
             HIP_CHECK(hipGetLastError());
 
             // Run
-            HIP_CHECK(
-                hipcub::DeviceScan::ExclusiveScan(
-                    d_temp_storage, temp_storage_size_bytes,
-                    d_input, d_output, scan_op, future_initial_value, input.size(),
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
+                                                        temp_storage_size_bytes,
+                                                        d_input,
+                                                        d_output,
+                                                        scan_op,
+                                                        future_initial_value,
+                                                        input.size(),
+                                                        stream));
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
