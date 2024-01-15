@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -98,7 +98,6 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
     using offset_type = unsigned int;
 
     const input_type init = test_utils::convert_to_device<input_type>(TestFixture::params::init);
-    const bool debug_synchronous = false;
     reduce_op_type reduce_op;
 
     std::random_device rd;
@@ -176,32 +175,32 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
 
             size_t temporary_storage_bytes;
 
-            HIP_CHECK(
-                hipcub::DeviceSegmentedReduce::Reduce(
-                    nullptr, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    reduce_op, init,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceSegmentedReduce::Reduce(nullptr,
+                                                            temporary_storage_bytes,
+                                                            d_values_input,
+                                                            d_aggregates_output,
+                                                            segments_count,
+                                                            d_offsets,
+                                                            d_offsets + 1,
+                                                            reduce_op,
+                                                            init,
+                                                            stream));
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            HIP_CHECK(
-                hipcub::DeviceSegmentedReduce::Reduce(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    reduce_op, init,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceSegmentedReduce::Reduce(d_temporary_storage,
+                                                            temporary_storage_bytes,
+                                                            d_values_input,
+                                                            d_aggregates_output,
+                                                            segments_count,
+                                                            d_offsets,
+                                                            d_offsets + 1,
+                                                            reduce_op,
+                                                            init,
+                                                            stream));
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -287,8 +286,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
     using result_type = output_type;
     using offset_type = unsigned int;
 
-    const input_type init              = input_type(0);
-    const bool       debug_synchronous = false;
+    const input_type init = input_type(0);
     reduce_op_type   reduce_op;
 
     std::random_device rd;
@@ -366,30 +364,28 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
 
             size_t temporary_storage_bytes;
 
-            HIP_CHECK(
-                hipcub::DeviceSegmentedReduce::Sum(
-                    nullptr, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceSegmentedReduce::Sum(nullptr,
+                                                         temporary_storage_bytes,
+                                                         d_values_input,
+                                                         d_aggregates_output,
+                                                         segments_count,
+                                                         d_offsets,
+                                                         d_offsets + 1,
+                                                         stream));
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            HIP_CHECK(
-                hipcub::DeviceSegmentedReduce::Sum(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceSegmentedReduce::Sum(d_temporary_storage,
+                                                         temporary_storage_bytes,
+                                                         d_values_input,
+                                                         d_aggregates_output,
+                                                         segments_count,
+                                                         d_offsets,
+                                                         d_offsets + 1,
+                                                         stream));
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -439,7 +435,6 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
     using offset_type = unsigned int;
 
     constexpr input_type init = std::numeric_limits<input_type>::max();
-    const bool debug_synchronous = false;
     reduce_op_type reduce_op;
 
     std::random_device rd;
@@ -517,30 +512,28 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
 
             size_t temporary_storage_bytes;
 
-            HIP_CHECK(
-                hipcub::DeviceSegmentedReduce::Min(
-                    nullptr, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceSegmentedReduce::Min(nullptr,
+                                                         temporary_storage_bytes,
+                                                         d_values_input,
+                                                         d_aggregates_output,
+                                                         segments_count,
+                                                         d_offsets,
+                                                         d_offsets + 1,
+                                                         stream));
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            HIP_CHECK(
-                hipcub::DeviceSegmentedReduce::Min(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_values_input, d_aggregates_output,
-                    segments_count,
-                    d_offsets, d_offsets + 1,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceSegmentedReduce::Min(d_temporary_storage,
+                                                         temporary_storage_bytes,
+                                                         d_values_input,
+                                                         d_aggregates_output,
+                                                         segments_count,
+                                                         d_offsets,
+                                                         d_offsets + 1,
+                                                         stream));
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -576,8 +569,7 @@ struct ArgMinDispatch
                     int             num_segments,
                     OffsetIteratorT d_begin_offsets,
                     OffsetIteratorT d_end_offsets,
-                    hipStream_t     stream,
-                    bool            debug_synchronous) const
+                    hipStream_t     stream) const
     {
         return hipcub::DeviceSegmentedReduce::ArgMin(d_temp_storage,
                                                      temp_storage_bytes,
@@ -586,8 +578,7 @@ struct ArgMinDispatch
                                                      num_segments,
                                                      d_begin_offsets,
                                                      d_end_offsets,
-                                                     stream,
-                                                     debug_synchronous);
+                                                     stream);
     }
 };
 
@@ -601,8 +592,7 @@ struct ArgMaxDispatch
                     int             num_segments,
                     OffsetIteratorT d_begin_offsets,
                     OffsetIteratorT d_end_offsets,
-                    hipStream_t     stream,
-                    bool            debug_synchronous) const
+                    hipStream_t     stream) const
     {
         return hipcub::DeviceSegmentedReduce::ArgMax(d_temp_storage,
                                                      temp_storage_bytes,
@@ -611,8 +601,7 @@ struct ArgMaxDispatch
                                                      num_segments,
                                                      d_begin_offsets,
                                                      d_end_offsets,
-                                                     stream,
-                                                     debug_synchronous);
+                                                     stream);
     }
 };
 
@@ -629,7 +618,6 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
     using offset_type = unsigned int;
 
     DispatchFunction                      function;
-    const bool                            debug_synchronous = false;
     std::random_device                    rd;
     std::default_random_engine            gen(rd());
     std::uniform_int_distribution<size_t> segment_length_dis(
@@ -716,8 +704,7 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
                                segments_count,
                                d_offsets,
                                d_offsets + 1,
-                               stream,
-                               debug_synchronous));
+                               stream));
 
             // temp_storage_size_bytes must be > 0
             ASSERT_GT(temporary_storage_bytes, 0U);
@@ -733,8 +720,7 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
                                segments_count,
                                d_offsets,
                                d_offsets + 1,
-                               stream,
-                               debug_synchronous));
+                               stream));
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
@@ -798,7 +784,6 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
     using key_value   = typename Iterator::value_type;
     using offset_type = unsigned int;
 
-    constexpr bool             debug_synchronous = false;
     hipStream_t                stream            = 0; // default
     DispatchFunction           function;
     std::random_device         rd;
@@ -857,8 +842,7 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
                            segments_count,
                            d_offsets,
                            d_offsets + 1,
-                           stream,
-                           debug_synchronous));
+                           stream));
 
         // temp_storage_size_bytes must be > 0
         ASSERT_GT(temporary_storage_bytes, 0U);
@@ -874,8 +858,7 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
                            segments_count,
                            d_offsets,
                            d_offsets + 1,
-                           stream,
-                           debug_synchronous));
+                           stream));
 
         std::vector<key_value> aggregates_output(segments_count);
         HIP_CHECK(hipMemcpy(aggregates_output.data(),
