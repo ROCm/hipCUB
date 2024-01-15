@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -105,8 +105,6 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
         std::uniform_real_distribution<test_utils::convert_to_fundamental_t<key_type>>,
         std::uniform_int_distribution<test_utils::convert_to_fundamental_t<key_type>>>::type;
 
-    const bool debug_synchronous = false;
-
     reduce_op_type reduce_op;
     hipcub::Equality key_compare_op;
 
@@ -206,32 +204,32 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
 
             size_t temporary_storage_bytes = 0;
 
-            HIP_CHECK(
-                hipcub::DeviceReduce::ReduceByKey(
-                    nullptr, temporary_storage_bytes,
-                    d_keys_input, d_unique_output,
-                    d_values_input, d_aggregates_output,
-                    d_unique_count_output,
-                    reduce_op, size,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceReduce::ReduceByKey(nullptr,
+                                                        temporary_storage_bytes,
+                                                        d_keys_input,
+                                                        d_unique_output,
+                                                        d_values_input,
+                                                        d_aggregates_output,
+                                                        d_unique_count_output,
+                                                        reduce_op,
+                                                        size,
+                                                        stream));
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            HIP_CHECK(
-                hipcub::DeviceReduce::ReduceByKey(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_keys_input, d_unique_output,
-                    d_values_input, d_aggregates_output,
-                    d_unique_count_output,
-                    reduce_op, size,
-                    stream, debug_synchronous
-                )
-            );
+            HIP_CHECK(hipcub::DeviceReduce::ReduceByKey(d_temporary_storage,
+                                                        temporary_storage_bytes,
+                                                        d_keys_input,
+                                                        d_unique_output,
+                                                        d_values_input,
+                                                        d_aggregates_output,
+                                                        d_unique_count_output,
+                                                        reduce_op,
+                                                        size,
+                                                        stream));
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
