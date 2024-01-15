@@ -65,6 +65,8 @@ public:
     HIPCUB_DEVICE __forceinline__ void ScatterToStriped(InputT (&items)[ITEMS_PER_THREAD],
                                                         OffsetT (&ranks)[ITEMS_PER_THREAD])
     {
+        (void)items;
+        (void)ranks;
         // Always false
         static_assert(sizeof(OffsetT) == 0,
                       "Shuffle specialization of warp exchange does not support\n"
@@ -79,6 +81,9 @@ public:
                          OutputT (&output_items)[ITEMS_PER_THREAD],
                          OffsetT (&ranks)[ITEMS_PER_THREAD])
     {
+        (void)input_items;
+        (void)output_items;
+        (void)ranks;
         // Always false
         static_assert(sizeof(OffsetT) == 0,
                       "Shuffle specialization of warp exchange does not support\n"

@@ -171,8 +171,13 @@ std::vector<T> stripe_vector(
 
 template<class Params, ::hipcub::WarpExchangeAlgorithm Algorithm>
 constexpr bool is_warp_exchange_test_enabled
+#ifdef HIPCUB_CUB_API
+    = (Algorithm == ::hipcub::WARP_EXCHANGE_SMEM)
+      || (Params::warp_size == Params::items_per_thread);
+#elif HIPCUB_ROCPRIM_API
     = (Algorithm == ::hipcub::WARP_EXCHANGE_SMEM)
       || (Params::warp_size % Params::items_per_thread == 0);
+#endif
 
 template<class Params, class Op, ::hipcub::WarpExchangeAlgorithm Algorithm>
 std::enable_if_t<is_warp_exchange_test_enabled<Params, Algorithm>> run_warp_exchange_test()
@@ -190,7 +195,7 @@ std::enable_if_t<is_warp_exchange_test_enabled<Params, Algorithm>> run_warp_exch
     SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
 
     std::vector<T> input(items_count);
-    for(int i = 0; i < input.size(); i++)
+    for(int i = 0; i < static_cast<int>(input.size()); i++)
     {
         input[i] = test_utils::convert_to_device<T>(i);
     }
@@ -222,7 +227,7 @@ std::enable_if_t<is_warp_exchange_test_enabled<Params, Algorithm>> run_warp_exch
     HIP_CHECK(hipFree(d_input));
     HIP_CHECK(hipFree(d_output));
 
-    for(int i = 0; i < items_count; i++)
+    for(int i = 0; i < static_cast<int>(items_count); i++)
     {
         ASSERT_EQ(test_utils::convert_to_native(expected[i]),
                   test_utils::convert_to_native(output[i]))
@@ -234,7 +239,11 @@ template<class Params, class Op, ::hipcub::WarpExchangeAlgorithm Algorithm>
 std::enable_if_t<!is_warp_exchange_test_enabled<Params, Algorithm>> run_warp_exchange_test()
 {
     GTEST_SKIP()
+#ifdef HIPCUB_CUB_API
+        << "WARP_EXCHANGE_SHUFFLE is only supported when ItemsPerThread is equal to WarpSize";
+#else
         << "WARP_EXCHANGE_SHUFFLE is only supported when ItemsPerThread is a divisor of WarpSize";
+#endif
 }
 
 TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeStripedToBlockedSmem)
@@ -340,7 +349,7 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeScatterToStriped)
     SKIP_IF_UNSUPPORTED_WARP_SIZE(warp_size);
 
     std::vector<T> input(items_count);
-    for(int i = 0; i < input.size(); i++)
+    for(int i = 0; i < static_cast<int>(input.size()); i++)
     {
         input[i] = test_utils::convert_to_device<T>(i);
     }
@@ -378,7 +387,7 @@ TYPED_TEST(HipcubWarpExchangeTest, WarpExchangeScatterToStriped)
 
     const std::vector<T> expected = stripe_vector(input, ranks, warp_size, items_per_thread);
 
-    for(int i = 0; i < items_count; i++)
+    for(int i = 0; i < static_cast<int>(items_count); i++)
     {
         ASSERT_EQ(test_utils::convert_to_native(expected[i]),
                   test_utils::convert_to_native(output[i]))

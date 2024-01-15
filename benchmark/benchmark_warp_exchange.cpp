@@ -23,9 +23,7 @@
 #include "common_benchmark_header.hpp"
 
 // HIP API
-#include "hipcub/backend/rocprim/warp/warp_exchange.hpp"
 #include "hipcub/warp/warp_exchange.hpp"
-
 
 #ifndef DEFAULT_N
 const size_t DEFAULT_N = 1024 * 1024 * 32;
@@ -254,24 +252,32 @@ int main(int argc, char *argv[])
     // Add benchmarks
     std::vector<benchmark::internal::Benchmark*> benchmarks{
         CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 16, WARP_EXCHANGE_SMEM),
-        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 16, WARP_EXCHANGE_SHUFFLE),
         CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 16, WARP_EXCHANGE_SMEM),
-        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 16, WARP_EXCHANGE_SHUFFLE),
-        CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 16),
-
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 16, 16, WARP_EXCHANGE_SMEM),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 16, 16, WARP_EXCHANGE_SMEM),
         CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 32, WARP_EXCHANGE_SMEM),
-        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 32, WARP_EXCHANGE_SHUFFLE),
         CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 32, WARP_EXCHANGE_SMEM),
-        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 32, WARP_EXCHANGE_SHUFFLE),
-        CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 32),
-
         CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32, WARP_EXCHANGE_SMEM),
-        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32, WARP_EXCHANGE_SHUFFLE),
         CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32, WARP_EXCHANGE_SMEM),
-        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 16),
+        CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 128, 4, 32),
         CREATE_BENCHMARK_SCATTER_TO_STRIPED(int, int, 256, 4, 32),
+
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 16, 16, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 16, 16, WARP_EXCHANGE_SHUFFLE),
+
+// CUB requires WS == IPT for WARP_EXCHANGE_SHUFFLE
+#ifdef HIPCUB_ROCPRIM_API
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 16, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 16, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 128, 4, 32, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 128, 4, 32, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_STRIPED_TO_BLOCKED(int, 256, 4, 32, WARP_EXCHANGE_SHUFFLE),
+        CREATE_BENCHMARK_BLOCKED_TO_STRIPED(int, 256, 4, 32, WARP_EXCHANGE_SHUFFLE),
+#endif
     };
 
+#ifdef HIPCUB_ROCPRIM_API
     if (::benchmark_utils::is_warp_size_supported(64))
     {
         std::vector<benchmark::internal::Benchmark*> additional_benchmarks{
@@ -292,6 +298,7 @@ int main(int argc, char *argv[])
             additional_benchmarks.end()
         );
     }
+#endif
 
     // Use manual timing
     for (auto& b : benchmarks)
