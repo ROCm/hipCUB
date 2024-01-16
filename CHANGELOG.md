@@ -9,7 +9,7 @@ Documentation for hipCUB is available at
 
 * Fixed the derivation for the accumulator type for device scan algorithms in the rocPRIM backend being different compared to CUB.
   It now derives the accumulator type as the result of the binary operator.
-- The NVIDIA backend now requires CUB, Thrust and libcu++ 2.2.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.2.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
 
 ## (Unreleased) hipCUB-3.1.0 for ROCm 6.1.0
 
