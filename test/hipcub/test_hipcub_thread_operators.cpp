@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -385,8 +385,7 @@ void scan_op_test(std::vector<InputT>  h_input,
     SCOPED_TRACE(testing::Message() << "with device_id = " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    hipStream_t stream            = 0;
-    const bool  debug_synchronous = false;
+    hipStream_t stream = 0;
 
     // Allocate input and output on device and copy input from host.
     InputT*  d_input{};
@@ -405,8 +404,7 @@ void scan_op_test(std::vector<InputT>  h_input,
                                                 d_output,
                                                 op,
                                                 input_size,
-                                                stream,
-                                                debug_synchronous));
+                                                stream));
 
     // Size of temporary storage must be > 0.
     ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -421,8 +419,7 @@ void scan_op_test(std::vector<InputT>  h_input,
                                                 d_output,
                                                 op,
                                                 input_size,
-                                                stream,
-                                                debug_synchronous));
+                                                stream));
     HIP_CHECK(hipGetLastError());
 
     // Copy output to host.
@@ -574,8 +571,7 @@ TYPED_TEST(HipcubNCThreadOperatorsTests, ReduceByKeyOp)
     SCOPED_TRACE(testing::Message() << "with device_id = " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    hipStream_t stream            = 0;
-    const bool  debug_synchronous = false;
+    hipStream_t stream = 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto input_size : sizes)
@@ -646,8 +642,7 @@ TYPED_TEST(HipcubNCThreadOperatorsTests, ReduceByKeyOp)
                                                     d_unique_keys_expected,
                                                     sum_op,
                                                     input_size,
-                                                    stream,
-                                                    debug_synchronous));
+                                                    stream));
 
         // Size of temporary storage must be > 0.
         ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -665,8 +660,7 @@ TYPED_TEST(HipcubNCThreadOperatorsTests, ReduceByKeyOp)
                                                     d_unique_keys_expected,
                                                     sum_op,
                                                     input_size,
-                                                    stream,
-                                                    debug_synchronous));
+                                                    stream));
         HIP_CHECK(hipGetLastError());
 
         // Copy expected results to host.

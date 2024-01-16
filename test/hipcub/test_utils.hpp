@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -42,6 +42,8 @@
 
 // Seed values
 #include "test_seed.hpp"
+
+#include <type_traits>
 
 namespace test_utils
 {
@@ -185,10 +187,10 @@ OutputIt host_exclusive_scan_by_key(InputIt first, InputIt last, KeyIt k_first,
 }
 
 template<class T, class U = T>
-HIPCUB_HOST_DEVICE inline constexpr typename std::common_type<T, U>::type max(const T& t,
-                                                                              const U& u)
+HIPCUB_HOST_DEVICE inline constexpr std::common_type_t<T, U> max(const T& t, const U& u)
 {
-    return t < u ? u : t;
+    using common_type = std::common_type_t<T, U>;
+    return static_cast<common_type>(t) < static_cast<common_type>(u) ? u : t;
 }
 
 HIPCUB_HOST_DEVICE inline test_utils::half max(const test_utils::half& a, const test_utils::half& b)
@@ -227,12 +229,12 @@ HIPCUB_HOST_DEVICE inline constexpr T max(const test_utils::bfloat16& t, const T
 }
 
 template<class T, class U>
-HIPCUB_HOST_DEVICE inline constexpr typename std::common_type<test_utils::custom_test_type<T>,
-                                                              test_utils::custom_test_type<U>>::type
+HIPCUB_HOST_DEVICE inline constexpr std::common_type_t<test_utils::custom_test_type<T>,
+                                                       test_utils::custom_test_type<U>>
     min(const test_utils::custom_test_type<T>& t, const test_utils::custom_test_type<U>& u)
 {
-    using common_type = typename std::common_type<test_utils::custom_test_type<T>,
-                                                  test_utils::custom_test_type<U>>::type;
+    using common_type
+        = std::common_type_t<test_utils::custom_test_type<T>, test_utils::custom_test_type<U>>;
     const common_type common_t(t);
     const common_type common_u(u);
 
@@ -240,10 +242,10 @@ HIPCUB_HOST_DEVICE inline constexpr typename std::common_type<test_utils::custom
 }
 
 template<class T, class U = T>
-HIPCUB_HOST_DEVICE inline constexpr typename std::common_type<T, U>::type min(const T& t,
-                                                                              const U& u)
+HIPCUB_HOST_DEVICE inline constexpr std::common_type_t<T, U> min(const T& t, const U& u)
 {
-    return t < u ? t : u;
+    using common_type = std::common_type_t<T, U>;
+    return static_cast<common_type>(t) < static_cast<common_type>(u) ? t : u;
 }
 
 template<class T>
