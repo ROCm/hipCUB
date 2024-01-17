@@ -38,12 +38,12 @@ python3 -m http.server
 * CMake (3.16 or later)
 * For AMD GPUs:
   * AMD [ROCm](https://rocm.github.io/install.html) software (1.8.0 or later)
-    * The
-      [HIP-clang](https://github.com/ROCm-Developer-Tools/HIP/blob/master/INSTALL.md#hip-clang)
-      compiler, which must be set as the C++ compiler for ROCm
+    * The [HIP-clang](https://github.com/ROCm/HIP/blob/master/INSTALL.md#hip-clang) compiler (you
+      must, set this as the C++ compiler for ROCm)
   * The [rocPRIM](https://github.com/ROCmSoftwarePlatform/rocPRIM) library
     * Automatically downloaded and built by the CMake script
     * Requires CMake 3.16.9 or later
+
 * For NVIDIA GPUs:
   * CUDA Toolkit
   * CUB library
@@ -65,7 +65,7 @@ GoogleTest and Google Benchmark are automatically downloaded and built by the CM
 To build and install hipCub, run the following code:
 
 ```shell
-git clone https://github.com/ROCmSoftwarePlatform/hipCUB.git
+git clone https://github.com/ROCm/hipCUB.git
 
 # Go to hipCUB directory, create and go to the build directory.
 cd hipCUB; mkdir build; cd build
@@ -109,7 +109,7 @@ Initial support for HIP on Windows is available. You can install it using the pr
 script:
 
 ```shell
-git clone https://github.com/ROCmSoftwarePlatform/hipCUB.git
+git clone https://github.com/ROCm/hipCUB.git
 cd hipCUB
 
 # the -i option will install rocPRIM to C:\hipSDK by default

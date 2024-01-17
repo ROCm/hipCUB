@@ -3,7 +3,7 @@
 Documentation for hipCUB is available at
 [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 6.1.0
+## (Unreleased) hipCUB-3.1.0 for ROCm 6.1.0
 
 ### Changes
 
@@ -21,14 +21,22 @@ Documentation for hipCUB is available at
 
 * Interface `DeviceMemcpy::Batched` for batched memcpy from rocPRIM and CUB
 
-## hipCUB-2.13.1 for ROCm 5.7.0
+## hipCUB-3.0.0 for ROCm 6.0.0
 
 ### Changes
 
-- CUB backend references CUB and Thrust version 2.0.1.
-- Fixed `DeviceSegmentedReduce::ArgMin` and `DeviceSegmentedReduce::ArgMax` by returning the segment-relative index instead of the absolute one.
-- Fixed `DeviceSegmentedReduce::ArgMin` for inputs where the segment minimum is smaller than the value returned for empty segments. An equivalent fix is applied to `DeviceSegmentedReduce::ArgMax`.
-- Removed `DOWNLOAD_ROCPRIM`, forcing rocPRIM to download can be done with `DEPENDENCIES_FORCE_DOWNLOAD`.
+* Removed `DOWNLOAD_ROCPRIM`
+  * You can force rocPRIM to download using `DEPENDENCIES_FORCE_DOWNLOAD`
+
+## hipCUB-2.13.2 for ROCm 5.7.0
+
+### Changes
+
+* CUB backend references CUB and Thrust version 2.0.1.
+* Fixed `DeviceSegmentedReduce::ArgMin` and `DeviceSegmentedReduce::ArgMax` by returning the
+  segment-relative index instead of the absolute one
+* Fixed `DeviceSegmentedReduce::ArgMin` for inputs where the segment minimum is smaller than the
+  value returned for empty segments; an equivalent fix is applied to `DeviceSegmentedReduce::ArgMax`
 
 ### Known issues
 
@@ -36,7 +44,9 @@ Documentation for hipCUB is available at
 * `DeviceReduce::Sum` doesn't compile on the CUDA platform for mixed extended-floating-point or
   floating-point InputT and OutputT types
 * `DeviceHistogram::HistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int]`.
-* `DeviceHistogram::MultiHistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int/unsigned short/float/double]` and `[LevelT, SampleIteratorT] = [float, double]`.
+* `DeviceHistogram::MultiHistogramEven` fails on CUDA platform for
+  `[LevelT, SampleIteratorT] = [int, int/unsigned short/float/double]` and
+  `[LevelT, SampleIteratorT] = [float, double]`
 
 ## hipCUB-2.13.1 for ROCm 5.5.0
 
