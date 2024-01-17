@@ -91,23 +91,23 @@ HIPCUB_RUNTIME_FUNCTION static hipError_t CsrMV(void*       d_temp_storage,
                                                                               temp_storage_bytes,
                                                                               spmv_params,
                                                                               stream));
-    }
+}
 
-    template<typename ValueT>
-    HIPCUB_DETAIL_DEPRECATED_DEBUG_SYNCHRONOUS HIPCUB_RUNTIME_FUNCTION static hipError_t
-        CsrMV(void*       d_temp_storage,
-              size_t&     temp_storage_bytes,
-              ValueT*     d_values,
-              int*        d_row_offsets,
-              int*        d_column_indices,
-              ValueT*     d_vector_x,
-              ValueT*     d_vector_y,
-              int         num_rows,
-              int         num_cols,
-              int         num_nonzeros,
-              hipStream_t stream,
-              bool        debug_synchronous)
-    {
+template<typename ValueT>
+HIPCUB_DETAIL_DEPRECATED_DEBUG_SYNCHRONOUS HIPCUB_RUNTIME_FUNCTION static hipError_t
+    CsrMV(void*       d_temp_storage,
+          size_t&     temp_storage_bytes,
+          ValueT*     d_values,
+          int*        d_row_offsets,
+          int*        d_column_indices,
+          ValueT*     d_vector_x,
+          ValueT*     d_vector_y,
+          int         num_rows,
+          int         num_cols,
+          int         num_nonzeros,
+          hipStream_t stream,
+          bool        debug_synchronous)
+{
     HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
     return CsrMV(d_temp_storage,
                  temp_storage_bytes,
@@ -120,7 +120,7 @@ HIPCUB_RUNTIME_FUNCTION static hipError_t CsrMV(void*       d_temp_storage,
                  num_cols,
                  num_nonzeros,
                  stream);
-    }
+}
 };
 
 END_HIPCUB_NAMESPACE

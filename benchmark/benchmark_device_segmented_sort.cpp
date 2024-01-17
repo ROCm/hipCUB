@@ -42,9 +42,15 @@ void run_sort_keys_benchmark(benchmark::State &state,
 {
     using offset_type = int;
     using key_type = Key;
-    typedef hipError_t (*sort_func) (
-        void *, size_t&, const key_type *, key_type *, int, 
-        int, offset_type *, offset_type *, hipStream_t);
+    typedef hipError_t (*sort_func)(void*,
+                                    size_t&,
+                                    const key_type*,
+                                    key_type*,
+                                    int,
+                                    int,
+                                    offset_type*,
+                                    offset_type*,
+                                    hipStream_t);
 
     sort_func func_ascending  = &hipcub::DeviceSegmentedSort::SortKeys
         <key_type, offset_type *>;
@@ -121,14 +127,15 @@ void run_sort_keys_benchmark(benchmark::State &state,
 
     void * d_temporary_storage = nullptr;
     size_t temporary_storage_bytes = 0;
-    HIP_CHECK(
-        sorting(
-            d_temporary_storage, temporary_storage_bytes,
-            d_keys_input, d_keys_output, size,
-            segments_count, d_offsets, d_offsets + 1,
-            stream
-        )
-    );
+    HIP_CHECK(sorting(d_temporary_storage,
+                      temporary_storage_bytes,
+                      d_keys_input,
+                      d_keys_output,
+                      size,
+                      segments_count,
+                      d_offsets,
+                      d_offsets + 1,
+                      stream));
 
     HIP_CHECK(hipMalloc(&d_temporary_storage, temporary_storage_bytes));
     HIP_CHECK(hipDeviceSynchronize());
@@ -136,14 +143,15 @@ void run_sort_keys_benchmark(benchmark::State &state,
     // Warm-up
     for (size_t i = 0; i < warmup_size; ++i)
     {
-        HIP_CHECK(
-            sorting(
-                d_temporary_storage, temporary_storage_bytes,
-                d_keys_input, d_keys_output, size,
-                segments_count, d_offsets, d_offsets + 1,
-                stream
-            )
-        );
+        HIP_CHECK(sorting(d_temporary_storage,
+                          temporary_storage_bytes,
+                          d_keys_input,
+                          d_keys_output,
+                          size,
+                          segments_count,
+                          d_offsets,
+                          d_offsets + 1,
+                          stream));
     }
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -153,14 +161,15 @@ void run_sort_keys_benchmark(benchmark::State &state,
 
         for (size_t i = 0; i < batch_size; ++i)
         {
-            HIP_CHECK(
-                sorting(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_keys_input, d_keys_output, size,
-                    segments_count, d_offsets, d_offsets + 1,
-                    stream
-                )
-            );
+            HIP_CHECK(sorting(d_temporary_storage,
+                              temporary_storage_bytes,
+                              d_keys_input,
+                              d_keys_output,
+                              size,
+                              segments_count,
+                              d_offsets,
+                              d_offsets + 1,
+                              stream));
         }
         HIP_CHECK(hipDeviceSynchronize());
 
@@ -189,9 +198,17 @@ void run_sort_pairs_benchmark(benchmark::State &state,
     using offset_type = int;
     using key_type = Key;
     using value_type = Value;
-    typedef hipError_t (*sort_func) (
-        void *, size_t&, const key_type *, key_type *, const value_type *, value_type *, int,
-        int, offset_type *, offset_type *, hipStream_t);
+    typedef hipError_t (*sort_func)(void*,
+                                    size_t&,
+                                    const key_type*,
+                                    key_type*,
+                                    const value_type*,
+                                    value_type*,
+                                    int,
+                                    int,
+                                    offset_type*,
+                                    offset_type*,
+                                    hipStream_t);
 
     sort_func func_ascending  = &hipcub::DeviceSegmentedSort::SortPairs
         <key_type, value_type, offset_type *>;
@@ -283,14 +300,17 @@ void run_sort_pairs_benchmark(benchmark::State &state,
 
     void * d_temporary_storage = nullptr;
     size_t temporary_storage_bytes = 0;
-    HIP_CHECK(
-        sorting(
-            d_temporary_storage, temporary_storage_bytes,
-            d_keys_input, d_keys_output, d_values_input, d_values_output, size,
-            segments_count, d_offsets, d_offsets + 1,
-            stream
-        )
-    );
+    HIP_CHECK(sorting(d_temporary_storage,
+                      temporary_storage_bytes,
+                      d_keys_input,
+                      d_keys_output,
+                      d_values_input,
+                      d_values_output,
+                      size,
+                      segments_count,
+                      d_offsets,
+                      d_offsets + 1,
+                      stream));
 
     HIP_CHECK(hipMalloc(&d_temporary_storage, temporary_storage_bytes));
     HIP_CHECK(hipDeviceSynchronize());
@@ -298,14 +318,17 @@ void run_sort_pairs_benchmark(benchmark::State &state,
     // Warm-up
     for (size_t i = 0; i < warmup_size; i++)
     {
-        HIP_CHECK(
-            sorting(
-                d_temporary_storage, temporary_storage_bytes,
-                d_keys_input, d_keys_output, d_values_input, d_values_output, size,
-                segments_count, d_offsets, d_offsets + 1,
-                stream
-            )
-        );
+        HIP_CHECK(sorting(d_temporary_storage,
+                          temporary_storage_bytes,
+                          d_keys_input,
+                          d_keys_output,
+                          d_values_input,
+                          d_values_output,
+                          size,
+                          segments_count,
+                          d_offsets,
+                          d_offsets + 1,
+                          stream));
     }
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -315,14 +338,17 @@ void run_sort_pairs_benchmark(benchmark::State &state,
 
         for (size_t i = 0; i < batch_size; i++)
         {
-            HIP_CHECK(
-                sorting(
-                    d_temporary_storage, temporary_storage_bytes,
-                    d_keys_input, d_keys_output, d_values_input, d_values_output, size,
-                    segments_count, d_offsets, d_offsets + 1,
-                    stream
-                )
-            );
+            HIP_CHECK(sorting(d_temporary_storage,
+                              temporary_storage_bytes,
+                              d_keys_input,
+                              d_keys_output,
+                              d_values_input,
+                              d_values_output,
+                              size,
+                              segments_count,
+                              d_offsets,
+                              d_offsets + 1,
+                              stream));
         }
         HIP_CHECK(hipDeviceSynchronize());
 
