@@ -38,6 +38,7 @@
 
 #include "../iterator/arg_index_input_iterator.hpp"
 #include "../thread/thread_operators.hpp"
+#include "../util_sync.hpp"
 #include "device_reduce.hpp"
 #include "rocprim/type_traits.hpp"
 
@@ -92,23 +93,6 @@ __global__ __launch_bounds__(
         }
     }
 }
-
-#define ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR(name, size, start)                           \
-    {                                                                                            \
-        auto _error = hipGetLastError();                                                         \
-        if(_error != hipSuccess)                                                                 \
-            return _error;                                                                       \
-        if HIPCUB_IF_CONSTEXPR(HIPCUB_DETAIL_DEBUG_SYNC_VALUE)                                   \
-        {                                                                                        \
-            std::cout << name << "(" << size << ")";                                             \
-            auto __error = hipStreamSynchronize(stream);                                         \
-            if(__error != hipSuccess)                                                            \
-                return __error;                                                                  \
-            auto _end = std::chrono::high_resolution_clock::now();                               \
-            auto _d   = std::chrono::duration_cast<std::chrono::duration<double>>(_end - start); \
-            std::cout << " " << _d.count() * 1000 << " ms" << '\n';                              \
-        }                                                                                        \
-    }
 
 /// Dispatch function similar to \p rocprim::segmented_reduce but writes \p empty_value for empty
 /// segments and writes a segment-relative index instead of an absolute one.
@@ -176,7 +160,7 @@ inline hipError_t segmented_arg_minmax(void*          temporary_storage,
                        reduce_op,
                        static_cast<result_type>(initial_value),
                        static_cast<result_type>(empty_value));
-    ROCPRIM_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("segmented_arg_minmax", segments, start);
+    HIPCUB_DETAIL_HIP_SYNC_AND_RETURN_ON_ERROR("segmented_arg_minmax", segments, start);
 
     return hipSuccess;
 }
