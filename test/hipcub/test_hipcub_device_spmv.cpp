@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2020 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -193,38 +193,34 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
     void *d_temp_storage = NULL;
 
     // Get amount of temporary storage needed
-    HIP_CHECK(hipcub::DeviceSpmv::CsrMV(
-                d_temp_storage,
-                temp_storage_bytes,
-                params.d_values,
-                params.d_row_end_offsets,
-                params.d_column_indices,
-                params.d_vector_x,
-                params.d_vector_y,
-                params.num_rows,
-                params.num_cols,
-                params.num_nonzeros,
-                stream,
-                false));
+    HIP_CHECK(hipcub::DeviceSpmv::CsrMV(d_temp_storage,
+                                        temp_storage_bytes,
+                                        params.d_values,
+                                        params.d_row_end_offsets,
+                                        params.d_column_indices,
+                                        params.d_vector_x,
+                                        params.d_vector_y,
+                                        params.num_rows,
+                                        params.num_cols,
+                                        params.num_nonzeros,
+                                        stream));
 
     // Allocate
     //HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_bytes);
     HIP_CHECK(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes));
     HIP_CHECK(hipDeviceSynchronize());
 
-    HIP_CHECK(hipcub::DeviceSpmv::CsrMV(
-                d_temp_storage,
-                temp_storage_bytes,
-                params.d_values,
-                params.d_row_end_offsets,
-                params.d_column_indices,
-                params.d_vector_x,
-                params.d_vector_y,
-                params.num_rows,
-                params.num_cols,
-                params.num_nonzeros,
-                stream,
-                false));
+    HIP_CHECK(hipcub::DeviceSpmv::CsrMV(d_temp_storage,
+                                        temp_storage_bytes,
+                                        params.d_values,
+                                        params.d_row_end_offsets,
+                                        params.d_column_indices,
+                                        params.d_vector_x,
+                                        params.d_vector_y,
+                                        params.num_rows,
+                                        params.num_cols,
+                                        params.num_nonzeros,
+                                        stream));
 
     HIP_CHECK(hipMemcpy(vector_y_in, params.d_vector_y, sizeof(T) * params.num_rows, hipMemcpyDeviceToHost));
 
@@ -236,6 +232,5 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
         auto diff = std::max<T>(std::abs(0.01f * vector_y_out[i]), 0.01f);
         ASSERT_NEAR(vector_y_in[i], vector_y_out[i], diff) << "where index = " << i;
     }
-
 }
 
