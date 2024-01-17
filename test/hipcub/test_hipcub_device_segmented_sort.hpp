@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -246,7 +246,6 @@ inline void sort_keys()
     constexpr unsigned int min_segment_length = TestFixture::params::min_segment_length;
     constexpr unsigned int max_segment_length = TestFixture::params::max_segment_length;
     constexpr hipStream_t stream = 0;
-    constexpr bool debug_synchronous = false;
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
@@ -288,7 +287,7 @@ inline void sort_keys()
                 method, d_temporary_storage, temporary_storage_bytes,
                 d_keys_input, d_keys_output, size,
                 segments_count, d_offsets, d_offsets + 1,
-                stream, debug_synchronous
+                stream
             );
 
             const std::vector<key_type> keys_output = download(d_keys_output, size);
@@ -317,7 +316,6 @@ inline void sort_keys_double_buffer()
     constexpr unsigned int min_segment_length = TestFixture::params::min_segment_length;
     constexpr unsigned int max_segment_length = TestFixture::params::max_segment_length;
     constexpr hipStream_t stream = 0;
-    constexpr bool debug_synchronous = false;
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
@@ -361,7 +359,7 @@ inline void sort_keys_double_buffer()
                 method, d_temporary_storage, temporary_storage_bytes,
                 d_keys, size,
                 segments_count, d_offsets, d_offsets + 1,
-                stream, debug_synchronous
+                stream
             );
 
             const std::vector<key_type> keys_output = download(d_keys.Current(), size);
@@ -421,7 +419,6 @@ inline void sort_pairs()
     constexpr unsigned int min_segment_length = TestFixture::params::min_segment_length;
     constexpr unsigned int max_segment_length = TestFixture::params::max_segment_length;
     constexpr hipStream_t stream = 0;
-    constexpr bool debug_synchronous = false;
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
@@ -472,7 +469,7 @@ inline void sort_pairs()
                 d_values_input, d_values_output,
                 size, segments_count,
                 d_offsets, d_offsets + 1,
-                stream, debug_synchronous
+                stream
             );
 
             const std::vector<key_type> keys_output = download(d_keys_output, size);
@@ -509,7 +506,6 @@ inline void sort_pairs_double_buffer()
     constexpr unsigned int min_segment_length = TestFixture::params::min_segment_length;
     constexpr unsigned int max_segment_length = TestFixture::params::max_segment_length;
     constexpr hipStream_t stream = 0;
-    constexpr bool debug_synchronous = false;
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
@@ -561,7 +557,7 @@ inline void sort_pairs_double_buffer()
                 d_keys, d_values,
                 size, segments_count,
                 d_offsets, d_offsets + 1,
-                stream, debug_synchronous
+                stream
             );
             
             const std::vector<key_type> keys_output = download(d_keys.Current(), size);
