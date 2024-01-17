@@ -165,7 +165,7 @@ HIPCUB_DETAIL_DEPRECATED_DEBUG_SYNCHRONOUS HIPCUB_RUNTIME_FUNCTION static hipErr
           hipStream_t stream,
           bool        debug_synchronous)
 {
-    HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+    HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
     return CsrMV(d_temp_storage,
                  temp_storage_bytes,
                  d_values,

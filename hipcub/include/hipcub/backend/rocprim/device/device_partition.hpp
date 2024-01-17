@@ -78,7 +78,7 @@ struct DevicePartition
                 hipStream_t          stream,
                 bool                 debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return Flagged(d_temp_storage,
                        temp_storage_bytes,
                        d_in,
@@ -128,7 +128,7 @@ struct DevicePartition
            hipStream_t          stream,
            bool                 debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return If(d_temp_storage,
                   temp_storage_bytes,
                   d_in,
@@ -193,7 +193,7 @@ struct DevicePartition
            hipStream_t               stream,
            bool                      debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return If(d_temp_storage,
                   temp_storage_bytes,
                   d_in,

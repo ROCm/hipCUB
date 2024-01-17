@@ -78,7 +78,7 @@ public:
                hipStream_t            stream,
                bool                   debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return Encode(d_temp_storage,
                       temp_storage_bytes,
                       d_in,
@@ -128,7 +128,7 @@ public:
                        hipStream_t            stream,
                        bool                   debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return NonTrivialRuns(d_temp_storage,
                               temp_storage_bytes,
                               d_in,

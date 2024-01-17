@@ -63,12 +63,16 @@
                               "is deprecated and no longer has any effect.\n"                      \
                               "Use the compile-time definition HIPCUB_DEBUG_SYNC instead.")
 
-#define HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS                                          \
-    if(debug_synchronous)                                                                    \
-    {                                                                                        \
-        std::cout << "The debug_synchronous argument of the hipcub device API functions is " \
-                     "deprecated and no longer has any effect.\n"                            \
-                     "Use the compile-time definition HIPCUB_DEBUG_SYNC instead.\n";         \
-    }
+#define HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS()                                         \
+    do                                                                                        \
+    {                                                                                         \
+        if(debug_synchronous)                                                                 \
+        {                                                                                     \
+            HipcubLog("The debug_synchronous argument of the hipcub device API functions is " \
+                      "deprecated and no longer has any effect.\n"                            \
+                      "Use the compile-time definition HIPCUB_DEBUG_SYNC instead.\n");        \
+        }                                                                                     \
+    }                                                                                         \
+    while(false)
 
 #endif // HIPCUB_UTIL_DEPRECATED_HPP_

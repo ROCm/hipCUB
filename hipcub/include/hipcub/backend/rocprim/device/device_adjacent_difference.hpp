@@ -75,7 +75,7 @@ struct DeviceAdjacentDifference
                          hipStream_t     stream,
                          bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SubtractLeftCopy(d_temp_storage,
                                 temp_storage_bytes,
                                 d_input,
@@ -116,7 +116,7 @@ struct DeviceAdjacentDifference
                      hipStream_t           stream,
                      bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SubtractLeft(d_temp_storage,
                             temp_storage_bytes,
                             d_input,
@@ -161,7 +161,7 @@ struct DeviceAdjacentDifference
                           hipStream_t     stream,
                           bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SubtractRightCopy(d_temp_storage,
                                  temp_storage_bytes,
                                  d_input,
@@ -202,7 +202,7 @@ struct DeviceAdjacentDifference
                       hipStream_t           stream,
                       bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SubtractRight(d_temp_storage,
                              temp_storage_bytes,
                              d_input,

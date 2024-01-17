@@ -216,7 +216,7 @@ struct DeviceSegmentedReduce
                hipStream_t     stream,
                bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return Reduce(d_temp_storage,
                       temp_storage_bytes,
                       d_in,
@@ -265,7 +265,7 @@ struct DeviceSegmentedReduce
             hipStream_t     stream,
             bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return Sum(d_temp_storage,
                    temp_storage_bytes,
                    d_in,
@@ -312,7 +312,7 @@ struct DeviceSegmentedReduce
             hipStream_t     stream,
             bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return Min(d_temp_storage,
                    temp_storage_bytes,
                    d_in,
@@ -378,7 +378,7 @@ struct DeviceSegmentedReduce
                hipStream_t     stream,
                bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ArgMin(d_temp_storage,
                       temp_storage_bytes,
                       d_in,
@@ -425,7 +425,7 @@ struct DeviceSegmentedReduce
             hipStream_t     stream,
             bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return Max(d_temp_storage,
                    temp_storage_bytes,
                    d_in,
@@ -491,7 +491,7 @@ struct DeviceSegmentedReduce
                hipStream_t     stream,
                bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ArgMax(d_temp_storage,
                       temp_storage_bytes,
                       d_in,

@@ -108,18 +108,18 @@ HIPCUB_RUNTIME_FUNCTION static hipError_t CsrMV(void*       d_temp_storage,
               hipStream_t stream,
               bool        debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
-        return CsrMV(d_temp_storage,
-                     temp_storage_bytes,
-                     d_values,
-                     d_row_offsets,
-                     d_column_indices,
-                     d_vector_x,
-                     d_vector_y,
-                     num_rows,
-                     num_cols,
-                     num_nonzeros,
-                     stream);
+    HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
+    return CsrMV(d_temp_storage,
+                 temp_storage_bytes,
+                 d_values,
+                 d_row_offsets,
+                 d_column_indices,
+                 d_vector_x,
+                 d_vector_y,
+                 num_rows,
+                 num_cols,
+                 num_nonzeros,
+                 stream);
     }
 };
 

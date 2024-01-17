@@ -136,10 +136,19 @@ hipError_t Debug(
     return error;
 }
 
+inline void Log(const char* message, const char* filename, int line)
+{
+    printf("hipcub: %s [%s:%d]\n", message, filename, line);
+}
+
 END_HIPCUB_NAMESPACE
 
 #ifndef HipcubDebug
     #define HipcubDebug(e) ::hipcub::Debug((hipError_t)(e), __FILE__, __LINE__)
+#endif
+
+#ifndef HipcubLog
+    #define HipcubLog(msg) ::hipcub::Log(msg, __FILE__, __LINE__)
 #endif
 
 #if __cpp_if_constexpr

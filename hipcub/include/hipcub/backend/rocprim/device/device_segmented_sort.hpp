@@ -85,7 +85,7 @@ struct DeviceSegmentedSort
                   hipStream_t     stream,
                   bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortPairs(d_temp_storage,
                          temp_storage_bytes,
                          d_keys_in,
@@ -142,7 +142,7 @@ struct DeviceSegmentedSort
                   hipStream_t           stream,
                   bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortPairs(d_temp_storage,
                          temp_storage_bytes,
                          d_keys,
@@ -198,7 +198,7 @@ struct DeviceSegmentedSort
                             hipStream_t     stream,
                             bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortPairsDescending(d_temp_storage,
                                    temp_storage_bytes,
                                    d_keys_in,
@@ -256,7 +256,7 @@ struct DeviceSegmentedSort
                             hipStream_t           stream,
                             bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortPairsDescending(d_temp_storage,
                                    temp_storage_bytes,
                                    d_keys,
@@ -306,7 +306,7 @@ struct DeviceSegmentedSort
                  hipStream_t     stream,
                  bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortKeys(d_temp_storage,
                         temp_storage_bytes,
                         d_keys_in,
@@ -356,7 +356,7 @@ struct DeviceSegmentedSort
                  hipStream_t         stream,
                  bool                debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortKeys(d_temp_storage,
                         temp_storage_bytes,
                         d_keys,
@@ -405,7 +405,7 @@ struct DeviceSegmentedSort
                            hipStream_t     stream,
                            bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortKeysDescending(d_temp_storage,
                                   temp_storage_bytes,
                                   d_keys_in,
@@ -456,7 +456,7 @@ struct DeviceSegmentedSort
                            hipStream_t         stream,
                            bool                debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return SortKeysDescending(d_temp_storage,
                                   temp_storage_bytes,
                                   d_keys,
@@ -508,7 +508,7 @@ struct DeviceSegmentedSort
                         hipStream_t     stream,
                         bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortPairs(d_temp_storage,
                                temp_storage_bytes,
                                d_keys_in,
@@ -557,7 +557,7 @@ struct DeviceSegmentedSort
                         hipStream_t           stream,
                         bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortPairs(d_temp_storage,
                                temp_storage_bytes,
                                d_keys,
@@ -611,7 +611,7 @@ struct DeviceSegmentedSort
                                   hipStream_t     stream,
                                   bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortPairsDescending(d_temp_storage,
                                          temp_storage_bytes,
                                          d_keys_in,
@@ -661,7 +661,7 @@ struct DeviceSegmentedSort
                                   hipStream_t           stream,
                                   bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortPairsDescending(d_temp_storage,
                                          temp_storage_bytes,
                                          d_keys,
@@ -708,7 +708,7 @@ struct DeviceSegmentedSort
                        hipStream_t     stream,
                        bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortKeys(d_temp_storage,
                               temp_storage_bytes,
                               d_keys_in,
@@ -752,7 +752,7 @@ struct DeviceSegmentedSort
                        hipStream_t         stream,
                        bool                debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortKeys(d_temp_storage,
                               temp_storage_bytes,
                               d_keys,
@@ -799,7 +799,7 @@ struct DeviceSegmentedSort
                                  hipStream_t     stream,
                                  bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortKeysDescending(d_temp_storage,
                                         temp_storage_bytes,
                                         d_keys_in,
@@ -844,7 +844,7 @@ struct DeviceSegmentedSort
                                  hipStream_t         stream,
                                  bool                debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return StableSortKeysDescending(d_temp_storage,
                                         temp_storage_bytes,
                                         d_keys,

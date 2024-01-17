@@ -72,7 +72,7 @@ public:
                      hipStream_t     stream,
                      bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return InclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream);
     }
 
@@ -114,7 +114,7 @@ public:
                       hipStream_t     stream,
                       bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return InclusiveScan(d_temp_storage,
                              temp_storage_bytes,
                              d_in,
@@ -153,7 +153,7 @@ public:
                      hipStream_t     stream,
                      bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ExclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items, stream);
     }
 
@@ -205,7 +205,7 @@ public:
                       hipStream_t     stream,
                       bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ExclusiveScan(d_temp_storage,
                              temp_storage_bytes,
                              d_in,
@@ -267,7 +267,7 @@ public:
                       hipStream_t                             stream,
                       bool                                    debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ExclusiveScan(d_temp_storage,
                              temp_storage_bytes,
                              d_in,
@@ -321,7 +321,7 @@ public:
                           hipStream_t           stream,
                           bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ExclusiveSumByKey(d_temp_storage,
                                  temp_storage_bytes,
                                  d_keys_in,
@@ -392,7 +392,7 @@ public:
                            hipStream_t           stream,
                            bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return ExclusiveScanByKey(d_temp_storage,
                                   temp_storage_bytes,
                                   d_keys_in,
@@ -445,7 +445,7 @@ public:
                           hipStream_t           stream,
                           bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return InclusiveSumByKey(d_temp_storage,
                                  temp_storage_bytes,
                                  d_keys_in,
@@ -511,7 +511,7 @@ public:
                            hipStream_t           stream,
                            bool                  debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return InclusiveScanByKey(d_temp_storage,
                                   temp_storage_bytes,
                                   d_keys_in,

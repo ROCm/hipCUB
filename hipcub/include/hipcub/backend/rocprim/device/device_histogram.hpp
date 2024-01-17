@@ -77,7 +77,7 @@ struct DeviceHistogram
                       hipStream_t     stream,
                       bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return HistogramEven(d_temp_storage,
                              temp_storage_bytes,
                              d_samples,
@@ -131,7 +131,7 @@ struct DeviceHistogram
                       hipStream_t     stream,
                       bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return HistogramEven(d_temp_storage,
                              temp_storage_bytes,
                              d_samples,
@@ -198,7 +198,7 @@ struct DeviceHistogram
                            hipStream_t     stream,
                            bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return MultiHistogramEven<NUM_CHANNELS>(d_temp_storage,
                                                 temp_storage_bytes,
                                                 d_samples,
@@ -269,7 +269,7 @@ struct DeviceHistogram
                            hipStream_t     stream,
                            bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return MultiHistogramEven<NUM_CHANNELS>(d_temp_storage,
                                                 temp_storage_bytes,
                                                 d_samples,
@@ -316,7 +316,7 @@ struct DeviceHistogram
                        hipStream_t     stream,
                        bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return HistogramRange(d_temp_storage,
                               temp_storage_bytes,
                               d_samples,
@@ -366,7 +366,7 @@ struct DeviceHistogram
                        hipStream_t     stream,
                        bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return HistogramRange(d_temp_storage,
                               temp_storage_bytes,
                               d_samples,
@@ -429,7 +429,7 @@ struct DeviceHistogram
                             hipStream_t     stream,
                             bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return MultiHistogramRange<NUM_CHANNELS>(d_temp_storage,
                                                  temp_storage_bytes,
                                                  d_samples,
@@ -496,7 +496,7 @@ struct DeviceHistogram
                             hipStream_t     stream,
                             bool            debug_synchronous)
     {
-        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS
+        HIPCUB_DETAIL_RUNTIME_LOG_DEBUG_SYNCHRONOUS();
         return MultiHistogramRange<NUM_CHANNELS>(d_temp_storage,
                                                  temp_storage_bytes,
                                                  d_samples,
