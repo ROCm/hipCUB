@@ -118,6 +118,10 @@ END_HIPCUB_NAMESPACE
 
 BEGIN_HIPCUB_NAMESPACE
 
+/// \brief Don't use this function directly, but via the `HipcubDebug` macro instead.
+/// If `error` is not `hipSuccess`, prints an error message containing the source filename and
+/// line information to the standard error output.
+/// \note This only happens if `HIPCUB_STDERR` is defined.
 inline
 hipError_t Debug(
     hipError_t      error,
@@ -136,6 +140,9 @@ hipError_t Debug(
     return error;
 }
 
+/// \brief Don't use this function directly, but via the `HipcubLog` macro instead.
+/// Prints the provided message containing the source filename and
+/// line information to the standard output.
 inline void Log(const char* message, const char* filename, int line)
 {
     printf("hipcub: %s [%s:%d]\n", message, filename, line);
@@ -166,7 +173,8 @@ END_HIPCUB_NAMESPACE
 
 #ifdef DOXYGEN_SHOULD_SKIP_THIS // Documentation only
 
-    /// \def If defined, synchronizes the stream after every kernel launch and prints the launch information
+    /// \def HIPCUB_DEBUG_SYNC
+    /// \brief If defined, synchronizes the stream after every kernel launch and prints the launch information
     /// to the standard output. If any of `CUB_DEBUG_SYNC`, `CUB_DEBUG_HOST_ASSERTIONS`, `CUB_DEBUG_DEVICE_ASSERTIONS`
     /// or `CUB_DEBUG_ALL` is defined, this is also defined automatically.
     #define HIPCUB_DEBUG_SYNC

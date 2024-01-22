@@ -34,7 +34,8 @@
 
 #ifdef DOXYGEN_SHOULD_SKIP_THIS // Documentation only
 
-    /// \def If defined, warnings of deprecated API use are suppressed. If `CUB_IGNORE_DEPRECATED_API` or
+    /// \def HIPCUB_IGNORE_DEPRECATED_API
+    /// \brief If defined, warnings of deprecated API use are suppressed. If `CUB_IGNORE_DEPRECATED_API` or
     /// `THRUST_IGNORE_DEPRECATED_API` is defined, this is also defined automatically.
     #define HIPCUB_IGNORE_DEPRECATED_API
 
