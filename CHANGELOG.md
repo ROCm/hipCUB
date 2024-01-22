@@ -5,6 +5,10 @@ Documentation for hipCUB is available at
 
 ## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
 
+### Changed
+
+* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.2.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+
 ### Fixed
 
 * Fixed the derivation for the accumulator type for device scan algorithms in the rocPRIM backend being different compared to CUB.
@@ -14,6 +18,11 @@ Documentation for hipCUB is available at
   * The potential values for the enum are `WARP_EXCHANGE_SMEM` and `WARP_EXCHANGE_SHUFFLE`.
   * `WARP_EXCHANGE_SMEM` stands for the previous algorithm, while `WARP_EXCHANGE_SHUFFLE` performs the exchange via shuffle operations.
   * `WARP_EXCHANGE_SHUFFLE` does not require any pre-allocated shared memory, but the `ItemsPerThread` must be a divisor of `WarpSize`.
+* `debug_synchronous` has been deprecated in hipCUB-2.13.2, and it no longer has any effect. With this release, passing `debug_synchronous`
+  to the device functions results in a deprecation warning both at runtime and at compile time.
+  * The synchronization that was previously achievable by passing `debug_synchronous=true` can now be achieved at compile time
+    by setting the `CUB_DEBUG_SYNC` (or higher debug level) or the `HIPCUB_DEBUG_SYNC` preprocessor definition.
+  * The compile time deprecation warnings can be disabled by defining the `HIPCUB_IGNORE_DEPRECATED_API` preprocessor definition.
 
 ## (Unreleased) hipCUB-3.1.0 for ROCm 6.1.0
 
