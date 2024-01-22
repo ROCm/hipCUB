@@ -137,11 +137,11 @@ fi
 #   BUILD_TEST - off by default,
 #   BUILD_BENCHMARK - off by default.
 #
-compiler="hipcc"
+compiler="amdclang++"
 
 cmake_executable="cmake"
 
-cmake_common_options=""
+cmake_common_options="--toolchain=toolchain-linux.cmake"
 
 if [[ "${build_benchmark}" == true ]]; then
     build_benchmarks="-DBUILD_BENCHMARK=ON"
