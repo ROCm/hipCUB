@@ -25,17 +25,20 @@
 // HIP API
 #include "hipcub/warp/warp_exchange.hpp"
 
+#include <type_traits>
+
 #ifndef DEFAULT_N
 const size_t DEFAULT_N = 1024 * 1024 * 32;
 #endif
 
-template<class T,
-         unsigned                        BlockSize,
+template<unsigned                        BlockSize,
          unsigned                        ItemsPerThread,
          unsigned                        LogicalWarpSize,
          ::hipcub::WarpExchangeAlgorithm Algorithm,
-         class Op>
-__global__ __launch_bounds__(BlockSize) void warp_exchange_kernel(T* d_output)
+         class Op,
+         class T>
+__device__ auto warp_exchange_benchmark(T* d_output)
+    -> std::enable_if_t<benchmark_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
 {
     T thread_data[ItemsPerThread];
     #pragma unroll
@@ -44,12 +47,11 @@ __global__ __launch_bounds__(BlockSize) void warp_exchange_kernel(T* d_output)
         thread_data[i] = static_cast<T>(i);
     }
 
-    using WarpExchangeT
-        = ::hipcub::WarpExchange<T,
-                                 ItemsPerThread,
-                                 ::benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value,
-                                 1, // ARCH
-                                 Algorithm>;
+    using WarpExchangeT                                           = ::hipcub::WarpExchange<T,
+                                                 ItemsPerThread,
+                                                 LogicalWarpSize,
+                                                 1, // ARCH
+                                                 Algorithm>;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
     const unsigned                                 warp_id = threadIdx.x / LogicalWarpSize;
@@ -65,16 +67,34 @@ __global__ __launch_bounds__(BlockSize) void warp_exchange_kernel(T* d_output)
     }
 }
 
-template<
-    class T,
-    class OffsetT,
-    unsigned BlockSize,
-    unsigned ItemsPerThread,
-    unsigned LogicalWarpSize
->
-__global__
-__launch_bounds__(BlockSize)
-void warp_exchange_scatter_to_striped_kernel(T* d_output)
+template<unsigned                        BlockSize,
+         unsigned                        ItemsPerThread,
+         unsigned                        LogicalWarpSize,
+         ::hipcub::WarpExchangeAlgorithm Algorithm,
+         class Op,
+         class T>
+__device__ auto warp_exchange_benchmark(T* /*d_output*/)
+    -> std::enable_if_t<!benchmark_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+{}
+
+template<unsigned                        BlockSize,
+         unsigned                        ItemsPerThread,
+         unsigned                        LogicalWarpSize,
+         ::hipcub::WarpExchangeAlgorithm Algorithm,
+         class Op,
+         class T>
+__global__ __launch_bounds__(BlockSize) void warp_exchange_kernel(T* d_output)
+{
+    warp_exchange_benchmark<BlockSize, ItemsPerThread, LogicalWarpSize, Algorithm, Op>(d_output);
+}
+
+template<class OffsetT,
+         unsigned BlockSize,
+         unsigned ItemsPerThread,
+         unsigned LogicalWarpSize,
+         class T>
+__device__ auto warp_exchange_scatter_to_striped_benchmark(T* d_output)
+    -> std::enable_if_t<benchmark_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
 {
     const unsigned warp_id = threadIdx.x / LogicalWarpSize;
     T thread_data[ItemsPerThread];
@@ -86,11 +106,7 @@ void warp_exchange_scatter_to_striped_kernel(T* d_output)
         thread_ranks[i] = static_cast<OffsetT>(LogicalWarpSize - warp_id * ItemsPerThread - i - 1);
     }
 
-    using WarpExchangeT = ::hipcub::WarpExchange<
-        T,
-        ItemsPerThread,
-        ::benchmark_utils::DeviceSelectWarpSize<LogicalWarpSize>::value
-    >;
+    using WarpExchangeT = ::hipcub::WarpExchange<T, ItemsPerThread, LogicalWarpSize>;
     constexpr unsigned warps_in_block = BlockSize / LogicalWarpSize;
     __shared__ typename WarpExchangeT::TempStorage temp_storage[warps_in_block];
 
@@ -103,6 +119,26 @@ void warp_exchange_scatter_to_striped_kernel(T* d_output)
             = BlockSize * ItemsPerThread * blockIdx.x + BlockSize * i + threadIdx.x;
         d_output[striped_global_idx] = thread_data[i];
     }
+}
+
+template<class OffsetT,
+         unsigned BlockSize,
+         unsigned ItemsPerThread,
+         unsigned LogicalWarpSize,
+         class T>
+__device__ auto warp_exchange_scatter_to_striped_benchmark(T* /*d_output*/)
+    -> std::enable_if_t<!benchmark_utils::device_test_enabled_for_warp_size_v<LogicalWarpSize>>
+{}
+
+template<class OffsetT,
+         unsigned BlockSize,
+         unsigned ItemsPerThread,
+         unsigned LogicalWarpSize,
+         class T>
+__global__ __launch_bounds__(BlockSize) void warp_exchange_scatter_to_striped_kernel(T* d_output)
+{
+    warp_exchange_scatter_to_striped_benchmark<OffsetT, BlockSize, ItemsPerThread, LogicalWarpSize>(
+        d_output);
 }
 
 template<class T,
@@ -126,7 +162,7 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t N)
 
         for (size_t i = 0; i < trials; ++i)
         {
-            warp_exchange_kernel<T, BlockSize, ItemsPerThread, LogicalWarpSize, Algorithm, Op>
+            warp_exchange_kernel<BlockSize, ItemsPerThread, LogicalWarpSize, Algorithm, Op>
                 <<<dim3(size / items_per_block), dim3(BlockSize), 0, stream>>>(d_output);
         }
 
@@ -165,8 +201,7 @@ void run_benchmark_scatter_to_striped(benchmark::State& state, hipStream_t strea
 
         for (size_t i = 0; i < trials; ++i)
         {
-            warp_exchange_scatter_to_striped_kernel<T,
-                                                    OffsetT,
+            warp_exchange_scatter_to_striped_kernel<OffsetT,
                                                     BlockSize,
                                                     ItemsPerThread,
                                                     LogicalWarpSize>

@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2020-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2020-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -353,13 +353,9 @@ bool is_warp_size_supported(const unsigned required_warp_size)
     return HIPCUB_HOST_WARP_THREADS >= required_warp_size;
 }
 
-template<unsigned LogicalWarpSize>
-struct DeviceSelectWarpSize
-{
-    static constexpr unsigned value = HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize
-                                          ? LogicalWarpSize
-                                          : HIPCUB_DEVICE_WARP_THREADS;
-};
+template<unsigned int LogicalWarpSize>
+__device__ constexpr bool device_test_enabled_for_warp_size_v
+    = HIPCUB_DEVICE_WARP_THREADS >= LogicalWarpSize;
 
 template<typename Iterator>
 using it_value_t = typename std::iterator_traits<Iterator>::value_type;
