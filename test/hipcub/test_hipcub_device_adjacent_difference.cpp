@@ -25,6 +25,7 @@
 // hipcub API
 #include "hipcub/device/device_adjacent_difference.hpp"
 #include "hipcub/iterator/counting_input_iterator.hpp"
+#include "hipcub/iterator/discard_output_iterator.hpp"
 #include "hipcub/iterator/transform_input_iterator.hpp"
 #include "test_utils_data_generation.hpp"
 
@@ -305,61 +306,6 @@ struct discard_write
     }
 };
 
-class discard_iterator
-{
-public:
-    struct discard_value
-    {
-        inline discard_value() = default;
-
-        template<class T>
-        HIPCUB_HOST_DEVICE inline discard_value(T){};
-
-        inline ~discard_value() = default;
-
-        template<class T>
-        HIPCUB_HOST_DEVICE inline discard_value& operator=(const T&)
-        {
-            return *this;
-        }
-    };
-
-    typedef discard_iterator self_type; ///< My own type
-    typedef discard_value    value_type; ///< The type of the element the iterator can point to
-    typedef discard_value*
-        pointer; ///< The type of a pointer to an element the iterator can point to
-    typedef discard_value
-        reference; ///< The type of a reference to an element the iterator can point to
-    typedef ptrdiff_t                       difference_type;
-    typedef std::random_access_iterator_tag iterator_category; ///< The iterator category
-    /// \brief Creates a new discard_iterator.
-    ///
-    /// \param index - optional index of discard iterator (default = 0).
-    HIPCUB_HOST_DEVICE inline discard_iterator(size_t index = 0) : index_(index) {}
-
-    inline ~discard_iterator() = default;
-
-    HIPCUB_HOST_DEVICE inline discard_value operator*() const
-    {
-        return discard_value();
-    }
-
-    HIPCUB_HOST_DEVICE inline discard_value operator[](difference_type distance) const
-    {
-        discard_iterator i = (*this) + distance;
-        return *i;
-    }
-
-    HIPCUB_HOST_DEVICE inline discard_iterator operator+(difference_type distance) const
-    {
-        auto i = static_cast<size_t>(static_cast<difference_type>(index_) + distance);
-        return discard_iterator(i);
-    }
-
-private:
-    mutable size_t index_;
-};
-
 template<class T, class InputIterator, class UnaryFunction>
 HIPCUB_HOST_DEVICE inline auto make_transform_iterator(InputIterator iterator,
                                                        UnaryFunction transform)
@@ -426,7 +372,7 @@ TYPED_TEST(HipcubDeviceAdjacentDifferenceLargeTests, LargeIndicesAndOpOnce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T                                 = size_t;
-    using OutputIterator                    = discard_iterator;
+    using OutputIterator                    = hipcub::DiscardOutputIterator<>;
     static constexpr bool left              = TestFixture::left;
     static constexpr bool copy              = TestFixture::copy;
 
