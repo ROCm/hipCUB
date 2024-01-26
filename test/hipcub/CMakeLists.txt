@@ -204,6 +204,7 @@ add_hipcub_test("hipcub.BlockRunLengthDecode" test_hipcub_block_run_length_decod
 add_hipcub_test("hipcub.BlockScan" test_hipcub_block_scan.cpp)
 add_hipcub_test("hipcub.BlockShuffle" test_hipcub_block_shuffle.cpp)
 add_hipcub_test("hipcub.DeviceAdjacentDifference" test_hipcub_device_adjacent_difference.cpp)
+add_hipcub_test("hipcub.DeviceCopy" test_hipcub_device_copy.cpp)
 add_hipcub_test("hipcub.DeviceHistogram" test_hipcub_device_histogram.cpp)
 add_hipcub_test("hipcub.DeviceMemcpy" test_hipcub_device_memcpy.cpp)
 add_hipcub_test("hipcub.DeviceMergeSort" test_hipcub_device_merge_sort.cpp)
