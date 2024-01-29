@@ -52,10 +52,10 @@ constexpr int32_t blev_min_size = 1024;
 
 // Used for generating offsets. We generate a permutation map and then derive
 // offsets via a sum scan over the sizes in the order of the permutation. This
-// allows us to keep the order of buffers we pass to batch_memcpy, but still
+// allows us to keep the order of buffers we pass to batch_copy, but still
 // have source and destinations mappings not be the identity function:
 //
-//  batch_memcpy(
+//  batch_copy(
 //    [&a0 , &b0 , &c0 , &d0 ], // from (note the order is still just a, b, c, d!)
 //    [&a0', &b0', &c0', &d0'], // to   (order is the same as above too!)
 //    [3   , 2   , 1   , 2   ]) // size
@@ -65,7 +65,7 @@ constexpr int32_t blev_min_size = 1024;
 // └───┴───┴───┴───┴───┴───┴───┴───┘ note that the order of buffers is shuffled!
 //  ───┬─── ─────┬───── ───┬─── ───
 //     └─────────┼─────────┼───┐
-//           ┌───┘     ┌───┘   │ what batch_memcpy does
+//           ┌───┘     ┌───┘   │ what batch_copy does
 //           ▼         ▼       ▼
 //  ─── ─────────── ─────── ───────
 // ┌───┬───┬───┬───┬───┬───┬───┬───┐
