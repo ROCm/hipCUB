@@ -220,11 +220,11 @@ TYPED_TEST(DeviceBatchCopyTests, SizeAndTypeVariation)
     size_t temp_storage_bytes = 0;
 
     HIP_CHECK(hipcub::DeviceCopy::Batched(nullptr,
-                                            temp_storage_bytes,
-                                            d_buffer_srcs,
-                                            d_buffer_dsts,
-                                            d_buffer_sizes,
-                                            num_buffers));
+                                          temp_storage_bytes,
+                                          d_buffer_srcs,
+                                          d_buffer_dsts,
+                                          d_buffer_sizes,
+                                          num_buffers));
 
     void* d_temp_storage{};
 
@@ -297,12 +297,12 @@ TYPED_TEST(DeviceBatchCopyTests, SizeAndTypeVariation)
 
     // Run batched copy.
     HIP_CHECK(hipcub::DeviceCopy::Batched(d_temp_storage,
-                                            temp_storage_bytes,
-                                            d_buffer_srcs,
-                                            d_buffer_dsts,
-                                            d_buffer_sizes,
-                                            num_buffers,
-                                            hipStreamDefault));
+                                          temp_storage_bytes,
+                                          d_buffer_srcs,
+                                          d_buffer_dsts,
+                                          d_buffer_sizes,
+                                          num_buffers,
+                                          hipStreamDefault));
     // Verify results.
     std::vector<value_alias> h_output(total_num_elements);
     HIP_CHECK(hipMemcpy(h_output.data(), d_output, total_num_bytes, hipMemcpyDeviceToHost));

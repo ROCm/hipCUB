@@ -272,11 +272,11 @@ void run_benchmark(benchmark::State& state,
     size_t                                     temp_storage_bytes = 0;
     BatchMemcpyData<ValueType, BufferSizeType> data;
     HIP_CHECK(hipcub::DeviceCopy::Batched(nullptr,
-                                            temp_storage_bytes,
-                                            data.d_buffer_srcs,
-                                            data.d_buffer_dsts,
-                                            data.d_buffer_sizes,
-                                            num_buffers));
+                                          temp_storage_bytes,
+                                          data.d_buffer_srcs,
+                                          data.d_buffer_dsts,
+                                          data.d_buffer_sizes,
+                                          num_buffers));
 
     void* d_temp_storage = nullptr;
     HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_bytes));
@@ -289,12 +289,12 @@ void run_benchmark(benchmark::State& state,
     for(size_t i = 0; i < warmup_size; i++)
     {
         HIP_CHECK(hipcub::DeviceCopy::Batched(d_temp_storage,
-                                                temp_storage_bytes,
-                                                data.d_buffer_srcs,
-                                                data.d_buffer_dsts,
-                                                data.d_buffer_sizes,
-                                                num_buffers,
-                                                stream));
+                                              temp_storage_bytes,
+                                              data.d_buffer_srcs,
+                                              data.d_buffer_dsts,
+                                              data.d_buffer_sizes,
+                                              num_buffers,
+                                              stream));
     }
     HIP_CHECK(hipDeviceSynchronize());
 
@@ -309,12 +309,12 @@ void run_benchmark(benchmark::State& state,
         HIP_CHECK(hipEventRecord(start, stream));
 
         HIP_CHECK(hipcub::DeviceCopy::Batched(d_temp_storage,
-                                                temp_storage_bytes,
-                                                data.d_buffer_srcs,
-                                                data.d_buffer_dsts,
-                                                data.d_buffer_sizes,
-                                                num_buffers,
-                                                stream));
+                                              temp_storage_bytes,
+                                              data.d_buffer_srcs,
+                                              data.d_buffer_dsts,
+                                              data.d_buffer_sizes,
+                                              num_buffers,
+                                              stream));
 
         // Record stop event and wait until it completes
         HIP_CHECK(hipEventRecord(stop, stream));

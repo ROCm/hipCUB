@@ -46,7 +46,7 @@ struct DeviceCopy
                               OutputBufferIt      output_buffer_it,
                               BufferSizeIteratorT buffer_sizes,
                               uint32_t            num_buffers,
-                              hipStream_t         stream            = 0)
+                              hipStream_t         stream = 0)
     {
         return rocprim::batch_copy(d_temp_storage,
                                    temp_storage_bytes,
