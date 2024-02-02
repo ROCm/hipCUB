@@ -89,11 +89,11 @@ HIPCUB_DEVICE __forceinline__ void AsmThreadStore(void * ptr, T val)
     HIPCUB_ASM_THREAD_STORE(cache_modifier, llvm_cache_modifier, double, uint64_t, flat_store_dwordx2, v, wait_inst, wait_cmd);
 
 #if defined(__gfx940__) || defined(__gfx941__)
-HIPCUB_ASM_THREAD_STORE_GROUP(STORE_WB, "sc0 sc1", "s_waitcnt", "");
-HIPCUB_ASM_THREAD_STORE_GROUP(STORE_CG, "sc0 sc1", "s_waitcnt", "");
-HIPCUB_ASM_THREAD_STORE_GROUP(STORE_WT, "sc0 sc1", "s_waitcnt", "vmcnt");
-HIPCUB_ASM_THREAD_STORE_GROUP(STORE_VOLATILE, "sc0 sc1", "s_waitcnt", "vmcnt");
-#elif defined(__gfx942__)
+HIPCUB_ASM_THREAD_STORE_GROUP(store_wb, "sc0 sc1", "s_waitcnt", "");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_cg, "sc0 sc1", "s_waitcnt", "");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_wt, "sc0 sc1", "s_waitcnt", "vmcnt");
+HIPCUB_ASM_THREAD_STORE_GROUP(store_volatile, "sc0 sc1", "s_waitcnt", "vmcnt");
+#elif defined(__gfx942__) || defined(__gfx950__)
 HIPCUB_ASM_THREAD_STORE_GROUP(STORE_WB, "sc0", "s_waitcnt", "");
 HIPCUB_ASM_THREAD_STORE_GROUP(STORE_CG, "sc0 nt", "s_waitcnt", "");
 HIPCUB_ASM_THREAD_STORE_GROUP(STORE_WT, "sc0", "s_waitcnt", "vmcnt");
