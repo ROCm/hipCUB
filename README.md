@@ -196,7 +196,7 @@ python3 -m http.server
 ```
 
 ## Support
- 
+
 Bugs and feature requests can be reported through [the issue tracker](https://github.com/ROCmSoftwarePlatform/hipCUB/issues).
 
 ## Contributions and License
