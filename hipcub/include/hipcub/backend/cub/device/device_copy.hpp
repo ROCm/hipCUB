@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2011-2022, NVIDIA CORPORATION. All rights reserved.
  * Modifications Copyright (c) 2024, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,12 @@
  *
  ******************************************************************************/
 
-#ifndef HIPCUB_ROCPRIM_DEVICE_DEVICE_COPY_HPP_
-#define HIPCUB_ROCPRIM_DEVICE_DEVICE_COPY_HPP_
+#ifndef HIPCUB_CUB_DEVICE_DEVICE_COPY_HPP_
+#define HIPCUB_CUB_DEVICE_DEVICE_COPY_HPP_
 
 #include "../../../config.hpp"
 
-#include <rocprim/device/device_copy.hpp>
+#include <cub/device/device_copy.cuh>
 
 #include <hip/hip_runtime.h>
 
@@ -48,17 +48,16 @@ struct DeviceCopy
                               uint32_t            num_buffers,
                               hipStream_t         stream = 0)
     {
-        return rocprim::batch_copy(d_temp_storage,
-                                   temp_storage_bytes,
-                                   input_buffer_it,
-                                   output_buffer_it,
-                                   buffer_sizes,
-                                   num_buffers,
-                                   stream,
-                                   HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        return hipCUDAErrorTohipError(::cub::DeviceCopy::Batched(d_temp_storage,
+                                                                 temp_storage_bytes,
+                                                                 input_buffer_it,
+                                                                 output_buffer_it,
+                                                                 buffer_sizes,
+                                                                 num_buffers,
+                                                                 stream));
     }
 };
 
 END_HIPCUB_NAMESPACE
 
-#endif // HIPCUB_ROCPRIM_DEVICE_DEVICE_COPY_HPP_
+#endif // HIPCUB_CUB_DEVICE_DEVICE_COPY_HPP_
