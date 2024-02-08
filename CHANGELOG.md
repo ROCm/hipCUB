@@ -5,6 +5,9 @@ Documentation for hipCUB is available at
 
 ## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
 
+### Added
+* Add `DeviceCopy` function to have parity with CUB.
+
 ### Changed
 
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.2.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
