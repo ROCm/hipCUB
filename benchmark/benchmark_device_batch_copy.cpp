@@ -101,7 +101,7 @@ struct BatchCopyData
     ValueType**     d_buffer_dsts      = nullptr;
     BufferSizeType* d_buffer_sizes     = nullptr;
 
-    BatchCopyData()                       = default;
+    BatchCopyData()                     = default;
     BatchCopyData(const BatchCopyData&) = delete;
 
     BatchCopyData(BatchCopyData&& other)
@@ -143,8 +143,8 @@ struct BatchCopyData
 
 template<class ValueType, class BufferSizeType>
 BatchCopyData<ValueType, BufferSizeType> prepare_data(const int32_t num_tlev_buffers = 1024,
-                                                        const int32_t num_wlev_buffers = 1024,
-                                                        const int32_t num_blev_buffers = 1024)
+                                                      const int32_t num_wlev_buffers = 1024,
+                                                      const int32_t num_blev_buffers = 1024)
 {
     const bool shuffle_buffers = false;
 
@@ -266,7 +266,7 @@ void run_benchmark(benchmark::State& state,
 {
     const size_t num_buffers = num_tlev_buffers + num_wlev_buffers + num_blev_buffers;
 
-    size_t                                     temp_storage_bytes = 0;
+    size_t                                   temp_storage_bytes = 0;
     BatchCopyData<ValueType, BufferSizeType> data;
     HIP_CHECK(hipcub::DeviceCopy::Batched(nullptr,
                                           temp_storage_bytes,
