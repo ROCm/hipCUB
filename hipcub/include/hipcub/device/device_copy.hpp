@@ -35,4 +35,4 @@
     #include "../backend/cub/device/device_copy.hpp"
 #endif
 
-#endif // HIPCUB_DEVICE_DEVICE_MEMCPY_HPP_
+#endif // HIPCUB_DEVICE_DEVICE_COPY_HPP_

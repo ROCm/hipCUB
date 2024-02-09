@@ -29,20 +29,17 @@
 #include "hipcub/device/device_copy.hpp"
 #include "hipcub/hipcub.hpp"
 
-#ifdef __HIP_PLATFORM_AMD__
-    // Only include this on AMD as it contains specialized config information
-    #include <rocprim/device/device_memcpy_config.hpp>
-#endif
-
 #include <hip/hip_runtime.h>
 
+#include <algorithm>
+#include <cstdint>
 #include <iostream>
+#include <memory>
 #include <numeric>
 #include <random>
+#include <string>
 #include <utility>
 #include <vector>
-
-#include <stdint.h>
 
 constexpr uint32_t warmup_size = 5;
 constexpr int32_t  max_size    = 1024 * 1024;
@@ -95,7 +92,7 @@ std::vector<T> shuffled_exclusive_scan(const std::vector<S>& input, RandomGenera
 using offset_type = size_t;
 
 template<typename ValueType, typename BufferSizeType>
-struct BatchMemcpyData
+struct BatchCopyData
 {
     size_t          total_num_elements = 0;
     ValueType*      d_input            = nullptr;
@@ -104,10 +101,10 @@ struct BatchMemcpyData
     ValueType**     d_buffer_dsts      = nullptr;
     BufferSizeType* d_buffer_sizes     = nullptr;
 
-    BatchMemcpyData()                       = default;
-    BatchMemcpyData(const BatchMemcpyData&) = delete;
+    BatchCopyData()                       = default;
+    BatchCopyData(const BatchCopyData&) = delete;
 
-    BatchMemcpyData(BatchMemcpyData&& other)
+    BatchCopyData(BatchCopyData&& other)
         : total_num_elements{std::exchange(other.total_num_elements, 0)}
         , d_input{std::exchange(other.d_input, nullptr)}
         , d_output{std::exchange(other.d_output, nullptr)}
@@ -116,7 +113,7 @@ struct BatchMemcpyData
         , d_buffer_sizes{std::exchange(other.d_buffer_sizes, nullptr)}
     {}
 
-    BatchMemcpyData& operator=(BatchMemcpyData&& other)
+    BatchCopyData& operator=(BatchCopyData&& other)
     {
         total_num_elements = std::exchange(other.total_num_elements, 0);
         d_input            = std::exchange(other.d_input, nullptr);
@@ -127,14 +124,14 @@ struct BatchMemcpyData
         return *this;
     };
 
-    BatchMemcpyData& operator=(const BatchMemcpyData&) = delete;
+    BatchCopyData& operator=(const BatchCopyData&) = delete;
 
     size_t total_num_bytes() const
     {
         return total_num_elements * sizeof(ValueType);
     }
 
-    ~BatchMemcpyData()
+    ~BatchCopyData()
     {
         HIP_CHECK(hipFree(d_buffer_sizes));
         HIP_CHECK(hipFree(d_buffer_srcs));
@@ -145,13 +142,13 @@ struct BatchMemcpyData
 };
 
 template<class ValueType, class BufferSizeType>
-BatchMemcpyData<ValueType, BufferSizeType> prepare_data(const int32_t num_tlev_buffers = 1024,
+BatchCopyData<ValueType, BufferSizeType> prepare_data(const int32_t num_tlev_buffers = 1024,
                                                         const int32_t num_wlev_buffers = 1024,
                                                         const int32_t num_blev_buffers = 1024)
 {
     const bool shuffle_buffers = false;
 
-    BatchMemcpyData<ValueType, BufferSizeType> result;
+    BatchCopyData<ValueType, BufferSizeType> result;
     const size_t num_buffers = num_tlev_buffers + num_wlev_buffers + num_blev_buffers;
 
     constexpr int32_t wlev_min_elems
@@ -241,7 +238,7 @@ BatchMemcpyData<ValueType, BufferSizeType> prepare_data(const int32_t num_tlev_b
         h_buffer_dsts[i] = result.d_output + dst_offsets[i];
     }
 
-    // Prepare the batch memcpy.
+    // Prepare the batch copy.
     HIP_CHECK(
         hipMemcpy(result.d_input, h_input.get(), result.total_num_bytes(), hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy(result.d_buffer_srcs,
@@ -270,7 +267,7 @@ void run_benchmark(benchmark::State& state,
     const size_t num_buffers = num_tlev_buffers + num_wlev_buffers + num_blev_buffers;
 
     size_t                                     temp_storage_bytes = 0;
-    BatchMemcpyData<ValueType, BufferSizeType> data;
+    BatchCopyData<ValueType, BufferSizeType> data;
     HIP_CHECK(hipcub::DeviceCopy::Batched(nullptr,
                                           temp_storage_bytes,
                                           data.d_buffer_srcs,
