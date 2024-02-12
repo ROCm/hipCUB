@@ -149,10 +149,8 @@ public:
             input, inclusive_output, exclusive_output, initial_value,
             temp_storage_, scan_op
         );
-        // In CUB documentation it's unclear if inclusive_output should include initial_value,
-        // however,the implementation includes initial_value in inclusive_output in WarpScan::Scan().
-        // In rocPRIM it's not included, and this is a fix to match CUB implementation.
-        // After confirmation from CUB's developers we will most probably change rocPRIM too.
+        // rocPRIM's warp_scan::scan inclusive_output does not include initial_value,
+        //   CUB's WarpScan::Scan inclusive_output does include initial_value.
         inclusive_output = scan_op(initial_value, inclusive_output);
     }
 
