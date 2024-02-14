@@ -16,60 +16,51 @@ Data type support
 
     *
       - Input/Output Types
-      - Library Data Type
       - AMD Support
       - CUDA Support
     *
       - int8
-      - int8_t
       - ✅
       - ✅
     *
       - float8
-      - Not Supported
       - ❌
       - ❌
     *
       - bfloat8
-      - Not Supported
       - ❌
       - ❌
     *
       - int16
-      - int16_t
       - ✅
       - ✅
     *
       - float16
-      - __half
       - ✅
       - ✅ [#]_
     *
       - bfloat16      
-      - hip_bfloat16
       - ✅
       - ✅ [#]_
     *
       - int32
-      - int
       - ✅
       - ✅
     *
       - tensorfloat32
-      - Not Supported
       - ❌
       - ❌
     *
       - float32
-      - float
       - ✅
       - ✅
     *
       - float64
-      - double
       - ✅
       - ✅
 
 .. rubric:: Footnotes
 .. [#] NVidia backend can't handle ``half`` with the following API calls: ``block_adjacent_difference``, ``device_adjacenet_difference``, ``device_reduce``, ``device_scan``, ``device_segmented_reduce`` and ``device_select``.
 .. [#] NVidia backend can't handle ``bfloat16`` with the following API calls: ``block_adjacent_difference``, ``device_adjacenet_difference``, ``device_reduce``, ``device_scan``, ``device_segmented_reduce``, ``device_select`` and ``device_histogram``.
+
+You can find the ROCm data type support summary and types description at :doc:`Supported data types in ROCm<rocm:about/compatibility/data-type-support>`
