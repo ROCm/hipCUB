@@ -33,6 +33,9 @@ using tuple = ::cuda::std::tuple<Args...>;
 template<size_t I, class T>
 using tuple_element = ::cuda::std::tuple_element<I, T>;
 
+template<size_t I, class T>
+using tuple_element_t = ::cuda::std::tuple_element_t<I, T>;
+
 template<class T>
 using tuple_size = ::cuda::std::tuple_size<T>;
 
