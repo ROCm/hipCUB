@@ -279,9 +279,9 @@ struct custom_type
 
     HIPCUB_HOST_DEVICE custom_type& operator+=(const custom_type& rhs)
     {
-        this->x += rhs.x;
-        this->y += rhs.y;
-        return *this;
+       this->x += rhs.x;
+       this->y += rhs.y;
+       return *this;
     }
 };
 
@@ -302,7 +302,7 @@ struct custom_type_decomposer
 
     HIPCUB_HOST_DEVICE ::hipcub::tuple<T&, U&> operator()(CustomType& key) const
     {
-        return ::hipcub::tuple<T&, U&>{key.x, key.y};
+       return ::hipcub::tuple<T&, U&>{key.x, key.y};
     }
 };
 
@@ -450,7 +450,7 @@ namespace std
         public:
             static constexpr inline T min()
             {
-                return std::numeric_limits<typename T::first_type>::min();
+        return std::numeric_limits<typename T::first_type>::min();
             }
 
         static constexpr inline T max()
@@ -472,7 +472,7 @@ namespace std
         public:
             static constexpr inline T min()
             {
-                return std::numeric_limits<typename T::first_type>::min();
+            return std::numeric_limits<typename T::first_type>::min();
             }
 
         static constexpr inline T max()
