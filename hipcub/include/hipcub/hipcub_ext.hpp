@@ -79,8 +79,8 @@ HIPCUB_RUNTIME_FUNCTION inline hipError_t device_synchronize()
 }
 }
 
-#include "util_device.cuh"
-#include "single_pass_scan_operators.cuh"
+#include "util_device.hpp"
+#include "single_pass_scan_operators.hpp"
 }// End of namespace hipcub_extensions
 
 #endif

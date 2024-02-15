@@ -35,7 +35,7 @@
 
 #include <iterator>
 
-#include "thread_load.cuh"
+#include "thread_load.hpp"
 
 // TODO Support NVIDIA arch + AMD warpsize 32
 using lane_mask = uint64_t;
