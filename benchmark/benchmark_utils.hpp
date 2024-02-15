@@ -35,6 +35,8 @@
     #include <cub/util_ptx.cuh>
 #endif
 
+#include "hipcub/tuple.hpp"
+
 #ifndef HIPCUB_CUB_API
 #define HIPCUB_WARP_THREADS_MACRO warpSize
 #else
@@ -275,7 +277,12 @@ struct custom_type
        return !(*this == other);
     }
 
-
+    HIPCUB_HOST_DEVICE custom_type& operator+=(const custom_type& rhs)
+    {
+        this->x += rhs.x;
+        this->y += rhs.y;
+        return *this;
+    }
 };
 
 template<typename>
@@ -283,6 +290,21 @@ struct is_custom_type : std::false_type {};
 
 template<class T, class U>
 struct is_custom_type<custom_type<T,U>> : std::true_type {};
+
+template<class CustomType>
+struct custom_type_decomposer
+{
+    static_assert(is_custom_type<CustomType>::value,
+                  "custom_type_decomposer can only be used with instantiations of custom_type");
+
+    using T = typename CustomType::first_type;
+    using U = typename CustomType::second_type;
+
+    HIPCUB_HOST_DEVICE ::hipcub::tuple<T&, U&> operator()(CustomType& key) const
+    {
+        return ::hipcub::tuple<T&, U&>{key.x, key.y};
+    }
+};
 
 template<class T>
 inline auto get_random_data(size_t size, T min, T max, size_t max_random_size = 1024 * 1024)
@@ -426,6 +448,10 @@ namespace std
         using T = typename benchmark_utils::custom_type<int>;
 
         public:
+            static constexpr inline T min()
+            {
+                return std::numeric_limits<typename T::first_type>::min();
+            }
 
         static constexpr inline T max()
         {
@@ -444,6 +470,10 @@ namespace std
         using T = typename benchmark_utils::custom_type<float>;
 
         public:
+            static constexpr inline T min()
+            {
+                return std::numeric_limits<typename T::first_type>::min();
+            }
 
         static constexpr inline T max()
         {
