@@ -93,6 +93,58 @@ struct DeviceRadixSort
                          stream);
     }
 
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairs(void*         d_temp_storage,
+                                                  size_t&       temp_storage_bytes,
+                                                  const KeyT*   d_keys_in,
+                                                  KeyT*         d_keys_out,
+                                                  const ValueT* d_values_in,
+                                                  ValueT*       d_values_out,
+                                                  NumItemsT     num_items,
+                                                  DecomposerT   decomposer,
+                                                  int           begin_bit,
+                                                  int           end_bit,
+                                                  hipStream_t   stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_pairs(d_temp_storage,
+                                           temp_storage_bytes,
+                                           d_keys_in,
+                                           d_keys_out,
+                                           d_values_in,
+                                           d_values_out,
+                                           num_items,
+                                           decomposer,
+                                           begin_bit,
+                                           end_bit,
+                                           stream,
+                                           HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairs(void*         d_temp_storage,
+                                                  size_t&       temp_storage_bytes,
+                                                  const KeyT*   d_keys_in,
+                                                  KeyT*         d_keys_out,
+                                                  const ValueT* d_values_in,
+                                                  ValueT*       d_values_out,
+                                                  NumItemsT     num_items,
+                                                  DecomposerT   decomposer,
+                                                  hipStream_t   stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_pairs(d_temp_storage,
+                                           temp_storage_bytes,
+                                           d_keys_in,
+                                           d_keys_out,
+                                           d_values_in,
+                                           d_values_out,
+                                           num_items,
+                                           decomposer,
+                                           stream,
+                                           HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
     template<typename KeyT, typename ValueT, typename NumItemsT>
     HIPCUB_RUNTIME_FUNCTION static hipError_t SortPairs(void*                 d_temp_storage,
                                                         size_t&               temp_storage_bytes,
@@ -140,6 +192,60 @@ struct DeviceRadixSort
                          begin_bit,
                          end_bit,
                          stream);
+    }
+
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairs(void*                 d_temp_storage,
+                                                  size_t&               temp_storage_bytes,
+                                                  DoubleBuffer<KeyT>&   d_keys,
+                                                  DoubleBuffer<ValueT>& d_values,
+                                                  NumItemsT             num_items,
+                                                  DecomposerT           decomposer,
+                                                  int                   begin_bit,
+                                                  int                   end_bit,
+                                                  hipStream_t           stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT>   d_keys_db   = detail::to_double_buffer(d_keys);
+        ::rocprim::double_buffer<ValueT> d_values_db = detail::to_double_buffer(d_values);
+        const hipError_t                 error       = ::rocprim::radix_sort_pairs(d_temp_storage,
+                                                             temp_storage_bytes,
+                                                             d_keys_db,
+                                                             d_values_db,
+                                                             num_items,
+                                                             decomposer,
+                                                             begin_bit,
+                                                             end_bit,
+                                                             stream,
+                                                             HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        detail::update_double_buffer(d_values, d_values_db);
+        return error;
+    }
+
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairs(void*                 d_temp_storage,
+                                                  size_t&               temp_storage_bytes,
+                                                  DoubleBuffer<KeyT>&   d_keys,
+                                                  DoubleBuffer<ValueT>& d_values,
+                                                  NumItemsT             num_items,
+                                                  DecomposerT           decomposer,
+                                                  hipStream_t           stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT>   d_keys_db   = detail::to_double_buffer(d_keys);
+        ::rocprim::double_buffer<ValueT> d_values_db = detail::to_double_buffer(d_values);
+        const hipError_t                 error       = ::rocprim::radix_sort_pairs(d_temp_storage,
+                                                             temp_storage_bytes,
+                                                             d_keys_db,
+                                                             d_values_db,
+                                                             num_items,
+                                                             decomposer,
+                                                             stream,
+                                                             HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        detail::update_double_buffer(d_values, d_values_db);
+        return error;
     }
 
     template<typename KeyT, typename ValueT, typename NumItemsT>
@@ -194,6 +300,58 @@ struct DeviceRadixSort
                                    stream);
     }
 
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairsDescending(void*         d_temp_storage,
+                                                            size_t&       temp_storage_bytes,
+                                                            const KeyT*   d_keys_in,
+                                                            KeyT*         d_keys_out,
+                                                            const ValueT* d_values_in,
+                                                            ValueT*       d_values_out,
+                                                            NumItemsT     num_items,
+                                                            DecomposerT   decomposer,
+                                                            int           begin_bit,
+                                                            int           end_bit,
+                                                            hipStream_t   stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_pairs_desc(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_keys_in,
+                                                d_keys_out,
+                                                d_values_in,
+                                                d_values_out,
+                                                num_items,
+                                                decomposer,
+                                                begin_bit,
+                                                end_bit,
+                                                stream,
+                                                HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairsDescending(void*         d_temp_storage,
+                                                            size_t&       temp_storage_bytes,
+                                                            const KeyT*   d_keys_in,
+                                                            KeyT*         d_keys_out,
+                                                            const ValueT* d_values_in,
+                                                            ValueT*       d_values_out,
+                                                            NumItemsT     num_items,
+                                                            DecomposerT   decomposer,
+                                                            hipStream_t   stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_pairs_desc(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_keys_in,
+                                                d_keys_out,
+                                                d_values_in,
+                                                d_values_out,
+                                                num_items,
+                                                decomposer,
+                                                stream,
+                                                HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
     template<typename KeyT, typename ValueT, typename NumItemsT>
     HIPCUB_RUNTIME_FUNCTION static hipError_t SortPairsDescending(void*   d_temp_storage,
                                                                   size_t& temp_storage_bytes,
@@ -243,6 +401,60 @@ struct DeviceRadixSort
                                    stream);
     }
 
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairsDescending(void*               d_temp_storage,
+                                                            size_t&             temp_storage_bytes,
+                                                            DoubleBuffer<KeyT>& d_keys,
+                                                            DoubleBuffer<ValueT>& d_values,
+                                                            NumItemsT             num_items,
+                                                            DecomposerT           decomposer,
+                                                            int                   begin_bit,
+                                                            int                   end_bit,
+                                                            hipStream_t           stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT>   d_keys_db   = detail::to_double_buffer(d_keys);
+        ::rocprim::double_buffer<ValueT> d_values_db = detail::to_double_buffer(d_values);
+        const hipError_t                 error = ::rocprim::radix_sort_pairs_desc(d_temp_storage,
+                                                                  temp_storage_bytes,
+                                                                  d_keys_db,
+                                                                  d_values_db,
+                                                                  num_items,
+                                                                  decomposer,
+                                                                  begin_bit,
+                                                                  end_bit,
+                                                                  stream,
+                                                                  HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        detail::update_double_buffer(d_values, d_values_db);
+        return error;
+    }
+
+    template<typename KeyT, typename ValueT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortPairsDescending(void*               d_temp_storage,
+                                                            size_t&             temp_storage_bytes,
+                                                            DoubleBuffer<KeyT>& d_keys,
+                                                            DoubleBuffer<ValueT>& d_values,
+                                                            NumItemsT             num_items,
+                                                            DecomposerT           decomposer,
+                                                            hipStream_t           stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT>   d_keys_db   = detail::to_double_buffer(d_keys);
+        ::rocprim::double_buffer<ValueT> d_values_db = detail::to_double_buffer(d_values);
+        const hipError_t                 error = ::rocprim::radix_sort_pairs_desc(d_temp_storage,
+                                                                  temp_storage_bytes,
+                                                                  d_keys_db,
+                                                                  d_values_db,
+                                                                  num_items,
+                                                                  decomposer,
+                                                                  stream,
+                                                                  HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        detail::update_double_buffer(d_values, d_values_db);
+        return error;
+    }
+
     template<typename KeyT, typename NumItemsT>
     HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeys(void*       d_temp_storage,
                                                        size_t&     temp_storage_bytes,
@@ -287,6 +499,50 @@ struct DeviceRadixSort
                         stream);
     }
 
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeys(void*       d_temp_storage,
+                                                 size_t&     temp_storage_bytes,
+                                                 const KeyT* d_keys_in,
+                                                 KeyT*       d_keys_out,
+                                                 NumItemsT   num_items,
+                                                 DecomposerT decomposer,
+                                                 int         begin_bit,
+                                                 int         end_bit,
+                                                 hipStream_t stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_keys(d_temp_storage,
+                                          temp_storage_bytes,
+                                          d_keys_in,
+                                          d_keys_out,
+                                          num_items,
+                                          decomposer,
+                                          begin_bit,
+                                          end_bit,
+                                          stream,
+                                          HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeys(void*       d_temp_storage,
+                                                 size_t&     temp_storage_bytes,
+                                                 const KeyT* d_keys_in,
+                                                 KeyT*       d_keys_out,
+                                                 NumItemsT   num_items,
+                                                 DecomposerT decomposer,
+                                                 hipStream_t stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_keys(d_temp_storage,
+                                          temp_storage_bytes,
+                                          d_keys_in,
+                                          d_keys_out,
+                                          num_items,
+                                          decomposer,
+                                          stream,
+                                          HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
     template<typename KeyT, typename NumItemsT>
     HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeys(void*               d_temp_storage,
                                                        size_t&             temp_storage_bytes,
@@ -328,6 +584,52 @@ struct DeviceRadixSort
                         begin_bit,
                         end_bit,
                         stream);
+    }
+
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeys(void*               d_temp_storage,
+                                                 size_t&             temp_storage_bytes,
+                                                 DoubleBuffer<KeyT>& d_keys,
+                                                 NumItemsT           num_items,
+                                                 DecomposerT         decomposer,
+                                                 int                 begin_bit,
+                                                 int                 end_bit,
+                                                 hipStream_t         stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT> d_keys_db = detail::to_double_buffer(d_keys);
+        hipError_t                     error     = ::rocprim::radix_sort_keys(d_temp_storage,
+                                                      temp_storage_bytes,
+                                                      d_keys_db,
+                                                      num_items,
+                                                      decomposer,
+                                                      begin_bit,
+                                                      end_bit,
+                                                      stream,
+                                                      HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        return error;
+    }
+
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeys(void*               d_temp_storage,
+                                                 size_t&             temp_storage_bytes,
+                                                 DoubleBuffer<KeyT>& d_keys,
+                                                 NumItemsT           num_items,
+                                                 DecomposerT         decomposer,
+                                                 hipStream_t         stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT> d_keys_db = detail::to_double_buffer(d_keys);
+        hipError_t                     error     = ::rocprim::radix_sort_keys(d_temp_storage,
+                                                      temp_storage_bytes,
+                                                      d_keys_db,
+                                                      num_items,
+                                                      decomposer,
+                                                      stream,
+                                                      HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        return error;
     }
 
     template<typename KeyT, typename NumItemsT>
@@ -374,6 +676,50 @@ struct DeviceRadixSort
                                   stream);
     }
 
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeysDescending(void*       d_temp_storage,
+                                                           size_t&     temp_storage_bytes,
+                                                           const KeyT* d_keys_in,
+                                                           KeyT*       d_keys_out,
+                                                           NumItemsT   num_items,
+                                                           DecomposerT decomposer,
+                                                           int         begin_bit,
+                                                           int         end_bit,
+                                                           hipStream_t stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_keys_desc(d_temp_storage,
+                                               temp_storage_bytes,
+                                               d_keys_in,
+                                               d_keys_out,
+                                               num_items,
+                                               decomposer,
+                                               begin_bit,
+                                               end_bit,
+                                               stream,
+                                               HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeysDescending(void*       d_temp_storage,
+                                                           size_t&     temp_storage_bytes,
+                                                           const KeyT* d_keys_in,
+                                                           KeyT*       d_keys_out,
+                                                           NumItemsT   num_items,
+                                                           DecomposerT decomposer,
+                                                           hipStream_t stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        return ::rocprim::radix_sort_keys_desc(d_temp_storage,
+                                               temp_storage_bytes,
+                                               d_keys_in,
+                                               d_keys_out,
+                                               num_items,
+                                               decomposer,
+                                               stream,
+                                               HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
     template<typename KeyT, typename NumItemsT>
     HIPCUB_RUNTIME_FUNCTION static hipError_t SortKeysDescending(void*   d_temp_storage,
                                                                  size_t& temp_storage_bytes,
@@ -415,6 +761,52 @@ struct DeviceRadixSort
                                   begin_bit,
                                   end_bit,
                                   stream);
+    }
+
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeysDescending(void*               d_temp_storage,
+                                                           size_t&             temp_storage_bytes,
+                                                           DoubleBuffer<KeyT>& d_keys,
+                                                           NumItemsT           num_items,
+                                                           DecomposerT         decomposer,
+                                                           int                 begin_bit,
+                                                           int                 end_bit,
+                                                           hipStream_t         stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT> d_keys_db = detail::to_double_buffer(d_keys);
+        const hipError_t               error     = ::rocprim::radix_sort_keys_desc(d_temp_storage,
+                                                                 temp_storage_bytes,
+                                                                 d_keys_db,
+                                                                 num_items,
+                                                                 decomposer,
+                                                                 begin_bit,
+                                                                 end_bit,
+                                                                 stream,
+                                                                 HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        return error;
+    }
+
+    template<typename KeyT, typename NumItemsT, typename DecomposerT>
+    HIPCUB_RUNTIME_FUNCTION static auto SortKeysDescending(void*               d_temp_storage,
+                                                           size_t&             temp_storage_bytes,
+                                                           DoubleBuffer<KeyT>& d_keys,
+                                                           NumItemsT           num_items,
+                                                           DecomposerT         decomposer,
+                                                           hipStream_t         stream = 0)
+        -> std::enable_if_t<!std::is_convertible<DecomposerT, int>::value, hipError_t>
+    {
+        ::rocprim::double_buffer<KeyT> d_keys_db = detail::to_double_buffer(d_keys);
+        const hipError_t               error     = ::rocprim::radix_sort_keys_desc(d_temp_storage,
+                                                                 temp_storage_bytes,
+                                                                 d_keys_db,
+                                                                 num_items,
+                                                                 decomposer,
+                                                                 stream,
+                                                                 HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+        detail::update_double_buffer(d_keys, d_keys_db);
+        return error;
     }
 };
 
