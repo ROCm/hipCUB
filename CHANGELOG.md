@@ -12,9 +12,9 @@ Documentation for hipCUB is available at
   * `WARP_EXCHANGE_SMEM` stands for the previous algorithm, while `WARP_EXCHANGE_SHUFFLE` performs the exchange via shuffle operations.
   * `WARP_EXCHANGE_SHUFFLE` does not require any pre-allocated shared memory, but the `ItemsPerThread` must be a divisor of `WarpSize`.
 * Added `tuple.hpp` which defines templates `hipcub::tuple`, `hipcub::tuple_element`, `hipcub::tuple_element_t` and `hipcub::tuple_size`.
-* Added new overloaded member functions to `BlockRadixSort` that expose a `decomposer` argument. Keys of a custom type (`key_type`) can be
-  sorted via these overloads, if an appropriate decomposer is passed. The decomposer has to implement `operator(const key_type&)` which 
-  returns a `hipcub::tuple` of references pointing to members of `key_type`.
+* Added new overloaded member functions to `BlockRadixSort` and `DeviceRadixSort` that expose a `decomposer` argument. Keys of a custom
+  type (`key_type`) can be sorted via these overloads, if an appropriate decomposer is passed. The decomposer has to implement
+  `operator(const key_type&)` which returns a `hipcub::tuple` of references pointing to members of `key_type`.
 
 ### Changed
 
