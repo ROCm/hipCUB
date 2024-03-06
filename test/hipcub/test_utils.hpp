@@ -66,6 +66,47 @@ struct precision_threshold<test_utils::bfloat16>
     static constexpr float percentage = 0.075f;
 };
 
+/// \brief Functor that returns a + b.
+template<class T = void>
+struct plus
+{
+    /// \brief Invocation operator
+    HIPCUB_HOST_DEVICE inline constexpr T operator()(const T& a, const T& b) const
+    {
+        return a + b;
+    }
+};
+
+/* Plus to operator selector for host-side
+ * On host-side we use `double` as accumulator and `rocprim::plus<double>` as operator
+ * for bfloat16 and half types. This is because additions of floating-point types are not
+ * associative. This would result in wrong output rather quickly for reductions and scan-algorithms
+ * on host-side for bfloat16 and half because of their low-precision.
+ */
+template<typename T>
+struct select_plus_operator_host
+{
+    typedef plus<T> type;
+    typedef T       acc_type;
+    typedef T       cast_type;
+};
+
+template<>
+struct select_plus_operator_host<test_utils::half>
+{
+    typedef plus<double>     type;
+    typedef double           acc_type;
+    typedef test_utils::half cast_type;
+};
+
+template<>
+struct select_plus_operator_host<test_utils::bfloat16>
+{
+    typedef plus<double>         type;
+    typedef double               acc_type;
+    typedef test_utils::bfloat16 cast_type;
+};
+
 // Can't use std::prefix_sum for inclusive/exclusive scan, because
 // it does not handle short[] -> int(int a, int b) { a + b; } -> int[]
 // they way we expect. That's because sum in std::prefix_sum's implementation
