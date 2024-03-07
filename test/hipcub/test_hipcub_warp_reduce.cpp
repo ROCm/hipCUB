@@ -120,6 +120,12 @@ TYPED_TEST(HipcubWarpReduceTests, Reduce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     // logical warp side for warp primitive, execution warp size
     constexpr size_t logical_warp_size = TestFixture::warp_size;
 
@@ -169,13 +175,13 @@ TYPED_TEST(HipcubWarpReduceTests, Reduce)
         // Calculate expected results on host
         for(size_t i = 0; i < output.size(); i++)
         {
-            T value = 0;
+            acc_type value(0);
             for(size_t j = 0; j < logical_warp_size; j++)
             {
                 auto idx = i * logical_warp_size + j;
-                value += input[idx];
+                value    = binary_op_host(input[idx], value);
             }
-            expected[i] = value;
+            expected[i] = static_cast<cast_type>(value);
         }
 
         // Writing to device memory
@@ -268,6 +274,12 @@ TYPED_TEST(HipcubWarpReduceTests, ReduceValid)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     // logical warp side for warp primitive, execution warp size
     constexpr size_t logical_warp_size = TestFixture::warp_size;
     // The different warp sizes
@@ -317,13 +329,13 @@ TYPED_TEST(HipcubWarpReduceTests, ReduceValid)
         // Calculate expected results on host
         for(size_t i = 0; i < output.size(); i++)
         {
-            T value = 0;
+            acc_type value(0);
             for(int j = 0; j < valid; ++j)
             {
                 auto idx = i * logical_warp_size + j;
-                value += input[idx];
+                value    = binary_op_host(input[idx], value);
             }
-            expected[i] = valid ? value : input[i];
+            expected[i] = valid ? static_cast<cast_type>(value) : input[i];
         }
 
         // Writing to device memory
@@ -414,6 +426,12 @@ TYPED_TEST(HipcubWarpReduceTests, HeadSegmentedReduceSum)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     using flag_type = unsigned char;
     // logical warp side for warp primitive, execution warp size
     constexpr size_t logical_warp_size = TestFixture::warp_size;
@@ -509,21 +527,21 @@ TYPED_TEST(HipcubWarpReduceTests, HeadSegmentedReduceSum)
         // Calculate expected results on host
         std::vector<T> expected(output.size());
         size_t segment_head_index = 0;
-        T reduction = input[0];
+        acc_type       reduction(input[0]);
         for(size_t i = 0; i < output.size(); i++)
         {
             if(i%logical_warp_size == 0 || flags[i])
             {
-                expected[segment_head_index] = reduction;
+                expected[segment_head_index] = static_cast<cast_type>(reduction);
                 segment_head_index = i;
                 reduction = input[i];
             }
             else
             {
-                reduction = reduction + input[i];
+                reduction = binary_op_host(input[i], reduction);
             }
         }
-        expected[segment_head_index] = reduction;
+        expected[segment_head_index] = static_cast<cast_type>(reduction);
 
         // Launching kernel
         if (current_device_warp_size == ws32)
@@ -609,6 +627,12 @@ TYPED_TEST(HipcubWarpReduceTests, TailSegmentedReduceSum)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     using flag_type = unsigned char;
     // logical warp side for warp primitive, execution warp size
     constexpr size_t logical_warp_size = TestFixture::warp_size;
@@ -701,10 +725,11 @@ TYPED_TEST(HipcubWarpReduceTests, TailSegmentedReduceSum)
         HIP_CHECK(hipDeviceSynchronize());
 
         // Calculate expected results on host
-        std::vector<T> expected(output.size());
+        std::vector<T>      expected(output.size());
         std::vector<size_t> segment_indexes;
-        size_t segment_index = 0;
-        T reduction;
+        size_t              segment_index = 0;
+        acc_type            accumulator(0);
+        acc_type            reduction(0);
         for(size_t i = 0; i < output.size(); i++)
         {
             // single value segments
@@ -712,20 +737,20 @@ TYPED_TEST(HipcubWarpReduceTests, TailSegmentedReduceSum)
             {
                 expected[i] = input[i];
                 segment_indexes.push_back(i);
-            }
-            else
+            } else
             {
                 segment_index = i;
-                reduction = input[i];
-                auto next = i + 1;
+                reduction     = input[i];
+                auto next     = i + 1;
                 while(next < output.size() && !flags[next])
                 {
-                    reduction = reduction + input[next];
+                    reduction = binary_op_host(input[next], reduction);
                     i++;
                     next++;
                 }
                 i++;
-                expected[segment_index] = reduction + input[i];
+                accumulator             = binary_op_host(reduction, input[i]);
+                expected[segment_index] = static_cast<cast_type>(accumulator);
                 segment_indexes.push_back(segment_index);
             }
         }

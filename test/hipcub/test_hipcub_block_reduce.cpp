@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -141,6 +141,12 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -167,13 +173,13 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
                                            test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
-            T value = 0;
+            acc_type value(0);
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx = i * block_size + j;
-                value += output[idx];
+                value    = binary_op_host(value, output[idx]);
             }
-            expected_reductions[i] = value;
+            expected_reductions[i] = static_cast<cast_type>(value);
         }
 
         // Preparing device
@@ -246,6 +252,12 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
 
     constexpr size_t block_size = TestFixture::block_size;
@@ -283,13 +295,13 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
                                            test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
-            T value = 0;
+            acc_type value(0);
             for(size_t j = 0; j < valid_items; j++)
             {
                 auto idx = i * block_size + j;
-                value += output[idx];
+                value    = binary_op_host(output[idx], value);
             }
-            expected_reductions[i] = value;
+            expected_reductions[i] = static_cast<cast_type>(value);
         }
 
         // Preparing device
@@ -415,7 +427,13 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using T                           = typename TestFixture::type;
+    using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -450,13 +468,13 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
                                            test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
-            test_utils::convert_to_native_t<T> value = 0;
+            acc_type value(0);
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx = i * items_per_block + j;
-                value += output[idx];
+                value    = binary_op_host(output[idx], value);
             }
-            expected_reductions[i] = test_utils::convert_to_device<T>(value);
+            expected_reductions[i] = static_cast<cast_type>(value);
         }
 
         // Preparing device

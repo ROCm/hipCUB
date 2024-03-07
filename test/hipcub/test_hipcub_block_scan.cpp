@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -116,7 +116,13 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
-    constexpr auto algorithm = TestFixture::algorithm;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
+    constexpr auto   algorithm  = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
     // Given block size not supported
@@ -140,10 +146,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
         std::vector<T> expected(output.size(), 0);
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
+            acc_type accumulator(0);
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
         }
 
@@ -217,6 +225,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -243,12 +257,14 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
         std::vector<T> expected_reductions(output_reductions.size(), 0);
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
+            acc_type accumulator(0);
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
-            expected_reductions[i] = expected[(i+1) * block_size - 1];
+            expected_reductions[i] = expected[(i + 1) * block_size - 1];
         }
 
         // Writing to device memory
@@ -357,6 +373,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -388,13 +410,14 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
         std::vector<T> expected_block_prefixes(output_block_prefixes.size(), 0);
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
-            expected[i * block_size] = block_prefix;
+            acc_type accumulator(block_prefix);
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
-            expected_block_prefixes[i] = expected[(i+1) * block_size - 1];
+            expected_block_prefixes[i] = expected[(i + 1) * block_size - 1];
         }
 
         // Writing to device memory
@@ -483,6 +506,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -512,12 +541,14 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
         std::vector<T> expected(output.size(), 0);
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
-          expected[i * block_size] = init;
-          for(size_t j = 1; j < block_size; j++)
-          {
-              auto idx = i * block_size + j;
-              expected[idx] = output[idx-1] + expected[idx-1];
-          }
+            acc_type accumulator(init);
+            expected[i * block_size] = init;
+            for(size_t j = 1; j < block_size; j++)
+            {
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
+            }
         }
 
         // Writing to device memory
@@ -590,6 +621,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -622,18 +659,21 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
         std::vector<T> expected_reductions(output_reductions.size(), 0);
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
+            acc_type accumulator(init);
             expected[i * block_size] = init;
             for(size_t j = 1; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected[idx] = output[idx-1] + expected[idx-1];
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
 
-            expected_reductions[i] = 0;
+            acc_type accumulator_reductions(0);
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected_reductions[i] += output[idx];
+                auto idx               = i * block_size + j;
+                accumulator_reductions = binary_op_host(output[idx], accumulator_reductions);
+                expected_reductions[i] = static_cast<cast_type>(accumulator_reductions);
             }
         }
 
@@ -743,6 +783,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -774,19 +820,23 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
         std::vector<T> expected_block_prefixes(output_block_prefixes.size(), 0);
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
+            acc_type accumulator(block_prefix);
             expected[i * block_size] = block_prefix;
             for(size_t j = 1; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected[idx] = output[idx-1] + expected[idx-1];
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
 
-            expected_block_prefixes[i] = block_prefix;
+            acc_type accumulator_block_prefixes(block_prefix);
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx = i * block_size + j;
-                expected_block_prefixes[i] += output[idx];
+                accumulator_block_prefixes
+                    = binary_op_host(output[idx], accumulator_block_prefixes);
             }
+            expected_block_prefixes[i] = static_cast<cast_type>(accumulator_block_prefixes);
         }
 
         // Writing to device memory
@@ -859,6 +909,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
 
     using base_type = typename TestFixture::type;
     using T = test_utils::custom_test_type<base_type>;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
 
@@ -892,10 +948,12 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
         std::vector<T> expected(output.size(), T(0));
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
+            acc_type accumulator(0);
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx = i * block_size + j;
-                expected[idx] = output[idx] + expected[j > 0 ? idx-1 : idx];
+                auto idx      = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
         }
 
@@ -1025,6 +1083,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -1051,12 +1115,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
         std::vector<T> expected(output.size(), test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
+            acc_type accumulator(0);
             for(size_t j = 0; j < items_per_block; j++)
             {
-                auto idx = i * items_per_block + j;
-                expected[idx] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(output[idx])
-                    + test_utils::convert_to_native(expected[j > 0 ? idx - 1 : idx]));
+                auto idx      = i * items_per_block + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
         }
 
@@ -1146,6 +1210,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T                           = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto   algorithm        = TestFixture::algorithm;
     constexpr size_t block_size       = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -1177,14 +1247,14 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
                                            test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
+            acc_type accumulator(0);
             for(size_t j = 0; j < items_per_block; j++)
             {
-                auto idx = i * items_per_block + j;
-                expected[idx] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(output[idx])
-                    + test_utils::convert_to_native(expected[j > 0 ? idx - 1 : idx]));
+                auto idx      = i * items_per_block + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
-            expected_reductions[i] = expected[(i+1) * items_per_block - 1];
+            expected_reductions[i] = expected[(i + 1) * items_per_block - 1];
         }
 
         // Writing to device memory
@@ -1306,6 +1376,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -1339,15 +1415,14 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
                                                test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
-            expected[i * items_per_block] = block_prefix;
+            acc_type accumulator(block_prefix);
             for(size_t j = 0; j < items_per_block; j++)
             {
-                auto idx = i * items_per_block + j;
-                expected[idx] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(output[idx])
-                    + test_utils::convert_to_native(expected[j > 0 ? idx - 1 : idx]));
+                auto idx      = i * items_per_block + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
-            expected_block_prefixes[i] = expected[(i+1) * items_per_block - 1];
+            expected_block_prefixes[i] = expected[(i + 1) * items_per_block - 1];
         }
 
         // Writing to device memory
@@ -1462,6 +1537,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -1495,13 +1576,13 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
         std::vector<T> expected(output.size(), test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
+            acc_type accumulator(init);
             expected[i * items_per_block] = init;
             for(size_t j = 1; j < items_per_block; j++)
             {
-                auto idx = i * items_per_block + j;
-                expected[idx] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(output[idx - 1])
-                    + test_utils::convert_to_native(expected[idx - 1]));
+                auto idx      = i * items_per_block + j;
+                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
         }
 
@@ -1590,6 +1671,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -1628,19 +1715,21 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
                                            test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
+            acc_type accumulator(init);
             expected[i * items_per_block] = init;
             for(size_t j = 1; j < items_per_block; j++)
             {
-                auto idx = i * items_per_block + j;
-                expected[idx] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(output[idx - 1])
-                    + test_utils::convert_to_native(expected[idx - 1]));
+                auto idx      = i * items_per_block + j;
+                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
+
+            acc_type accumulator_reductions(0);
             for(size_t j = 0; j < items_per_block; j++)
             {
-                expected_reductions[i] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(expected_reductions[i])
-                    + test_utils::convert_to_native(output[i * items_per_block + j]));
+                auto idx               = i * items_per_block + j;
+                accumulator_reductions = binary_op_host(output[idx], accumulator_reductions);
+                expected_reductions[i] = static_cast<cast_type>(accumulator_reductions);
             }
         }
 
@@ -1766,6 +1855,12 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
     HIP_CHECK(hipSetDevice(device_id));
 
     using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
+    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
     constexpr size_t items_per_thread = TestFixture::items_per_thread;
@@ -1798,21 +1893,21 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
                                                test_utils::convert_to_device<T>(0));
         for(size_t i = 0; i < output.size() / items_per_block; i++)
         {
+            acc_type accumulator(block_prefix);
             expected[i * items_per_block] = block_prefix;
             for(size_t j = 1; j < items_per_block; j++)
             {
-                auto idx = i * items_per_block + j;
-                expected[idx] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(output[idx - 1])
-                    + test_utils::convert_to_native(expected[idx - 1]));
+                auto idx      = i * items_per_block + j;
+                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                expected[idx] = static_cast<cast_type>(accumulator);
             }
-            expected_block_prefixes[i] = block_prefix;
+            acc_type accumulator_block_prefixes(block_prefix);
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx = i * items_per_block + j;
-                expected_block_prefixes[i] = test_utils::convert_to_device<T>(
-                    test_utils::convert_to_native(expected_block_prefixes[i])
-                    + test_utils::convert_to_native(output[idx]));
+                accumulator_block_prefixes
+                    = binary_op_host(output[idx], accumulator_block_prefixes);
+                expected_block_prefixes[i] = static_cast<cast_type>(accumulator_block_prefixes);
             }
         }
 
