@@ -68,7 +68,7 @@ struct greater_equal
     }
 };
 
-    template<class T>
+template<class T>
 struct plus
 {
     HIPCUB_HOST_DEVICE inline constexpr T operator()(const T& a, const T& b) const
@@ -77,7 +77,7 @@ struct plus
     }
 };
 
-    template<class T>
+template<class T>
 struct minus
 {
     HIPCUB_HOST_DEVICE inline constexpr T operator()(const T& a, const T& b) const
@@ -86,7 +86,7 @@ struct minus
     }
 };
 
-    template<class T>
+template<class T>
 struct multiplies
 {
 

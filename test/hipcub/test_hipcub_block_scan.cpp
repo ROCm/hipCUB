@@ -1067,12 +1067,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output[i]),
-                        test_utils::convert_to_native(expected[i]),
-                        0.05 * test_utils::convert_to_native(expected[i]));
-        }
+        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
 
         HIP_CHECK(hipFree(device_output));
     }
@@ -1211,19 +1206,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output[i]),
-                        test_utils::convert_to_native(expected[i]),
-                        0.05 * test_utils::convert_to_native(expected[i]));
-        }
+        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
 
-        for(size_t i = 0; i < output_reductions.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output_reductions[i]),
-                        test_utils::convert_to_native(expected_reductions[i]),
-                        0.05 * test_utils::convert_to_native(expected_reductions[i]));
-        }
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T> * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_reductions));
@@ -1376,19 +1363,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output[i]),
-                        test_utils::convert_to_native(expected[i]),
-                        0.05 * test_utils::convert_to_native(expected[i]));
-        }
+        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
 
-        for(size_t i = 0; i < output_block_prefixes.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output_block_prefixes[i]),
-                        test_utils::convert_to_native(expected_block_prefixes[i]),
-                        0.05 * test_utils::convert_to_native(expected_block_prefixes[i]));
-        }
+        test_utils::assert_near(output_block_prefixes,
+                                expected_block_prefixes,
+                                test_utils::precision<T> * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_bp));
@@ -1509,12 +1488,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output[i]),
-                        test_utils::convert_to_native(expected[i]),
-                        0.05 * test_utils::convert_to_native(expected[i]));
-        }
+        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
 
         HIP_CHECK(hipFree(device_output));
     }
@@ -1668,19 +1642,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output[i]),
-                        test_utils::convert_to_native(expected[i]),
-                        0.05 * test_utils::convert_to_native(expected[i]));
-        }
+        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
 
-        for(size_t i = 0; i < output_reductions.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output_reductions[i]),
-                        test_utils::convert_to_native(expected_reductions[i]),
-                        0.05 * test_utils::convert_to_native(expected_reductions[i]));
-        }
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T> * block_size);
     }
 }
 
@@ -1832,19 +1798,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output[i]),
-                        test_utils::convert_to_native(expected[i]),
-                        0.05 * test_utils::convert_to_native(expected[i]));
-        }
+        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
 
-        for(size_t i = 0; i < output_block_prefixes.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output_block_prefixes[i]),
-                        test_utils::convert_to_native(expected_block_prefixes[i]),
-                        0.05 * test_utils::convert_to_native(expected_block_prefixes[i]));
-        }
+        test_utils::assert_near(output_block_prefixes,
+                                expected_block_prefixes,
+                                test_utils::precision<T> * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_bp));

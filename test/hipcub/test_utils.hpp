@@ -33,13 +33,13 @@
     #include <cub/util_ptx.cuh>
 #endif
 
-#include "test_utils_functional.hpp"
-#include "test_utils_half.hpp"
+#include "test_utils_assertions.hpp"
 #include "test_utils_bfloat16.hpp"
-#include "test_utils_sort_comparator.hpp"
 #include "test_utils_custom_test_types.hpp"
 #include "test_utils_data_generation.hpp"
-#include "test_utils_assertions.hpp"
+#include "test_utils_functional.hpp"
+#include "test_utils_half.hpp"
+#include "test_utils_sort_comparator.hpp"
 
 // Seed values
 #include "test_seed.hpp"
@@ -48,24 +48,6 @@
 
 namespace test_utils
 {
-
-template<class T>
-struct precision_threshold
-{
-    static constexpr float percentage = 0.01f;
-};
-
-template<>
-struct precision_threshold<test_utils::half>
-{
-    static constexpr float percentage = 0.075f;
-};
-
-template<>
-struct precision_threshold<test_utils::bfloat16>
-{
-    static constexpr float percentage = 0.075f;
-};
 
 // Values of relative error for non-assotiative operations
 // (+, -, *) and type conversions for floats

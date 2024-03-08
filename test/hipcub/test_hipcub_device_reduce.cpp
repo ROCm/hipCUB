@@ -105,8 +105,17 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
         for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
         {
             unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
             SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            if(test_utils::precision<U> * size > 0.5)
+            {
+                std::cout << "Test is skipped from size " << size
+                          << " on, potential error of summation is more than 0.5 of the result "
+                             "with current or larger size"
+                          << std::endl;
+                break;
+            }
 
             hipStream_t stream = 0; // default
 
@@ -184,7 +193,8 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if output values are as expected
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(output[0], expected, test_utils::precision_threshold<T>::percentage));
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(output[0], expected, test_utils::precision<U> * size));
 
             hipFree(d_input);
             hipFree(d_output);
@@ -281,7 +291,12 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if output values are as expected
-            ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(output[0], expected, 0.01f));
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
+                output[0],
+                expected,
+                std::is_same<T, U>::value
+                    ? 0
+                    : std::max(test_utils::precision<T>, test_utils::precision<U>)));
 
             hipFree(d_input);
             hipFree(d_output);

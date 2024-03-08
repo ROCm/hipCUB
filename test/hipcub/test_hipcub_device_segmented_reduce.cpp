@@ -114,7 +114,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
         for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
         {
             unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             hipStream_t stream = 0; // default
@@ -130,18 +130,21 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
             );
 
             std::vector<offset_type> offsets;
-            unsigned int segments_count = 0;
-            size_t offset = 0;
+            unsigned int             segments_count     = 0;
+            size_t                   offset             = 0;
+            size_t                   max_segment_length = 0;
             while(offset < size)
             {
                 const size_t segment_length = segment_length_dis(gen);
                 offsets.push_back(offset);
 
-                const size_t end = std::min(size, offset + segment_length);
+                const size_t end   = std::min(size, offset + segment_length);
+                max_segment_length = std::max(max_segment_length, end - offset);
+
                 result_type aggregate = init;
                 for(size_t i = offset; i < end; i++)
                 {
-                    aggregate = reduce_op(aggregate, static_cast<result_type>(values_input[i]));
+                    aggregate = reduce_op(aggregate, values_input[i]);
                 }
                 aggregates_expected.push_back(aggregate);
 
@@ -149,6 +152,16 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
                 offset += segment_length;
             }
             offsets.push_back(size);
+
+            const float precision = test_utils::precision<result_type> * max_segment_length;
+            if(precision > 0.5)
+            {
+                std::cout << "Test is skipped from size " << size
+                          << " on, potential error of summation is more than 0.5 of the result "
+                             "with current or larger size"
+                          << std::endl;
+                continue;
+            }
 
             input_type * d_values_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
@@ -217,23 +230,8 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
             HIP_CHECK(hipFree(d_offsets));
             HIP_CHECK(hipFree(d_aggregates_output));
 
-            for(size_t i = 0; i < segments_count; i++)
-            {
-                if(std::is_integral<output_type>::value)
-                {
-                    ASSERT_EQ(test_utils::convert_to_native(aggregates_output[i]),
-                              test_utils::convert_to_native(aggregates_expected[i]));
-                }
-                else
-                {
-                    auto diff = std::max<test_utils::convert_to_fundamental_t<output_type>>(
-                        std::abs(0.01 * test_utils::convert_to_fundamental(aggregates_expected[i])),
-                        output_type(0.01));
-                    ASSERT_NEAR(test_utils::convert_to_native(aggregates_output[i]),
-                                test_utils::convert_to_native(aggregates_expected[i]),
-                                diff);
-                }
-            }
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(aggregates_output, aggregates_expected, precision));
         }
     }
 }
@@ -303,7 +301,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
         for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
         {
             unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             hipStream_t stream = 0; // default
@@ -319,14 +317,17 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
             );
 
             std::vector<offset_type> offsets;
-            unsigned int segments_count = 0;
-            size_t offset = 0;
+            unsigned int             segments_count     = 0;
+            size_t                   offset             = 0;
+            size_t                   max_segment_length = 0;
             while(offset < size)
             {
                 const size_t segment_length = segment_length_dis(gen);
                 offsets.push_back(offset);
 
-                const size_t end = std::min(size, offset + segment_length);
+                const size_t end   = std::min(size, offset + segment_length);
+                max_segment_length = std::max(max_segment_length, end - offset);
+
                 result_type aggregate = init;
                 for(size_t i = offset; i < end; i++)
                 {
@@ -338,6 +339,16 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
                 offset += segment_length;
             }
             offsets.push_back(size);
+
+            const float precision = test_utils::precision<result_type> * max_segment_length;
+            if(precision > 0.5)
+            {
+                std::cout << "Test is skipped from size " << size
+                          << " on, potential error of summation is more than 0.5 of the result "
+                             "with current or larger size"
+                          << std::endl;
+                continue;
+            }
 
             input_type * d_values_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
@@ -402,22 +413,8 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
             HIP_CHECK(hipFree(d_offsets));
             HIP_CHECK(hipFree(d_aggregates_output));
 
-            for(size_t i = 0; i < segments_count; i++)
-            {
-                if(std::is_integral<output_type>::value)
-                {
-                    ASSERT_EQ(aggregates_output[i], aggregates_expected[i]);
-                }
-                else
-                {
-                    auto diff = std::max<output_type>(
-                        std::abs(0.01 * aggregates_expected[i]), output_type(0.01)
-                    );
-                    ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(aggregates_output[i],
-                                                                    aggregates_expected[i],
-                                                                    diff));
-                }
-            }
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(aggregates_output, aggregates_expected, precision));
         }
     }
 }
@@ -451,7 +448,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
         for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
         {
             unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             hipStream_t stream = 0; // default
@@ -467,14 +464,17 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
             );
 
             std::vector<offset_type> offsets;
-            unsigned int segments_count = 0;
-            size_t offset = 0;
+            unsigned int             segments_count     = 0;
+            size_t                   offset             = 0;
+            size_t                   max_segment_length = 0;
             while(offset < size)
             {
                 const size_t segment_length = segment_length_dis(gen);
                 offsets.push_back(offset);
 
-                const size_t end = std::min(size, offset + segment_length);
+                const size_t end   = std::min(size, offset + segment_length);
+                max_segment_length = std::max(max_segment_length, end - offset);
+
                 result_type aggregate = init;
                 for(size_t i = offset; i < end; i++)
                 {
@@ -486,6 +486,16 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
                 offset += segment_length;
             }
             offsets.push_back(size);
+
+            const float precision = test_utils::precision<result_type> * max_segment_length;
+            if(precision > 0.5)
+            {
+                std::cout << "Test is skipped from size " << size
+                          << " on, potential error of summation is more than 0.5 of the result "
+                             "with current or larger size"
+                          << std::endl;
+                continue;
+            }
 
             input_type * d_values_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
@@ -550,11 +560,8 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
             HIP_CHECK(hipFree(d_offsets));
             HIP_CHECK(hipFree(d_aggregates_output));
 
-            for(size_t i = 0; i < segments_count; i++)
-            {
-                ASSERT_NO_FATAL_FAILURE(
-                    test_utils::assert_near(aggregates_output[i], aggregates_expected[i], .01f));
-            }
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(aggregates_output, aggregates_expected, precision));
         }
     }
 }
@@ -644,15 +651,17 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
 
             HostOp                   host_op{};
             std::vector<offset_type> offsets;
-            unsigned int             segments_count = 0;
-            size_t                   offset         = 0;
+            unsigned int             segments_count     = 0;
+            size_t                   offset             = 0;
+            size_t                   max_segment_length = 0;
             while(offset < size)
             {
                 const size_t segment_length = segment_length_dis(gen);
                 offsets.push_back(offset);
                 Iterator x(&values_input[offset]);
 
-                const size_t end = std::min(size, offset + segment_length);
+                const size_t end   = std::min(size, offset + segment_length);
+                max_segment_length = std::max(max_segment_length, end - offset);
                 if(offset < end)
                 {
                     key_value aggregate(0, values_input[offset]);
@@ -673,6 +682,16 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
                 offset += segment_length;
             }
             offsets.push_back(size);
+
+            const float precision = test_utils::precision<key_value> * max_segment_length;
+            if(precision > 0.5)
+            {
+                std::cout << "Test is skipped from size " << size
+                          << " on, potential error of summation is more than 0.5 of the result "
+                             "with current or larger size"
+                          << std::endl;
+                continue;
+            }
 
             input_type* d_values_input;
             HIP_CHECK(
@@ -741,7 +760,7 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
                     test_utils::assert_eq(aggregates_output[i].key, aggregates_expected[i].key));
                 ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(aggregates_output[i].value,
                                                                 aggregates_expected[i].value,
-                                                                .01f));
+                                                                precision));
             }
         }
     }

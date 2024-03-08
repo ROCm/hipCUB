@@ -516,13 +516,9 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
         );
 
         // Verifying results
-        for(size_t i = 0; i < output_reductions.size(); i++)
-        {
-            ASSERT_NEAR(test_utils::convert_to_native(output_reductions[i]),
-                        test_utils::convert_to_native(expected_reductions[i]),
-                        test_utils::convert_to_native(0.05)
-                            * test_utils::convert_to_native(expected_reductions[i]));
-        }
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T> * items_per_block);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_reductions));

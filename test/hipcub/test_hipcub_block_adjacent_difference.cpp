@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -900,9 +900,11 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeft)
                 hipMemcpyDeviceToHost
             )
         );
-        
+
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output, expected, test_utils::precision_threshold<type>::percentage));
+            output,
+            expected,
+            std::max(test_utils::precision<type>, test_utils::precision<stored_type>)));
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_output));
@@ -1018,9 +1020,11 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
                 hipMemcpyDeviceToHost
             )
         );
-        
+
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output, expected, test_utils::precision_threshold<type>::percentage));
+            output,
+            expected,
+            std::max(test_utils::precision<type>, test_utils::precision<stored_type>)));
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_tile_sizes));
@@ -1118,9 +1122,11 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
                 hipMemcpyDeviceToHost
             )
         );
-        
+
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output, expected, test_utils::precision_threshold<type>::percentage));
+            output,
+            expected,
+            std::max(test_utils::precision<type>, test_utils::precision<stored_type>)));
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_output));
@@ -1235,9 +1241,16 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartialTile)
                 hipMemcpyDeviceToHost
             )
         );
-        
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output, expected, test_utils::precision_threshold<type>::percentage));
+
+        using is_add_op = test_utils::is_add_operator<binary_function>;
+        // clang-format off
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(output, expected,
+            is_add_op::value
+                ? std::max(test_utils::precision<type>, test_utils::precision<stored_type>)
+                : std::is_same<type, stored_type>::value 
+                    ? 0 
+                    : test_utils::precision<stored_type>));
+        // clang-format on
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_tile_sizes));
