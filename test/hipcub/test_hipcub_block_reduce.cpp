@@ -518,7 +518,7 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
         // Verifying results
         test_utils::assert_near(output_reductions,
                                 expected_reductions,
-                                test_utils::precision<T> * items_per_block);
+                                test_utils::precision<T>::value * items_per_block);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_reductions));

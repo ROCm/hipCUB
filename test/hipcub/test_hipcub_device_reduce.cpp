@@ -108,7 +108,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
             SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
-            if(test_utils::precision<U> * size > 0.5)
+            if(test_utils::precision<U>::value * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
                           << " on, potential error of summation is more than 0.5 of the result "
@@ -194,7 +194,9 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
 
             // Check if output values are as expected
             ASSERT_NO_FATAL_FAILURE(
-                test_utils::assert_near(output[0], expected, test_utils::precision<U> * size));
+                test_utils::assert_near(output[0],
+                                        expected,
+                                        test_utils::precision<U>::value * size));
 
             hipFree(d_input);
             hipFree(d_output);
@@ -296,7 +298,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
                 expected,
                 std::is_same<T, U>::value
                     ? 0
-                    : std::max(test_utils::precision<T>, test_utils::precision<U>)));
+                    : std::max(test_utils::precision<T>::value, test_utils::precision<U>::value)));
 
             hipFree(d_input);
             hipFree(d_output);

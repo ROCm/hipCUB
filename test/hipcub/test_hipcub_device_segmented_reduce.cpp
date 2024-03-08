@@ -153,7 +153,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
             }
             offsets.push_back(size);
 
-            const float precision = test_utils::precision<result_type> * max_segment_length;
+            const float precision = test_utils::precision<result_type>::value * max_segment_length;
             if(precision > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -340,7 +340,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
             }
             offsets.push_back(size);
 
-            const float precision = test_utils::precision<result_type> * max_segment_length;
+            const float precision = test_utils::precision<result_type>::value * max_segment_length;
             if(precision > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -487,7 +487,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
             }
             offsets.push_back(size);
 
-            const float precision = test_utils::precision<result_type> * max_segment_length;
+            const float precision = test_utils::precision<result_type>::value * max_segment_length;
             if(precision > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -683,7 +683,7 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
             }
             offsets.push_back(size);
 
-            const float precision = test_utils::precision<key_value> * max_segment_length;
+            const float precision = test_utils::precision<key_value>::value * max_segment_length;
             if(precision > 0.5)
             {
                 std::cout << "Test is skipped from size " << size

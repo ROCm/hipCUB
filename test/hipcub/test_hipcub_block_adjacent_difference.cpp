@@ -901,10 +901,11 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeft)
             )
         );
 
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output,
-            expected,
-            std::max(test_utils::precision<type>, test_utils::precision<stored_type>)));
+        ASSERT_NO_FATAL_FAILURE(
+            test_utils::assert_near(output,
+                                    expected,
+                                    std::max(test_utils::precision<type>::value,
+                                             test_utils::precision<stored_type>::value)));
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_output));
@@ -1021,10 +1022,11 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractLeftPartialTile)
             )
         );
 
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output,
-            expected,
-            std::max(test_utils::precision<type>, test_utils::precision<stored_type>)));
+        ASSERT_NO_FATAL_FAILURE(
+            test_utils::assert_near(output,
+                                    expected,
+                                    std::max(test_utils::precision<type>::value,
+                                             test_utils::precision<stored_type>::value)));
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_tile_sizes));
@@ -1123,10 +1125,11 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRight)
             )
         );
 
-        ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(
-            output,
-            expected,
-            std::max(test_utils::precision<type>, test_utils::precision<stored_type>)));
+        ASSERT_NO_FATAL_FAILURE(
+            test_utils::assert_near(output,
+                                    expected,
+                                    std::max(test_utils::precision<type>::value,
+                                             test_utils::precision<stored_type>::value)));
 
         HIP_CHECK(hipFree(d_input));
         HIP_CHECK(hipFree(d_output));
@@ -1246,10 +1249,10 @@ TYPED_TEST(HipcubBlockAdjacentDifferenceSubtract, SubtractRightPartialTile)
         // clang-format off
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(output, expected,
             is_add_op::value
-                ? std::max(test_utils::precision<type>, test_utils::precision<stored_type>)
+                ? std::max(test_utils::precision<type>::value, test_utils::precision<stored_type>::value)
                 : std::is_same<type, stored_type>::value 
                     ? 0 
-                    : test_utils::precision<stored_type>));
+                    : test_utils::precision<stored_type>::value));
         // clang-format on
 
         HIP_CHECK(hipFree(d_input));

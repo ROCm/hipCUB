@@ -162,7 +162,8 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     // all scan operations use the same acc_type,
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
-    constexpr float single_op_precision = is_plus_op::value ? test_utils::precision<acc_type> : 0;
+    constexpr float single_op_precision
+        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -319,8 +320,9 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
     // all scan operations use the same acc_type,
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
-    constexpr float  single_op_precision = is_plus_op::value ? test_utils::precision<acc_type> : 0;
-    constexpr size_t max_segment_length  = 100;
+    constexpr float single_op_precision
+        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+    constexpr size_t max_segment_length = 100;
 
     const std::vector<size_t> sizes = get_sizes();
     for (auto size : sizes)
@@ -494,7 +496,8 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     // all scan operations use the same acc_type,
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
-    constexpr float single_op_precision = is_plus_op::value ? test_utils::precision<acc_type> : 0;
+    constexpr float single_op_precision
+        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -660,8 +663,9 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
     // all scan operations use the same acc_type,
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
-    constexpr float  single_op_precision = is_plus_op::value ? test_utils::precision<acc_type> : 0;
-    constexpr size_t max_segment_length  = 100;
+    constexpr float single_op_precision
+        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+    constexpr size_t max_segment_length = 100;
 
     const std::vector<size_t> sizes = get_sizes();
     for (auto size : sizes)
@@ -1086,7 +1090,8 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     // all scan operations use the same acc_type,
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
-    constexpr float single_op_precision = is_plus_op::value ? test_utils::precision<acc_type> : 0;
+    constexpr float single_op_precision
+        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)

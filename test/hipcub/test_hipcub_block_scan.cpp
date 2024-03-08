@@ -1067,7 +1067,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
+        test_utils::assert_near(output, expected, test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
     }
@@ -1206,11 +1206,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
+        test_utils::assert_near(output, expected, test_utils::precision<T>::value * block_size);
 
         test_utils::assert_near(output_reductions,
                                 expected_reductions,
-                                test_utils::precision<T> * block_size);
+                                test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_reductions));
@@ -1363,11 +1363,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
+        test_utils::assert_near(output, expected, test_utils::precision<T>::value * block_size);
 
         test_utils::assert_near(output_block_prefixes,
                                 expected_block_prefixes,
-                                test_utils::precision<T> * block_size);
+                                test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_bp));
@@ -1488,7 +1488,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
+        test_utils::assert_near(output, expected, test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
     }
@@ -1642,11 +1642,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
+        test_utils::assert_near(output, expected, test_utils::precision<T>::value * block_size);
 
         test_utils::assert_near(output_reductions,
                                 expected_reductions,
-                                test_utils::precision<T> * block_size);
+                                test_utils::precision<T>::value * block_size);
     }
 }
 
@@ -1798,11 +1798,11 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
                             hipMemcpyDeviceToHost));
 
         // Validating results
-        test_utils::assert_near(output, expected, test_utils::precision<T> * block_size);
+        test_utils::assert_near(output, expected, test_utils::precision<T>::value * block_size);
 
         test_utils::assert_near(output_block_prefixes,
                                 expected_block_prefixes,
-                                test_utils::precision<T> * block_size);
+                                test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_bp));

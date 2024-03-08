@@ -54,26 +54,47 @@ namespace test_utils
 // They are doubled from 1 / (1 << mantissa_bits) as we compare in tests
 // the results of _two_ sequences of operations with different order
 // For all other operations (i.e. integer arithmetics) default 0 is used
-template<class T>
-static constexpr float precision = 0;
+template<typename T>
+struct precision
+{
+    static constexpr float value = 0;
+};
 
 template<>
-static constexpr float precision<double> = 2.0f / (1ll << 52);
+struct precision<double>
+{
+    static constexpr float value = 2.0f / static_cast<float>(1ll << 52);
+};
 
 template<>
-static constexpr float precision<float> = 2.0f / (1ll << 23);
+struct precision<float>
+{
+    static constexpr float value = 2.0f / static_cast<float>(1ll << 23);
+};
 
 template<>
-static constexpr float precision<test_utils::half> = 2.0f / (1ll << 10);
+struct precision<test_utils::half>
+{
+    static constexpr float value = 2.0f / static_cast<float>(1ll << 10);
+};
 
 template<>
-static constexpr float precision<test_utils::bfloat16> = 2.0f / (1ll << 7);
+struct precision<test_utils::bfloat16>
+{
+    static constexpr float value = 2.0f / static_cast<float>(1ll << 7);
+};
 
-template<class T>
-static constexpr float precision<const T> = precision<T>;
+template<typename T>
+struct precision<const T>
+{
+    static constexpr float value = precision<T>::value;
+};
 
-template<class T>
-static constexpr float precision<custom_test_type<T>> = precision<T>;
+template<typename T>
+struct precision<custom_test_type<T>>
+{
+    static constexpr float value = precision<T>::value;
+};
 
 template<class T>
 struct is_plus_operator : std::false_type
