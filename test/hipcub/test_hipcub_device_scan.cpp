@@ -93,8 +93,8 @@ template<typename input_type, typename input_op_type>
 struct accum_type
 {
     static constexpr bool is_low_precision
-        = std::is_same<input_type, ::rocprim::half>::value
-          || std::is_same<input_type, ::rocprim::bfloat16>::value;
+        = std::is_same<input_type, test_utils::half>::value
+          || std::is_same<input_type, test_utils::bfloat16>::value;
     static constexpr bool is_plus = test_utils::is_plus_operator<input_op_type>::value;
     using type = typename std::conditional_t<is_low_precision && is_plus, float, input_type>;
 };
