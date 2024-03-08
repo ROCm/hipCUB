@@ -33,6 +33,7 @@
     #include <cub/util_ptx.cuh>
 #endif
 
+#include "test_utils_functional.hpp"
 #include "test_utils_half.hpp"
 #include "test_utils_bfloat16.hpp"
 #include "test_utils_sort_comparator.hpp"
@@ -66,19 +67,76 @@ struct precision_threshold<test_utils::bfloat16>
     static constexpr float percentage = 0.075f;
 };
 
-/// \brief Functor that returns a + b.
-template<class T = void>
-struct plus
+// Values of relative error for non-assotiative operations
+// (+, -, *) and type conversions for floats
+// They are doubled from 1 / (1 << mantissa_bits) as we compare in tests
+// the results of _two_ sequences of operations with different order
+// For all other operations (i.e. integer arithmetics) default 0 is used
+template<class T>
+static constexpr float precision = 0;
+
+template<>
+static constexpr float precision<double> = 2.0f / (1ll << 52);
+
+template<>
+static constexpr float precision<float> = 2.0f / (1ll << 23);
+
+template<>
+static constexpr float precision<test_utils::half> = 2.0f / (1ll << 10);
+
+template<>
+static constexpr float precision<test_utils::bfloat16> = 2.0f / (1ll << 7);
+
+template<class T>
+static constexpr float precision<const T> = precision<T>;
+
+template<class T>
+static constexpr float precision<custom_test_type<T>> = precision<T>;
+
+template<class T>
+struct is_plus_operator : std::false_type
 {
-    /// \brief Invocation operator
-    HIPCUB_HOST_DEVICE inline constexpr T operator()(const T& a, const T& b) const
-    {
-        return a + b;
-    }
+    typedef uint8_t value_type;
+};
+
+template<class T>
+struct is_plus_operator<test_utils::plus<T>> : std::true_type
+{
+    typedef T value_type;
+};
+
+template<class T>
+struct is_add_operator : std::false_type
+{
+    typedef uint8_t value_type;
+};
+
+template<class T>
+struct is_add_operator<test_utils::plus<T>> : std::true_type
+{
+    typedef T value_type;
+};
+
+template<class T>
+struct is_add_operator<test_utils::minus<T>> : std::true_type
+{
+    typedef T value_type;
+};
+
+template<class T>
+struct is_multiply_operator : std::false_type
+{
+    typedef uint8_t value_type;
+};
+
+template<class T>
+struct is_multiply_operator<test_utils::multiplies<T>> : std::true_type
+{
+    typedef T value_type;
 };
 
 /* Plus to operator selector for host-side
- * On host-side we use `double` as accumulator and `rocprim::plus<double>` as operator
+ * On host-side we use `double` as accumulator and `test_utils::plus<double>` as operator
  * for bfloat16 and half types. This is because additions of floating-point types are not
  * associative. This would result in wrong output rather quickly for reductions and scan-algorithms
  * on host-side for bfloat16 and half because of their low-precision.
@@ -86,145 +144,295 @@ struct plus
 template<typename T>
 struct select_plus_operator_host
 {
-    typedef plus<T> type;
-    typedef T       acc_type;
-    typedef T       cast_type;
+    typedef test_utils::plus<T> type;
+    typedef T                   acc_type;
+    typedef T                   cast_type;
 };
 
 template<>
 struct select_plus_operator_host<test_utils::half>
 {
-    typedef plus<double>     type;
-    typedef double           acc_type;
-    typedef test_utils::half cast_type;
+    typedef test_utils::plus<double> type;
+    typedef double                   acc_type;
+    typedef test_utils::half         cast_type;
 };
 
 template<>
 struct select_plus_operator_host<test_utils::bfloat16>
 {
-    typedef plus<double>         type;
-    typedef double               acc_type;
-    typedef test_utils::bfloat16 cast_type;
+    typedef test_utils::plus<double> type;
+    typedef double                   acc_type;
+    typedef test_utils::bfloat16     cast_type;
 };
 
-// Can't use std::prefix_sum for inclusive/exclusive scan, because
-// it does not handle short[] -> int(int a, int b) { a + b; } -> int[]
-// they way we expect. That's because sum in std::prefix_sum's implementation
-// is of type typename std::iterator_traits<InputIt>::value_type (short)
-template<class InputIt, class OutputIt, class BinaryOperation>
-OutputIt host_inclusive_scan(InputIt first, InputIt last,
-                             OutputIt d_first, BinaryOperation op)
+template<class InputIt, class OutputIt, class BinaryOperation, class acc_type>
+OutputIt host_inclusive_scan_impl(
+    InputIt first, InputIt last, OutputIt d_first, BinaryOperation op, acc_type)
 {
-    using input_type = typename std::iterator_traits<InputIt>::value_type;
-    using output_type = typename std::iterator_traits<OutputIt>::value_type;
-    using result_type =
-        typename std::conditional<
-            std::is_void<output_type>::value, input_type, output_type
-        >::type;
+    if(first == last)
+        return d_first;
 
-    if (first == last) return d_first;
+    acc_type sum = *first;
+    *d_first     = sum;
 
-    result_type sum = *first;
-    *d_first = sum;
+    while(++first != last)
+    {
+        sum        = op(sum, *first);
+        *++d_first = sum;
+    }
+    return ++d_first;
+}
 
-    while (++first != last) {
-       sum = op(sum, static_cast<result_type>(*first));
-       *++d_first = sum;
+template<class InputIt, class OutputIt, class BinaryOperation>
+OutputIt host_inclusive_scan(InputIt first, InputIt last, OutputIt d_first, BinaryOperation op)
+{
+    using acc_type = typename std::iterator_traits<InputIt>::value_type;
+    return host_inclusive_scan_impl(first, last, d_first, op, acc_type{});
+}
+
+template<class InputIt,
+         class OutputIt,
+         class T,
+         std::enable_if_t<
+             std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                          test_utils::bfloat16>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                                 test_utils::half>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type, float>::value,
+             bool>
+         = true>
+OutputIt host_inclusive_scan(InputIt first, InputIt last, OutputIt d_first, test_utils::plus<T>)
+{
+    using acc_type = double;
+    return host_inclusive_scan_impl(first, last, d_first, test_utils::plus<acc_type>(), acc_type{});
+}
+
+template<class InputIt, class T, class OutputIt, class BinaryOperation, class acc_type>
+OutputIt host_exclusive_scan_impl(
+    InputIt first, InputIt last, T initial_value, OutputIt d_first, BinaryOperation op, acc_type)
+{
+    if(first == last)
+        return d_first;
+
+    acc_type sum = initial_value;
+    *d_first     = initial_value;
+
+    while((first + 1) != last)
+    {
+        sum        = op(sum, *first);
+        *++d_first = sum;
+        first++;
     }
     return ++d_first;
 }
 
 template<class InputIt, class T, class OutputIt, class BinaryOperation>
-OutputIt host_exclusive_scan(InputIt first, InputIt last,
-                             T initial_value, OutputIt d_first,
-                             BinaryOperation op)
+OutputIt host_exclusive_scan(
+    InputIt first, InputIt last, T initial_value, OutputIt d_first, BinaryOperation op)
 {
-    using input_type = typename std::iterator_traits<InputIt>::value_type;
-    using output_type = typename std::iterator_traits<OutputIt>::value_type;
-    using result_type =
-        typename std::conditional<
-            std::is_void<output_type>::value, input_type, output_type
-        >::type;
-
-    if (first == last) return d_first;
-
-    result_type sum = initial_value;
-    *d_first = initial_value;
-
-    while ((first+1) != last)
-    {
-       sum = op(sum, static_cast<result_type>(*first));
-       *++d_first = sum;
-       first++;
-    }
-    return ++d_first;
+    using acc_type = typename std::iterator_traits<InputIt>::value_type;
+    return host_exclusive_scan_impl(first, last, initial_value, d_first, op, acc_type{});
 }
 
-template<class InputIt, class KeyIt, class OutputIt, class BinaryOperation, class KeyCompare>
-OutputIt host_inclusive_scan_by_key(InputIt first, InputIt last, KeyIt k_first,
-                                    OutputIt d_first, BinaryOperation op, KeyCompare key_compare_op)
+template<class InputIt,
+         class T,
+         class OutputIt,
+         class U,
+         std::enable_if_t<
+             std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                          test_utils::bfloat16>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                                 test_utils::half>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type, float>::value,
+             bool>
+         = true>
+OutputIt host_exclusive_scan(
+    InputIt first, InputIt last, T initial_value, OutputIt d_first, test_utils::plus<U>)
 {
-    using input_type = typename std::iterator_traits<InputIt>::value_type;
-    using output_type = typename std::iterator_traits<OutputIt>::value_type;
-    using result_type =
-        typename std::conditional<
-            std::is_void<output_type>::value, input_type, output_type
-        >::type;
+    using acc_type = double;
+    return host_exclusive_scan_impl(first,
+                                    last,
+                                    initial_value,
+                                    d_first,
+                                    test_utils::plus<acc_type>(),
+                                    acc_type{});
+}
 
-    if (first == last)
-    {
+template<class InputIt,
+         class KeyIt,
+         class T,
+         class OutputIt,
+         class BinaryOperation,
+         class KeyCompare,
+         class acc_type>
+OutputIt host_exclusive_scan_by_key_impl(InputIt         first,
+                                         InputIt         last,
+                                         KeyIt           k_first,
+                                         T               initial_value,
+                                         OutputIt        d_first,
+                                         BinaryOperation op,
+                                         KeyCompare      key_compare_op,
+                                         acc_type)
+{
+    if(first == last)
         return d_first;
-    }
 
-    result_type sum = *first;
-    *d_first = sum;
+    acc_type sum = initial_value;
+    *d_first     = initial_value;
 
-    while (++first != last)
+    while((first + 1) != last)
     {
-        if (key_compare_op(*k_first, *++k_first))
+        if(key_compare_op(*k_first, *(k_first + 1)))
         {
-            sum = op(sum, static_cast<result_type>(*first));
-        }
-        else
-        {
-            sum = *first;
-        }
-        *++d_first = sum;
-    }
-    return ++d_first;
-}
-
-template<class InputIt, class KeyIt, class T, class OutputIt, class BinaryOperation, class KeyCompare>
-OutputIt host_exclusive_scan_by_key(InputIt first, InputIt last, KeyIt k_first,
-                                    T initial_value, OutputIt d_first,
-                                    BinaryOperation op, KeyCompare key_compare_op)
-{
-    using input_type = typename std::iterator_traits<InputIt>::value_type;
-    using output_type = typename std::iterator_traits<OutputIt>::value_type;
-    using result_type =
-        typename std::conditional<
-            std::is_void<output_type>::value, input_type, output_type
-        >::type;
-
-    if (first == last) return d_first;
-
-    result_type sum = initial_value;
-    *d_first = initial_value;
-
-    while ((first+1) != last)
-    {
-        if(key_compare_op(*k_first, *++k_first))
-        {
-            sum = op(sum, static_cast<result_type>(*first));
-        }
-        else
+            sum = op(sum, *first);
+        } else
         {
             sum = initial_value;
         }
+        k_first++;
         *++d_first = sum;
         first++;
     }
     return ++d_first;
+}
+template<class InputIt,
+         class KeyIt,
+         class T,
+         class OutputIt,
+         class BinaryOperation,
+         class KeyCompare>
+OutputIt host_exclusive_scan_by_key(InputIt         first,
+                                    InputIt         last,
+                                    KeyIt           k_first,
+                                    T               initial_value,
+                                    OutputIt        d_first,
+                                    BinaryOperation op,
+                                    KeyCompare      key_compare_op)
+{
+    using acc_type = typename std::iterator_traits<InputIt>::value_type;
+    return host_exclusive_scan_by_key_impl(first,
+                                           last,
+                                           k_first,
+                                           initial_value,
+                                           d_first,
+                                           op,
+                                           key_compare_op,
+                                           acc_type{});
+}
+
+template<class InputIt,
+         class KeyIt,
+         class T,
+         class OutputIt,
+         class U,
+         class KeyCompare,
+         std::enable_if_t<
+             std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                          test_utils::bfloat16>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                                 test_utils::half>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type, float>::value,
+             bool>
+         = true>
+OutputIt host_exclusive_scan_by_key(InputIt  first,
+                                    InputIt  last,
+                                    KeyIt    k_first,
+                                    T        initial_value,
+                                    OutputIt d_first,
+                                    test_utils::plus<U>,
+                                    KeyCompare key_compare_op)
+{
+    using acc_type = double;
+    return host_exclusive_scan_by_key_impl(first,
+                                           last,
+                                           k_first,
+                                           initial_value,
+                                           d_first,
+                                           test_utils::plus<acc_type>(),
+                                           key_compare_op,
+                                           acc_type{});
+}
+
+template<class InputIt,
+         class KeyIt,
+         class OutputIt,
+         class BinaryOperation,
+         class KeyCompare,
+         class acc_type>
+OutputIt host_inclusive_scan_by_key_impl(InputIt         first,
+                                         InputIt         last,
+                                         KeyIt           k_first,
+                                         OutputIt        d_first,
+                                         BinaryOperation op,
+                                         KeyCompare      key_compare_op,
+                                         acc_type)
+{
+    if(first == last)
+        return d_first;
+
+    acc_type sum = *first;
+    *d_first     = sum;
+
+    while(++first != last)
+    {
+        if(key_compare_op(*k_first, *(k_first + 1)))
+        {
+            sum = op(sum, *first);
+        } else
+        {
+            sum = *first;
+        }
+        k_first++;
+        *++d_first = sum;
+    }
+    return ++d_first;
+}
+template<class InputIt, class KeyIt, class OutputIt, class BinaryOperation, class KeyCompare>
+OutputIt host_inclusive_scan_by_key(InputIt         first,
+                                    InputIt         last,
+                                    KeyIt           k_first,
+                                    OutputIt        d_first,
+                                    BinaryOperation op,
+                                    KeyCompare      key_compare_op)
+{
+    using acc_type = typename std::iterator_traits<InputIt>::value_type;
+    return host_inclusive_scan_by_key_impl(first,
+                                           last,
+                                           k_first,
+                                           d_first,
+                                           op,
+                                           key_compare_op,
+                                           acc_type{});
+}
+
+template<class InputIt,
+         class KeyIt,
+         class OutputIt,
+         class U,
+         class KeyCompare,
+         std::enable_if_t<
+             std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                          test_utils::bfloat16>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type,
+                                 test_utils::half>::value
+                 || std::is_same<typename std::iterator_traits<InputIt>::value_type, float>::value,
+             bool>
+         = true>
+OutputIt host_inclusive_scan_by_key(InputIt  first,
+                                    InputIt  last,
+                                    KeyIt    k_first,
+                                    OutputIt d_first,
+                                    test_utils::plus<U>,
+                                    KeyCompare key_compare_op)
+{
+    using acc_type = double;
+    return host_inclusive_scan_by_key_impl(first,
+                                           last,
+                                           k_first,
+                                           d_first,
+                                           test_utils::plus<acc_type>(),
+                                           key_compare_op,
+                                           acc_type{});
 }
 
 template<class T, class U = T>
