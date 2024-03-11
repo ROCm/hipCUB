@@ -149,7 +149,6 @@ struct select_plus_operator_host
 {
     typedef test_utils::plus<T> type;
     typedef T                   acc_type;
-    typedef T                   cast_type;
 };
 
 template<>
@@ -157,7 +156,6 @@ struct select_plus_operator_host<test_utils::half>
 {
     typedef test_utils::plus<double> type;
     typedef double                   acc_type;
-    typedef test_utils::half         cast_type;
 };
 
 template<>
@@ -165,7 +163,6 @@ struct select_plus_operator_host<test_utils::bfloat16>
 {
     typedef test_utils::plus<double> type;
     typedef double                   acc_type;
-    typedef test_utils::bfloat16     cast_type;
 };
 
 template<class InputIt, class OutputIt, class BinaryOperation, class acc_type>

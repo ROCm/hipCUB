@@ -144,8 +144,7 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
@@ -179,7 +178,7 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
                 auto idx = i * block_size + j;
                 value    = binary_op_host(value, output[idx]);
             }
-            expected_reductions[i] = static_cast<cast_type>(value);
+            expected_reductions[i] = static_cast<T>(value);
         }
 
         // Preparing device
@@ -255,8 +254,7 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     constexpr auto algorithm = TestFixture::algorithm;
 
@@ -301,7 +299,7 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
                 auto idx = i * block_size + j;
                 value    = binary_op_host(output[idx], value);
             }
-            expected_reductions[i] = static_cast<cast_type>(value);
+            expected_reductions[i] = static_cast<T>(value);
         }
 
         // Preparing device
@@ -431,8 +429,7 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     constexpr auto algorithm = TestFixture::algorithm;
     constexpr size_t block_size = TestFixture::block_size;
@@ -474,7 +471,7 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
                 auto idx = i * items_per_block + j;
                 value    = binary_op_host(output[idx], value);
             }
-            expected_reductions[i] = static_cast<cast_type>(value);
+            expected_reductions[i] = static_cast<T>(value);
         }
 
         // Preparing device

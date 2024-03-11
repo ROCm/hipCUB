@@ -123,8 +123,7 @@ TYPED_TEST(HipcubWarpReduceTests, Reduce)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     // logical warp side for warp primitive, execution warp size
     constexpr size_t logical_warp_size = TestFixture::warp_size;
@@ -181,7 +180,7 @@ TYPED_TEST(HipcubWarpReduceTests, Reduce)
                 auto idx = i * logical_warp_size + j;
                 value    = binary_op_host(input[idx], value);
             }
-            expected[i] = static_cast<cast_type>(value);
+            expected[i] = static_cast<T>(value);
         }
 
         // Writing to device memory
@@ -274,8 +273,7 @@ TYPED_TEST(HipcubWarpReduceTests, ReduceValid)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     // logical warp side for warp primitive, execution warp size
     constexpr size_t logical_warp_size = TestFixture::warp_size;
@@ -332,7 +330,7 @@ TYPED_TEST(HipcubWarpReduceTests, ReduceValid)
                 auto idx = i * logical_warp_size + j;
                 value    = binary_op_host(input[idx], value);
             }
-            expected[i] = valid ? static_cast<cast_type>(value) : input[i];
+            expected[i] = valid ? static_cast<T>(value) : input[i];
         }
 
         // Writing to device memory
@@ -423,8 +421,7 @@ TYPED_TEST(HipcubWarpReduceTests, HeadSegmentedReduceSum)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     using flag_type = unsigned char;
     // logical warp side for warp primitive, execution warp size
@@ -526,7 +523,7 @@ TYPED_TEST(HipcubWarpReduceTests, HeadSegmentedReduceSum)
         {
             if(i%logical_warp_size == 0 || flags[i])
             {
-                expected[segment_head_index] = static_cast<cast_type>(reduction);
+                expected[segment_head_index] = static_cast<T>(reduction);
                 segment_head_index = i;
                 reduction = input[i];
             }
@@ -535,7 +532,7 @@ TYPED_TEST(HipcubWarpReduceTests, HeadSegmentedReduceSum)
                 reduction = binary_op_host(input[i], reduction);
             }
         }
-        expected[segment_head_index] = static_cast<cast_type>(reduction);
+        expected[segment_head_index] = static_cast<T>(reduction);
 
         // Launching kernel
         if (current_device_warp_size == ws32)
@@ -628,8 +625,7 @@ TYPED_TEST(HipcubWarpReduceTests, TailSegmentedReduceSum)
     // for bfloat16 and half we use double for host-side accumulation
     using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
     binary_op_type_host binary_op_host;
-    using acc_type  = typename test_utils::select_plus_operator_host<T>::acc_type;
-    using cast_type = typename test_utils::select_plus_operator_host<T>::cast_type;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
 
     using flag_type = unsigned char;
     // logical warp side for warp primitive, execution warp size
@@ -748,7 +744,7 @@ TYPED_TEST(HipcubWarpReduceTests, TailSegmentedReduceSum)
                 }
                 i++;
                 accumulator             = binary_op_host(reduction, input[i]);
-                expected[segment_index] = static_cast<cast_type>(accumulator);
+                expected[segment_index] = static_cast<T>(accumulator);
                 segment_indexes.push_back(segment_index);
             }
         }
