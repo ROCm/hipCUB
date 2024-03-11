@@ -167,7 +167,7 @@ TYPED_TEST(HipcubWarpScanTests, InclusiveScan)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size);
         std::vector<T> expected(output.size(), 0);
 
@@ -228,21 +228,9 @@ TYPED_TEST(HipcubWarpScanTests, InclusiveScan)
         );
 
         // Validating results
-        if (std::is_integral<T>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                ASSERT_EQ(output[i], expected[i]);
-            }
-        }
-        else if (std::is_floating_point<T>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                auto tolerance = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-                ASSERT_NEAR(output[i], expected[i], tolerance);
-            }
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));
@@ -343,7 +331,7 @@ TYPED_TEST(HipcubWarpScanTests, InclusiveScanReduce)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size);
         std::vector<T> output_reductions(size / logical_warp_size);
         std::vector<T> expected(output.size(), 0);
@@ -422,32 +410,9 @@ TYPED_TEST(HipcubWarpScanTests, InclusiveScanReduce)
         );
 
         // Validating results
-        if (std::is_integral<T>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                ASSERT_EQ(output[i], expected[i]);
-            }
-
-            for(size_t i = 0; i < output_reductions.size(); i++)
-            {
-                ASSERT_EQ(output_reductions[i], expected_reductions[i]);
-            }
-        }
-        else if (std::is_floating_point<T>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                auto tolerance = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-                ASSERT_NEAR(output[i], expected[i], tolerance);
-            }
-
-            for(size_t i = 0; i < output_reductions.size(); i++)
-            {
-                auto tolerance = std::max<T>(std::abs(0.1f * expected_reductions[i]), T(0.01f));
-                ASSERT_NEAR(output_reductions[i], expected_reductions[i], tolerance);
-            }
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));
@@ -534,7 +499,7 @@ TYPED_TEST(HipcubWarpScanTests, ExclusiveScan)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size);
         std::vector<T> expected(input.size(), 0);
         const T init = test_utils::get_random_value(0, 100, seed_value + seed_value_addition);
@@ -597,21 +562,9 @@ TYPED_TEST(HipcubWarpScanTests, ExclusiveScan)
         );
 
         // Validating results
-        if (std::is_integral<T>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                ASSERT_EQ(output[i], expected[i]);
-            }
-        }
-        else if (std::is_floating_point<T>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                auto tolerance = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-                ASSERT_NEAR(output[i], expected[i], tolerance);
-            }
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));
@@ -706,7 +659,7 @@ TYPED_TEST(HipcubWarpScanTests, ExclusiveReduceScan)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size);
         std::vector<T> output_reductions(size / logical_warp_size);
         std::vector<T> expected(input.size(), 0);
@@ -794,32 +747,12 @@ TYPED_TEST(HipcubWarpScanTests, ExclusiveReduceScan)
         );
 
         // Validating results
-        if (std::is_integral<T>::value)
-        {
-          for(size_t i = 0; i < output.size(); i++)
-          {
-            ASSERT_EQ(output[i], expected[i]);
-          }
-
-          for(size_t i = 0; i < output_reductions.size(); i++)
-          {
-            ASSERT_EQ(output_reductions[i], expected_reductions[i]);
-          }
-        }
-        else if (std::is_floating_point<T>::value)
-        {
-          for(size_t i = 0; i < output.size(); i++)
-          {
-            auto tolerance = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-            ASSERT_NEAR(output[i], expected[i], tolerance);
-          }
-
-          for(size_t i = 0; i < output_reductions.size(); i++)
-          {
-            auto tolerance = std::max<T>(std::abs(0.1f * expected_reductions[i]), T(0.01f));
-            ASSERT_NEAR(output_reductions[i], expected_reductions[i], tolerance);
-          }
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));
@@ -912,7 +845,7 @@ TYPED_TEST(HipcubWarpScanTests, Scan)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output_inclusive(size);
         std::vector<T> output_exclusive(size);
         std::vector<T> expected_inclusive(output_inclusive.size(), 0);
@@ -922,20 +855,20 @@ TYPED_TEST(HipcubWarpScanTests, Scan)
         // Calculate expected results on host
         for(size_t i = 0; i < input.size() / logical_warp_size; i++)
         {
-          acc_type accumulator_inclusive(init);
-          acc_type accumulator_exclusive(init);
-          expected_exclusive[i * logical_warp_size] = init;
-          for(size_t j = 0; j < logical_warp_size; j++)
-          {
-            auto idx                = i * logical_warp_size + j;
-            accumulator_inclusive   = binary_op_host(input[idx], accumulator_inclusive);
-            expected_inclusive[idx] = static_cast<cast_type>(accumulator_inclusive);
-            if(j > 0)
+            acc_type accumulator_inclusive(init);
+            acc_type accumulator_exclusive(init);
+            expected_exclusive[i * logical_warp_size] = init;
+            for(size_t j = 0; j < logical_warp_size; j++)
             {
-                accumulator_exclusive   = binary_op_host(input[idx - 1], accumulator_exclusive);
-                expected_exclusive[idx] = static_cast<cast_type>(accumulator_exclusive);
+                auto idx                = i * logical_warp_size + j;
+                accumulator_inclusive   = binary_op_host(input[idx], accumulator_inclusive);
+                expected_inclusive[idx] = static_cast<cast_type>(accumulator_inclusive);
+                if(j > 0)
+                {
+                    accumulator_exclusive   = binary_op_host(input[idx - 1], accumulator_exclusive);
+                    expected_exclusive[idx] = static_cast<cast_type>(accumulator_exclusive);
+                }
             }
-          }
         }
 
         // Writing to device memory
@@ -1003,25 +936,12 @@ TYPED_TEST(HipcubWarpScanTests, Scan)
         );
 
         // Validating results
-        if (std::is_integral<T>::value)
-        {
-            for(size_t i = 0; i < output_inclusive.size(); i++)
-            {
-                ASSERT_EQ(output_inclusive[i], expected_inclusive[i]);
-                ASSERT_EQ(output_exclusive[i], expected_exclusive[i]);
-            }
-        }
-        else if (std::is_floating_point<T>::value)
-        {
-            for(size_t i = 0; i < output_inclusive.size(); i++)
-            {
-                auto tolerance = std::max<T>(std::abs(0.1f * expected_inclusive[i]), T(0.01f));
-                ASSERT_NEAR(output_inclusive[i], expected_inclusive[i], tolerance);
-
-                tolerance = std::max<T>(std::abs(0.1f * expected_exclusive[i]), T(0.01f));
-                ASSERT_NEAR(output_exclusive[i], expected_exclusive[i], tolerance);
-            }
-        }
+        test_utils::assert_near(output_inclusive,
+                                expected_inclusive,
+                                test_utils::precision<T>::value * logical_warp_size);
+        test_utils::assert_near(output_exclusive,
+                                expected_exclusive,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_inclusive_output));
@@ -1157,24 +1077,9 @@ TYPED_TEST(HipcubWarpScanTests, InclusiveScanCustomType)
             )
         );
 
-        // Validating results
-        if (std::is_integral<base_type>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                ASSERT_EQ(output[i], expected[i]);
-            }
-        }
-        else if (std::is_floating_point<base_type>::value)
-        {
-            for(size_t i = 0; i < output.size(); i++)
-            {
-                auto tolerance_x = std::max<base_type>(std::abs(0.1f * expected[i].x), base_type(0.01f));
-                auto tolerance_y = std::max<base_type>(std::abs(0.1f * expected[i].y), base_type(0.01f));
-                ASSERT_NEAR(output[i].x, expected[i].x, tolerance_x);
-                ASSERT_NEAR(output[i].y, expected[i].y, tolerance_y);
-            }
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));

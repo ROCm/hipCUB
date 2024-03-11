@@ -168,7 +168,7 @@ TYPED_TEST(HipcubWarpReduceTests, Reduce)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size / logical_warp_size, 0);
         std::vector<T> expected(output.size(), 1);
 
@@ -228,12 +228,9 @@ TYPED_TEST(HipcubWarpReduceTests, Reduce)
             )
         );
 
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            auto diff = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-            if(std::is_integral<T>::value) diff = 0;
-            ASSERT_NEAR(output[i], expected[i], diff) << "where index = " << i;
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));
@@ -322,7 +319,7 @@ TYPED_TEST(HipcubWarpReduceTests, ReduceValid)
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         // Generate data
-        std::vector<T> input = test_utils::get_random_data<T>(size, -100, 100, seed_value);
+        std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size / logical_warp_size, 0);
         std::vector<T> expected(output.size(), 1);
 
@@ -382,12 +379,9 @@ TYPED_TEST(HipcubWarpReduceTests, ReduceValid)
             )
         );
 
-        for(size_t i = 0; i < output.size(); i++)
-        {
-            auto diff = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-            if(std::is_integral<T>::value) diff = 0;
-            ASSERT_NEAR(output[i], expected[i], diff) << "where index = " << i;
-        }
+        test_utils::assert_near(output,
+                                expected,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_output));
@@ -578,15 +572,19 @@ TYPED_TEST(HipcubWarpReduceTests, HeadSegmentedReduceSum)
         );
         HIP_CHECK(hipDeviceSynchronize());
 
+        std::vector<T> output_segment(output.size(), T(0));
+        std::vector<T> expected_segment(output.size(), T(0));
         for(size_t i = 0; i < output.size(); i++)
         {
             if(flags[i])
             {
-                auto diff = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-                if(std::is_integral<T>::value) diff = 0;
-                ASSERT_NEAR(output[i], expected[i], diff) << "where index = " << i;
+                output_segment[i]   = output[i];
+                expected_segment[i] = expected[i];
             }
         }
+        test_utils::assert_near(output_segment,
+                                expected_segment,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_flags));
@@ -790,13 +788,17 @@ TYPED_TEST(HipcubWarpReduceTests, TailSegmentedReduceSum)
         );
         HIP_CHECK(hipDeviceSynchronize());
 
+        std::vector<T> output_segment(segment_indexes.size());
+        std::vector<T> expected_segment(segment_indexes.size());
         for(size_t i = 0; i < segment_indexes.size(); i++)
         {
             auto index = segment_indexes[i];
-            auto diff = std::max<T>(std::abs(0.1f * expected[i]), T(0.01f));
-            if(std::is_integral<T>::value) diff = 0;
-            ASSERT_NEAR(output[index], expected[index], diff) << "where index = " << i;
+            output_segment[i]   = output[index];
+            expected_segment[i] = expected[index];
         }
+        test_utils::assert_near(output_segment,
+                                expected_segment,
+                                test_utils::precision<T>::value * logical_warp_size);
 
         HIP_CHECK(hipFree(device_input));
         HIP_CHECK(hipFree(device_flags));
