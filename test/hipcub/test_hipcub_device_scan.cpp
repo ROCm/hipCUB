@@ -147,7 +147,6 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
 
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
-    using V = test_utils::convert_to_fundamental_t<U>;
 
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
@@ -304,7 +303,6 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
 
     using T                             = typename TestFixture::input_type;
     using U                             = typename TestFixture::output_type;
-    using V                             = test_utils::convert_to_fundamental_t<U>;
     using K                             = typename TestFixture::key_type;
 
     using scan_op_type = typename TestFixture::scan_op_type;
@@ -481,7 +479,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
 
     using T                      = typename TestFixture::input_type;
     using U                      = typename TestFixture::output_type;
-    using V                      = test_utils::convert_to_fundamental_t<U>;
 
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
@@ -647,7 +644,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
 
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
-    using V                             = test_utils::convert_to_fundamental_t<U>;
     using K = typename TestFixture::key_type;
 
     using scan_op_type = typename TestFixture::scan_op_type;
@@ -1075,9 +1071,8 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
 
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
-    using V                      = test_utils::convert_to_fundamental_t<U>;
 
-    using scan_op_type           = typename TestFixture::scan_op_type;
+    using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
     using is_plus_op = test_utils::is_plus_operator<scan_op_type>;
