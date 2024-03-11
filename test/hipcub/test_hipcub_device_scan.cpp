@@ -132,13 +132,6 @@ std::vector<T> generate_segments(const size_t size,
 }
 }
 
-template<class T, class InputIterator, class UnaryFunction>
-HIPCUB_HOST_DEVICE inline auto make_transform_iterator(InputIterator iterator,
-                                                       UnaryFunction transform)
-{
-    return ::hipcub::TransformInputIterator<T, UnaryFunction, InputIterator>(iterator, transform);
-}
-
 TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -151,8 +144,9 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op = test_utils::is_plus_operator<scan_op_type>;
-    using acc_type   = typename accum_type<T, scan_op_type>::type;
+    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using acc_type     = typename accum_type<T, scan_op_type>::type;
+    using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
     // for non-associative operations in inclusive scan
     // intermediate results use the type of input iterator, then
@@ -216,9 +210,11 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
                 expected.begin(), scan_op
             );
 
-            auto input_iterator
-                = make_transform_iterator<T>(d_input,
-                                             [](T in) { return static_cast<acc_type>(in); });
+            // Scan operator: CastOp.
+            hipcub::CastOp<acc_type> op{};
+
+            // Transform input applying the casting operator.
+            auto input_iterator = IteratorType(d_input, op);
 
             // temp storage
             size_t temp_storage_size_bytes;
@@ -308,8 +304,9 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op = test_utils::is_plus_operator<scan_op_type>;
-    using acc_type   = typename accum_type<T, scan_op_type>::type;
+    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using acc_type     = typename accum_type<T, scan_op_type>::type;
+    using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
     // for non-associative operations in inclusive scan
     // intermediate results use the type of input iterator, then
@@ -383,9 +380,11 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
                 expected.begin(), scan_op, hipcub::Equality()
             );
 
-            auto input_iterator
-                = make_transform_iterator<T>(d_input,
-                                             [](T in) { return static_cast<acc_type>(in); });
+            // Scan operator: CastOp.
+            hipcub::CastOp<acc_type> op{};
+
+            // Transform input applying the casting operator.
+            auto input_iterator = IteratorType(d_input, op);
 
             // temp storage
             size_t temp_storage_size_bytes{};
@@ -483,8 +482,9 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op = test_utils::is_plus_operator<scan_op_type>;
-    using acc_type   = typename accum_type<T, scan_op_type>::type;
+    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using acc_type     = typename accum_type<T, scan_op_type>::type;
+    using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
     // for non-associative operations in inclusive scan
     // intermediate results use the type of input iterator, then
@@ -555,9 +555,11 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
                 scan_op
             );
 
-            auto input_iterator
-                = make_transform_iterator<T>(d_input,
-                                             [](T in) { return static_cast<acc_type>(in); });
+            // Scan operator: CastOp.
+            hipcub::CastOp<acc_type> op{};
+
+            // Transform input applying the casting operator.
+            auto input_iterator = IteratorType(d_input, op);
 
             // temp storage
             size_t temp_storage_size_bytes;
@@ -649,8 +651,9 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op = test_utils::is_plus_operator<scan_op_type>;
-    using acc_type   = typename accum_type<T, scan_op_type>::type;
+    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using acc_type     = typename accum_type<T, scan_op_type>::type;
+    using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
     // for non-associative operations in inclusive scan
     // intermediate results use the type of input iterator, then
@@ -736,9 +739,11 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
                 expected.begin(), scan_op, hipcub::Equality()
             );
 
-            auto input_iterator
-                = make_transform_iterator<T>(d_input,
-                                             [](T in) { return static_cast<acc_type>(in); });
+            // Scan operator: CastOp.
+            hipcub::CastOp<acc_type> op{};
+
+            // Transform input applying the casting operator.
+            auto input_iterator = IteratorType(d_input, op);
 
             // temp storage
             size_t temp_storage_size_bytes;
@@ -1075,8 +1080,9 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op = test_utils::is_plus_operator<scan_op_type>;
-    using acc_type   = typename accum_type<T, scan_op_type>::type;
+    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using acc_type     = typename accum_type<T, scan_op_type>::type;
+    using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
     // for non-associative operations in inclusive scan
     // intermediate results use the type of input iterator, then
@@ -1147,9 +1153,11 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
                 scan_op
             );
 
-            auto input_iterator
-                = make_transform_iterator<T>(d_input,
-                                             [](T in) { return static_cast<acc_type>(in); });
+            // Scan operator: CastOp.
+            hipcub::CastOp<acc_type> op{};
+
+            // Transform input applying the casting operator.
+            auto input_iterator = IteratorType(d_input, op);
 
             const auto future_initial_value = hipcub::FutureValue<U>{d_initial_value};
 
