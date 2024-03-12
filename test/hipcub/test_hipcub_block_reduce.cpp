@@ -469,7 +469,7 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx = i * items_per_block + j;
-                value    = binary_op_host(output[idx], value);
+                value    = binary_op_host(static_cast<acc_type>(output[idx]), value);
             }
             expected_reductions[i] = static_cast<T>(value);
         }

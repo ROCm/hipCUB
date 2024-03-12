@@ -103,7 +103,7 @@ struct is_plus_operator : std::false_type
 };
 
 template<class T>
-struct is_plus_operator<test_utils::plus<T>> : std::true_type
+struct is_plus_operator<test_utils::plus(T)> : std::true_type
 {
     typedef T value_type;
 };
@@ -115,13 +115,13 @@ struct is_add_operator : std::false_type
 };
 
 template<class T>
-struct is_add_operator<test_utils::plus<T>> : std::true_type
+struct is_add_operator<test_utils::plus(T)> : std::true_type
 {
     typedef T value_type;
 };
 
 template<class T>
-struct is_add_operator<test_utils::minus<T>> : std::true_type
+struct is_add_operator<test_utils::minus(T)> : std::true_type
 {
     typedef T value_type;
 };
@@ -133,7 +133,7 @@ struct is_multiply_operator : std::false_type
 };
 
 template<class T>
-struct is_multiply_operator<test_utils::multiplies<T>> : std::true_type
+struct is_multiply_operator<test_utils::multiplies(T)> : std::true_type
 {
     typedef T value_type;
 };
@@ -147,22 +147,22 @@ struct is_multiply_operator<test_utils::multiplies<T>> : std::true_type
 template<typename T>
 struct select_plus_operator_host
 {
-    typedef test_utils::plus<T> type;
-    typedef T                   acc_type;
+    typedef test_utils::plus type;
+    typedef T                acc_type;
 };
 
 template<>
 struct select_plus_operator_host<test_utils::half>
 {
-    typedef test_utils::plus<double> type;
-    typedef double                   acc_type;
+    typedef test_utils::plus type;
+    typedef double           acc_type;
 };
 
 template<>
 struct select_plus_operator_host<test_utils::bfloat16>
 {
-    typedef test_utils::plus<double> type;
-    typedef double                   acc_type;
+    typedef test_utils::plus type;
+    typedef double           acc_type;
 };
 
 template<class InputIt, class OutputIt, class BinaryOperation, class acc_type>
@@ -201,10 +201,10 @@ template<class InputIt,
                  || std::is_same<typename std::iterator_traits<InputIt>::value_type, float>::value,
              bool>
          = true>
-OutputIt host_inclusive_scan(InputIt first, InputIt last, OutputIt d_first, test_utils::plus<T>)
+OutputIt host_inclusive_scan(InputIt first, InputIt last, OutputIt d_first, test_utils::plus)
 {
     using acc_type = double;
-    return host_inclusive_scan_impl(first, last, d_first, test_utils::plus<acc_type>(), acc_type{});
+    return host_inclusive_scan_impl(first, last, d_first, test_utils::plus(), acc_type{});
 }
 
 template<class InputIt, class T, class OutputIt, class BinaryOperation, class acc_type>
@@ -247,14 +247,14 @@ template<class InputIt,
              bool>
          = true>
 OutputIt host_exclusive_scan(
-    InputIt first, InputIt last, T initial_value, OutputIt d_first, test_utils::plus<U>)
+    InputIt first, InputIt last, T initial_value, OutputIt d_first, test_utils::plus)
 {
     using acc_type = double;
     return host_exclusive_scan_impl(first,
                                     last,
                                     initial_value,
                                     d_first,
-                                    test_utils::plus<acc_type>(),
+                                    test_utils::plus(),
                                     acc_type{});
 }
 
@@ -339,7 +339,7 @@ OutputIt host_exclusive_scan_by_key(InputIt  first,
                                     KeyIt    k_first,
                                     T        initial_value,
                                     OutputIt d_first,
-                                    test_utils::plus<U>,
+                                    test_utils::plus,
                                     KeyCompare key_compare_op)
 {
     using acc_type = double;
@@ -348,7 +348,7 @@ OutputIt host_exclusive_scan_by_key(InputIt  first,
                                            k_first,
                                            initial_value,
                                            d_first,
-                                           test_utils::plus<acc_type>(),
+                                           test_utils::plus(),
                                            key_compare_op,
                                            acc_type{});
 }
@@ -422,7 +422,7 @@ OutputIt host_inclusive_scan_by_key(InputIt  first,
                                     InputIt  last,
                                     KeyIt    k_first,
                                     OutputIt d_first,
-                                    test_utils::plus<U>,
+                                    test_utils::plus,
                                     KeyCompare key_compare_op)
 {
     using acc_type = double;
@@ -430,7 +430,7 @@ OutputIt host_inclusive_scan_by_key(InputIt  first,
                                            last,
                                            k_first,
                                            d_first,
-                                           test_utils::plus<acc_type>(),
+                                           test_utils::plus(),
                                            key_compare_op,
                                            acc_type{});
 }

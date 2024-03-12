@@ -142,7 +142,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScan)
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
         }
@@ -246,7 +246,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduce)
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
             expected_reductions[i] = expected[(i + 1) * block_size - 1];
@@ -378,7 +378,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanPrefixCallback)
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
             expected_block_prefixes[i] = expected[(i + 1) * block_size - 1];
@@ -495,7 +495,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScan)
             for(size_t j = 1; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx - 1]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
         }
@@ -602,15 +602,16 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanReduce)
             for(size_t j = 1; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx - 1]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
 
             acc_type accumulator_reductions(0);
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx               = i * block_size + j;
-                accumulator_reductions = binary_op_host(output[idx], accumulator_reductions);
+                auto idx = i * block_size + j;
+                accumulator_reductions
+                    = binary_op_host(static_cast<acc_type>(output[idx]), accumulator_reductions);
                 expected_reductions[i] = static_cast<T>(accumulator_reductions);
             }
         }
@@ -743,7 +744,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
             for(size_t j = 1; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx - 1]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
 
@@ -751,8 +752,8 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, ExclusiveScanPrefixCallback)
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx = i * block_size + j;
-                accumulator_block_prefixes
-                    = binary_op_host(output[idx], accumulator_block_prefixes);
+                accumulator_block_prefixes = binary_op_host(static_cast<acc_type>(output[idx]),
+                                                            accumulator_block_prefixes);
             }
             expected_block_prefixes[i] = static_cast<T>(accumulator_block_prefixes);
         }
@@ -864,7 +865,7 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, CustomStruct)
             for(size_t j = 0; j < block_size; j++)
             {
                 auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
         }
@@ -1023,7 +1024,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScan)
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx      = i * items_per_block + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
         }
@@ -1146,7 +1147,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanReduce)
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx      = i * items_per_block + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
             expected_reductions[i] = expected[(i + 1) * items_per_block - 1];
@@ -1297,7 +1298,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, InclusiveScanPrefixCallback)
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx      = i * items_per_block + j;
-                accumulator   = binary_op_host(output[idx], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
             expected_block_prefixes[i] = expected[(i + 1) * items_per_block - 1];
@@ -1440,7 +1441,7 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScan)
             for(size_t j = 1; j < items_per_block; j++)
             {
                 auto idx      = i * items_per_block + j;
-                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx - 1]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
         }
@@ -1571,15 +1572,16 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanReduce)
             for(size_t j = 1; j < items_per_block; j++)
             {
                 auto idx      = i * items_per_block + j;
-                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx - 1]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
 
             acc_type accumulator_reductions(0);
             for(size_t j = 0; j < items_per_block; j++)
             {
-                auto idx               = i * items_per_block + j;
-                accumulator_reductions = binary_op_host(output[idx], accumulator_reductions);
+                auto idx = i * items_per_block + j;
+                accumulator_reductions
+                    = binary_op_host(static_cast<acc_type>(output[idx]), accumulator_reductions);
                 expected_reductions[i] = static_cast<T>(accumulator_reductions);
             }
         }
@@ -1727,15 +1729,15 @@ TYPED_TEST(HipcubBlockScanInputArrayTests, ExclusiveScanPrefixCallback)
             for(size_t j = 1; j < items_per_block; j++)
             {
                 auto idx      = i * items_per_block + j;
-                accumulator   = binary_op_host(output[idx - 1], accumulator);
+                accumulator   = binary_op_host(static_cast<acc_type>(output[idx - 1]), accumulator);
                 expected[idx] = static_cast<T>(accumulator);
             }
             acc_type accumulator_block_prefixes(block_prefix);
             for(size_t j = 0; j < items_per_block; j++)
             {
                 auto idx = i * items_per_block + j;
-                accumulator_block_prefixes
-                    = binary_op_host(output[idx], accumulator_block_prefixes);
+                accumulator_block_prefixes = binary_op_host(static_cast<acc_type>(output[idx]),
+                                                            accumulator_block_prefixes);
                 expected_block_prefixes[i] = static_cast<T>(accumulator_block_prefixes);
             }
         }
