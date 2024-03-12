@@ -434,7 +434,9 @@ void test_argminmax(typename TestFixture::input_type empty_value)
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output[0].key, expected.key));
             ASSERT_NO_FATAL_FAILURE(
-                test_utils::assert_near(output[0].value, expected.value, 0.01f));
+                test_utils::assert_near(output[0].value,
+                                        expected.value,
+                                        test_utils::precision<T>::value * size));
         }
     }
 }

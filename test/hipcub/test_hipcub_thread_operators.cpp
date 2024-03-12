@@ -428,13 +428,10 @@ void scan_op_test(std::vector<InputT>  h_input,
         hipMemcpy(h_output.data(), d_output, input_size * sizeof(OutputT), hipMemcpyDeviceToHost));
 
     // Check output.
-    for(size_t i = 0; i < input_size; ++i)
-    {
-        auto tolerance = std::max<OutputT>(std::abs(0.1f * h_expected[i]), OutputT(0.01f));
-        if(std::is_integral<OutputT>::value)
-            tolerance = 0;
-        ASSERT_NEAR(h_output[i], h_expected[i], tolerance) << "where index = " << i;
-    }
+    ASSERT_NO_FATAL_FAILURE(
+        test_utils::assert_near(h_output,
+                                h_expected,
+                                test_utils::precision<InputT>::value * input_size));
 
     // Check output type.
     for(size_t i = 0; i < input_size; ++i)
@@ -547,14 +544,14 @@ TYPED_TEST(HipcubNCThreadOperatorsTests, ReduceBySegmentOp)
         for(size_t i = 0; i < segment_count; i++)
         {
             // Check keys.
-            ASSERT_EQ(expected[i].key, output[i].key) << "where index = " << i;
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(expected[i].key, output[i].key))
+                << "where index = " << i;
 
             // Check values.
-            auto tolerance
-                = std::max<output_type>(std::abs(0.1f * expected[i].value), output_type(0.01f));
-            if(std::is_integral<output_type>::value)
-                tolerance = 0;
-            ASSERT_NEAR(expected[i].value, output[i].value, tolerance) << "where index = " << i;
+            auto tolerance = test_utils::precision<input_type>::value * i;
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(expected[i].value, output[i].value, tolerance))
+                << "where index = " << i;
         }
     }
 }
@@ -685,18 +682,12 @@ TYPED_TEST(HipcubNCThreadOperatorsTests, ReduceByKeyOp)
         // Check if output values are as expected.
         // Check number of unique keys.
         ASSERT_EQ(h_unique_keys_expected[0], h_unique_keys);
-        for(size_t i = 0; i < h_unique_keys; ++i)
-        {
-            // Check keys.
-            ASSERT_EQ(h_keys_expected[i], h_keys_output[i]) << "where index = " << i;
 
-            // Check values.
-            auto tolerance
-                = std::max<output_type>(std::abs(0.1f * h_expected[i]), output_type(0.01f));
-            if(std::is_integral<output_type>::value)
-                tolerance = 0;
-            ASSERT_NEAR(h_expected[i], h_output[i], tolerance) << "where index = " << i;
-        }
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(h_keys_expected, h_keys_output));
+        ASSERT_NO_FATAL_FAILURE(
+            test_utils::assert_near(h_expected,
+                                    h_output,
+                                    test_utils::precision<input_type>::value * input_size));
 
         // Free resources.
         HIP_CHECK(hipFree(d_input));
@@ -773,11 +764,10 @@ TYPED_TEST(HipcubNCThreadOperatorsTests, CastOp)
         // Check output.
         for(size_t i = 0; i < input_size; ++i)
         {
-            auto tolerance
-                = std::max<output_type>(std::abs(0.1f * expected[i]), output_type(0.01f));
-            if(std::is_integral<output_type>::value)
-                tolerance = 0;
-            ASSERT_NEAR(output[i], expected[i], tolerance);
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(output[i],
+                                        expected[i],
+                                        test_utils::precision<input_type>::value));
         }
 
         // Check output type.

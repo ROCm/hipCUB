@@ -26,6 +26,7 @@
 #include "hipcub/util_allocator.hpp"
 
 #include "common_test_header.hpp"
+#include "test_utils_assertions.hpp"
 
 hipcub::CachingDeviceAllocator g_allocator;
 
@@ -227,10 +228,12 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
     HIP_CHECK(hipPeekAtLastError());
     HIP_CHECK(hipDeviceSynchronize());
 
+    const auto  max_row_len = csr_matrix.num_cols * csr_matrix.num_rows;
+    const float diff        = max_row_len * test_utils::precision<T>::value;
+
     for(int32_t i = 0; i < csr_matrix.num_rows; i++)
     {
-        auto diff = std::max<T>(std::abs(0.01f * vector_y_out[i]), 0.01f);
-        ASSERT_NEAR(vector_y_in[i], vector_y_out[i], diff) << "where index = " << i;
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(vector_y_in[i], vector_y_out[i], diff))
+            << "where index = " << i;
     }
 }
-
