@@ -97,18 +97,6 @@ struct precision<custom_test_type<T>>
 };
 
 template<class T>
-struct is_plus_operator : std::false_type
-{
-    typedef uint8_t value_type;
-};
-
-template<class T>
-struct is_plus_operator<test_utils::plus(T)> : std::true_type
-{
-    typedef T value_type;
-};
-
-template<class T>
 struct is_add_operator : std::false_type
 {
     typedef uint8_t value_type;

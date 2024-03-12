@@ -95,8 +95,8 @@ struct accum_type
     static constexpr bool is_low_precision
         = std::is_same<input_type, test_utils::half>::value
           || std::is_same<input_type, test_utils::bfloat16>::value;
-    static constexpr bool is_plus = test_utils::is_plus_operator<input_op_type>::value;
-    using type = typename std::conditional_t<is_low_precision && is_plus, float, input_type>;
+    static constexpr bool is_add = test_utils::is_add_operator<input_op_type>::value;
+    using type = typename std::conditional_t<is_low_precision && is_add, float, input_type>;
 };
 
 TYPED_TEST_SUITE(HipcubDeviceScanTests, HipcubDeviceScanTestsParams);
@@ -144,7 +144,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using is_add_op    = test_utils::is_add_operator<scan_op_type>;
     using acc_type     = typename accum_type<T, scan_op_type>::type;
     using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
@@ -156,7 +156,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
     constexpr float single_op_precision
-        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+        = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -304,7 +304,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using is_add_op    = test_utils::is_add_operator<scan_op_type>;
     using acc_type     = typename accum_type<T, scan_op_type>::type;
     using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
@@ -316,7 +316,7 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
     constexpr float single_op_precision
-        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+        = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
     constexpr size_t max_segment_length = 100;
 
     const std::vector<size_t> sizes = get_sizes();
@@ -482,7 +482,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using is_add_op    = test_utils::is_add_operator<scan_op_type>;
     using acc_type     = typename accum_type<T, scan_op_type>::type;
     using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
@@ -494,7 +494,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
     constexpr float single_op_precision
-        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+        = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
@@ -651,7 +651,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using is_add_op    = test_utils::is_add_operator<scan_op_type>;
     using acc_type     = typename accum_type<T, scan_op_type>::type;
     using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
@@ -663,7 +663,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
     constexpr float single_op_precision
-        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+        = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
     constexpr size_t max_segment_length = 100;
 
     const std::vector<size_t> sizes = get_sizes();
@@ -1080,7 +1080,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     using scan_op_type = typename TestFixture::scan_op_type;
     // if scan_op_type is plus and input_type is bfloat16 or half,
     // use float as device-side accumulator and double as host-side accumulator
-    using is_plus_op   = test_utils::is_plus_operator<scan_op_type>;
+    using is_add_op    = test_utils::is_add_operator<scan_op_type>;
     using acc_type     = typename accum_type<T, scan_op_type>::type;
     using IteratorType = hipcub::TransformInputIterator<acc_type, hipcub::CastOp<acc_type>, T*>;
 
@@ -1092,7 +1092,7 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     // and all output types are the same acc_type,
     // therefore the only source of error is precision of operation itself
     constexpr float single_op_precision
-        = is_plus_op::value ? test_utils::precision<acc_type>::value : 0;
+        = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
     const std::vector<size_t> sizes = get_sizes();
     for(auto size : sizes)
