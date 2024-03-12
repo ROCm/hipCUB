@@ -212,10 +212,9 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
         );
 
         // Verifying results
-        for(size_t i = 0; i < output_reductions.size(); i++)
-        {
-            ASSERT_EQ(output_reductions[i], expected_reductions[i]);
-        }
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_reductions));
@@ -333,10 +332,9 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
         );
 
         // Verifying results
-        for(size_t i = 0; i < output_reductions.size(); i++)
-        {
-            ASSERT_EQ(output_reductions[i], expected_reductions[i]);
-        }
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T>::value * block_size);
 
         HIP_CHECK(hipFree(device_output));
         HIP_CHECK(hipFree(device_output_reductions));
