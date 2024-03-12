@@ -267,26 +267,12 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
             ASSERT_EQ(unique_count_output[0], unique_count_expected);
 
             // Validating results
-            for(size_t i = 0; i < unique_count_expected; i++)
-            {
-                ASSERT_EQ(test_utils::convert_to_native(unique_output[i]),
-                          test_utils::convert_to_native(unique_expected[i]));
-
-                if(std::is_integral<aggregate_type>::value)
-                {
-                    ASSERT_EQ(test_utils::convert_to_native(aggregates_output[i]),
-                              test_utils::convert_to_native(aggregates_expected[i]));
-                }
-                else if(test_utils::is_floating_point<aggregate_type>::value)
-                {
-                    auto tolerance = std::max<test_utils::convert_to_fundamental_t<aggregate_type>>(
-                        std::abs(0.1f * test_utils::convert_to_native(aggregates_expected[i])),
-                        aggregate_type(0.01f));
-                    ASSERT_NEAR(test_utils::convert_to_native(aggregates_output[i]),
-                                test_utils::convert_to_native(aggregates_expected[i]),
-                                tolerance);
-                }
-            }
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(unique_output, unique_expected));
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_near(aggregates_output,
+                                        aggregates_expected,
+                                        test_utils::precision<aggregate_type>::value
+                                            * TestFixture::params::max_segment_length));
         }
     }
 }
