@@ -30,8 +30,8 @@ Please use the GitHub Issues tab to notify us of issues.
 
 The purpose of hipCUB is to provide a thin wrapper library on top of rocPRIM or CUB. This wrapper allows users to port CUB projects to HIP so that they can also be run on AMD hardware.
 
-Because it is a wrapper, the implementations of the algorithms that hipCUB API calls refer to are not contained within hipCUB.
-Rather, they exist within rocPRIM and CUB - the hipCUB API functions simply delegate the work to these underlying libraries.
+Because it is a wrapper, the implementations of the algorithms that hipCUB API calls are not contained within hipCUB.
+They exist within rocPRIM and CUB - the hipCUB API functions simply delegate the work to these underlying libraries.
 This delegation should be performed in a manner that minimizes overhead.
 
 When a pull request is created, a number of automated checks are run. These checks:
@@ -61,11 +61,11 @@ The following subdirectories are organized according to software-scope level:
 Finally, the iterator/ subdirectory provides access to the iterators that are used to interact with most algorithms in the library.
 
 Back at the root level, you can find tests and benchmarks located inside directories of the same name. 
-There is also an examples folder that contains a number of sample API use cases.
+There is also an examples/ folder that contains a number of sample API use cases.
 
 ## Coding Style ##
 
-C and C++ code should be formatted using `clang-format`. Use the clang-format version for Clang 9, which is available in the `/opt/rocm` directory. Please do not use your system's built-in `clang-format`, as this is an older version that will result in different results.
+C and C++ code should be formatted using `clang-format`. Use the clang-format version for Clang 9, which is available in the `/opt/rocm` directory. Please do not use your system's built-in `clang-format`, as this is an older version that will have different results.
 
 To format a file, use:
 
