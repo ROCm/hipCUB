@@ -18,7 +18,7 @@ Our documentation is structured as follows:
   .. grid-item-card:: Reference
 
     * :ref:`data-type-support`
-    * :ref:`python-api-reference`
+    * :doc:`API library <../doxygen/html/index>`
    
 To contribute to the documentation refer to
 `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
