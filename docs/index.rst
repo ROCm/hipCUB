@@ -1,6 +1,6 @@
 .. meta::
    :description: hipCUB is a thin header-only wrapper library on top of rocPRIM or CUB that enables developers to port project
-using CUB library to the HIP layer.
+    using CUB library to the HIP layer.
    :keywords: hipCUB, ROCm, library, API
 
 .. _index:
@@ -17,17 +17,9 @@ Our documentation is structured as follows:
 
   .. grid-item-card:: Reference
 
-    * :ref:`cpp-api-reference`
+    * :ref:`data-type-support`
     * :ref:`python-api-reference`
    
-  .. grid-item-card:: Command-line tool
-
-    * :ref:`migraphx-driver`    
-
-  .. grid-item-card:: Tutorial
-
-    * :ref:`contributing-to-migraphx`
-
 To contribute to the documentation refer to
 `Contributing to ROCm  <https://rocm.docs.amd.com/en/latest/contribute/contributing.html>`_.
 
