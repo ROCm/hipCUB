@@ -33,7 +33,7 @@ differences between the ROCm (HIP) platform and the CUDA platform.
 
 Unsupported features and differences:
 
-- Functions, classes, and macros which are not in the public API or undocumented are not
+- Functions, classes, and macros that are not in the public API or undocumented are not
   supported.
 
 - Device-wide primitives can't be called from kernels (dynamic parallelism is not supported in HIP
