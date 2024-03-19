@@ -94,6 +94,7 @@ copyright-date:
       -D BUILD_TEST=OFF
       -D BUILD_EXAMPLE=OFF
       -D ROCM_DEP_ROCMCORE=OFF
+      -D GPU_TARGETS="$GPU_TARGETS"
       -B $CI_PROJECT_DIR/rocPRIM/build
       -S $CI_PROJECT_DIR/rocPRIM
     - cd $CI_PROJECT_DIR/rocPRIM/build
