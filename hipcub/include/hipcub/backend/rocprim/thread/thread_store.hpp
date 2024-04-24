@@ -68,8 +68,9 @@ HIPCUB_DEVICE __forceinline__ void AsmThreadStore(void * ptr, T val)
     HIPCUB_DEVICE __forceinline__ void AsmThreadStore<cache_modifier, type>(void * ptr, type val)            \
     {                                                                                                        \
         interim_type temp_val = val;                                                                         \
-        asm volatile(#asm_operator " %0, %1 " llvm_cache_modifier : : "v"(ptr), #output_modifier(temp_val)); \
-        asm volatile(#wait_inst wait_cmd "(%0)" : : "I"(0x00));                                              \
+        asm volatile(#asm_operator " %0, %1 " llvm_cache_modifier "\n\t"                                     \
+                                   wait_inst wait_cmd "(%2)"                                                 \
+                     : : "v"(ptr), #output_modifier(temp_val), "I"(0x00));                                   \
     }
 
 // TODO fix flat_store_ubyte and flat_store_sbyte issues
