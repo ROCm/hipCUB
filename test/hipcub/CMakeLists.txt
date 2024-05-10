@@ -1,5 +1,5 @@
 # MIT License #
-# Copyright (c) 2017-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -179,7 +179,6 @@ ${TEST_TYPE_SLICE_COUNT} test type slice(s) for test target ${TEST_TARGET}")
     message(FATAL_ERROR "no .cpp files generated for target ${TEST_TARGET}")
   endif()
 
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_CLEAN_FILES "${TEST_TARGET}.parallel")
   add_hipcub_test_internal(${TEST_NAME} "${SOURCES}" ${TEST_TARGET})
   target_include_directories("${TEST_TARGET}" PRIVATE "../../test/hipcub")
 endfunction()
@@ -205,6 +204,7 @@ add_hipcub_test("hipcub.BlockRunLengthDecode" test_hipcub_block_run_length_decod
 add_hipcub_test("hipcub.BlockScan" test_hipcub_block_scan.cpp)
 add_hipcub_test("hipcub.BlockShuffle" test_hipcub_block_shuffle.cpp)
 add_hipcub_test("hipcub.DeviceAdjacentDifference" test_hipcub_device_adjacent_difference.cpp)
+add_hipcub_test("hipcub.DeviceCopy" test_hipcub_device_copy.cpp)
 add_hipcub_test("hipcub.DeviceHistogram" test_hipcub_device_histogram.cpp)
 add_hipcub_test("hipcub.DeviceMemcpy" test_hipcub_device_memcpy.cpp)
 add_hipcub_test("hipcub.DeviceMergeSort" test_hipcub_device_merge_sort.cpp)
@@ -217,6 +217,7 @@ add_hipcub_test_parallel("hipcub.DeviceSegmentedRadixSort" test_hipcub_device_se
 add_hipcub_test("hipcub.DeviceSegmentedReduce" test_hipcub_device_segmented_reduce.cpp)
 add_hipcub_test_parallel("hipcub.DeviceSegmentedSort" test_hipcub_device_segmented_sort.cpp.in)
 add_hipcub_test("hipcub.DeviceSelect" test_hipcub_device_select.cpp)
+add_hipcub_test("hipcub.DeviceSpmv" test_hipcub_device_spmv.cpp)
 add_hipcub_test("hipcub.DevicePartition" test_hipcub_device_partition.cpp)
 add_hipcub_test("hipcub.Grid" test_hipcub_grid.cpp)
 add_hipcub_test("hipcub.UtilPtx" test_hipcub_util_ptx.cpp)

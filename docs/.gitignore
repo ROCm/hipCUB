@@ -1,8 +1,6 @@
 /_build/
-/_images/
-/_static/
-/_templates/
-/.doxygen/docBin
-/.doxygen/hipCUB.tag
-/.sphinx/_toc.yml
-/api
+/_doxygen
+/doxygen/html
+/doxygen/xml
+/doxygen/hipCUB.tag
+/sphinx/_toc.yml
