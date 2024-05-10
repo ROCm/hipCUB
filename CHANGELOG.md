@@ -1,168 +1,294 @@
-# Change Log for hipCUB
+# Changelog for hipCUB
 
-See README.md on how to build the hipCUB documentation using Doxygen.
+Documentation for hipCUB is available at
+[https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 6.1.0
+## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
+
+### Added
+* Add `DeviceCopy` function to have parity with CUB.
+* In the rocPRIM backend, added `enum WarpExchangeAlgorithm`, which is used as the new optional template argument for `WarpExchange`.
+  * The potential values for the enum are `WARP_EXCHANGE_SMEM` and `WARP_EXCHANGE_SHUFFLE`.
+  * `WARP_EXCHANGE_SMEM` stands for the previous algorithm, while `WARP_EXCHANGE_SHUFFLE` performs the exchange via shuffle operations.
+  * `WARP_EXCHANGE_SHUFFLE` does not require any pre-allocated shared memory, but the `ItemsPerThread` must be a divisor of `WarpSize`.
+* Added `tuple.hpp` which defines templates `hipcub::tuple`, `hipcub::tuple_element`, `hipcub::tuple_element_t` and `hipcub::tuple_size`.
+* Added new overloaded member functions to `BlockRadixSort` and `DeviceRadixSort` that expose a `decomposer` argument. Keys of a custom
+  type (`key_type`) can be sorted via these overloads, if an appropriate decomposer is passed. The decomposer has to implement
+  `operator(const key_type&)` which returns a `hipcub::tuple` of references pointing to members of `key_type`.
+
+* On AMD GPUs (using the HIP backend), it is possible to issue hipCUB API calls inside of
+  hipGraphs, with several exceptions:
+   * CachingDeviceAllocator
+   * GridBarrierLifetime
+   * DeviceSegmentedRadixSort
+   * DeviceRunLengthEncode
+  Currently, these classes rely on one or more synchronous calls to function correctly. Because of this, they cannot be used inside of hipGraphs.
+
 ### Changed
-- CUB backend references CUB and Thrust version 2.1.0.
-- Updated `HIPCUB_HOST_WARP_THREADS` macro definition to match `host_warp_size` changes from rocPRIM 3.0.
-- Implemented `__int128_t` and `__uint128_t` support for radix_sort.
+
+* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.2.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+
 ### Fixed
-- Fixed build issues with `rmake.py` on Windows when using VS 2017 15.8 or later due to a breaking fix with extended aligned storage.
 
-### Added
-- Added interface `DeviceMemcpy::Batched` for batched memcpy from rocPRIM and CUB.
+* Fixed the derivation for the accumulator type for device scan algorithms in the rocPRIM backend being different compared to CUB.
+  It now derives the accumulator type as the result of the binary operator.
+* `debug_synchronous` has been deprecated in hipCUB-2.13.2, and it no longer has any effect. With this release, passing `debug_synchronous`
+  to the device functions results in a deprecation warning both at runtime and at compile time.
+  * The synchronization that was previously achievable by passing `debug_synchronous=true` can now be achieved at compile time
+    by setting the `CUB_DEBUG_SYNC` (or higher debug level) or the `HIPCUB_DEBUG_SYNC` preprocessor definition.
+  * The compile time deprecation warnings can be disabled by defining the `HIPCUB_IGNORE_DEPRECATED_API` preprocessor definition.
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 5.7.0
-### Changed
-- CUB backend references CUB and Thrust version 2.0.1.
-- Fixed `DeviceSegmentedReduce::ArgMin` and `DeviceSegmentedReduce::ArgMax` by returning the segment-relative index instead of the absolute one.
-- Fixed `DeviceSegmentedReduce::ArgMin` for inputs where the segment minimum is smaller than the value returned for empty segments. An equivalent fix is applied to `DeviceSegmentedReduce::ArgMax`.
-- Removed `DOWNLOAD_ROCPRIM`, forcing rocPRIM to download can be done with `DEPENDENCIES_FORCE_DOWNLOAD`.
-### Known Issues
-- `debug_synchronous` no longer works on CUDA platform. `CUB_DEBUG_SYNC` should be used to enable those checks.
-- `DeviceReduce::Sum` does not compile on CUDA platform for mixed extended-floating-point/floating-point InputT and OutputT types.
-- `DeviceHistogram::HistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int]`.
-- `DeviceHistogram::MultiHistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int/unsigned short/float/double]` and `[LevelT, SampleIteratorT] = [float, double]`.
+## (Unreleased) hipCUB-3.1.0 for ROCm 6.1.0
 
-## (Unreleased) hipCUB-2.13.1 for ROCm 5.5.0
-### Added
-- Benchmarks for `BlockShuffle`, `BlockLoad`, and `BlockStore`.
-### Changed
-- CUB backend references CUB and Thrust version 1.17.2.
-- Improved benchmark coverage of `BlockScan` by adding `ExclusiveScan`, benchmark coverage of `BlockRadixSort` by adding `SortBlockedToStriped`, and benchmark coverage of `WarpScan` by adding `Broadcast`.
-- Removed references to and workarounds for deprecated hcc
-### Known Issues
-- `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
-- `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
+### Changes
 
-## (Unreleased) hipCUB-2.13.0 for ROCm 5.4.0
-### Added
-- CMake functionality to improve build parallelism of the test suite that splits compilation units by
-function or by parameters.
-- New overload for `BlockAdjacentDifference::SubtractLeftPartialTile` that takes a predecessor item.
-### Changed
-- Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, 
-`DeviceSegmentedRadixSort` and `DeviceSegmentedSort`.
-- CUB backend references CUB and Thrust version 1.17.1.
+* CUB backend references CUB and Thrust version 2.1.0
+* Updated the `HIPCUB_HOST_WARP_THREADS` macro definition to match `host_warp_size` changes
+  from rocPRIM 3.0
+* Implemented `__int128_t` and `__uint128_t` support for `radix_sort`
 
-### Known Issues
-- `BlockRadixRankMatch` is currently broken under the rocPRIM backend.
-- `BlockRadixRankMatch` with a warp size that does not exactly divide the block size is broken under the CUB backend.
+### Fixes
+
+* Build issues with `rmake.py` on Windows when using Visual Studio 2017 15.8 or later (due to a
+  breaking fix with extended aligned storage)
+
+### Additions
+
+* Interface `DeviceMemcpy::Batched` for batched memcpy from rocPRIM and CUB
+
+## hipCUB-3.0.0 for ROCm 6.0.0
+
+### Changes
+
+* Removed `DOWNLOAD_ROCPRIM`
+  * You can force rocPRIM to download using `DEPENDENCIES_FORCE_DOWNLOAD`
+
+## hipCUB-2.13.2 for ROCm 5.7.0
+
+### Changes
+
+* CUB backend references CUB and Thrust version 2.0.1.
+* Fixed `DeviceSegmentedReduce::ArgMin` and `DeviceSegmentedReduce::ArgMax` by returning the
+  segment-relative index instead of the absolute one
+* Fixed `DeviceSegmentedReduce::ArgMin` for inputs where the segment minimum is smaller than the
+  value returned for empty segments; an equivalent fix is applied to `DeviceSegmentedReduce::ArgMax`
+
+### Known issues
+
+* `debug_synchronous` no longer works on the CUDA platform; use `CUB_DEBUG_SYNC` instead
+* `DeviceReduce::Sum` doesn't compile on the CUDA platform for mixed extended-floating-point or
+  floating-point InputT and OutputT types
+* `DeviceHistogram::HistogramEven` fails on CUDA platform for `[LevelT, SampleIteratorT] = [int, int]`.
+* `DeviceHistogram::MultiHistogramEven` fails on CUDA platform for
+  `[LevelT, SampleIteratorT] = [int, int/unsigned short/float/double]` and
+  `[LevelT, SampleIteratorT] = [float, double]`
+
+## hipCUB-2.13.1 for ROCm 5.5.0
+
+### Additions
+
+* Benchmarks for `BlockShuffle`, `BlockLoad`, and `BlockStore`
+
+### Changes
+
+* The CUB backend references CUB and Thrust version 1.17.2
+* Improved benchmark coverage for:
+  * `BlockScan` by adding `ExclusiveScan`
+  * `BlockRadixSort` by adding `SortBlockedToStriped`
+  * `WarpScan` by adding `Broadcast`
+* Removed references to, and workarounds for, the deprecated hcc
+
+### Known issues
+
+* `BlockRadixRankMatch` is currently broken for the rocPRIM backend
+* `BlockRadixRankMatch` with a warp size that does not divide exactly by the block size is broken for
+  the CUB backend
+
+## hipCUB-2.13.0 for ROCm 5.4.0
+
+### Additions
+
+* CMake functionality improves build parallelism for the test suite that splits compilation units by
+function or parameters
+* New overload for `BlockAdjacentDifference::SubtractLeftPartialTile`, which takes a predecessor item
+
+### Changes
+
+* Improved build parallelism of the test suite by splitting up large compilation units for `DeviceRadixSort`, `DeviceSegmentedRadixSort`, and `DeviceSegmentedSort`
+* The CUB backend references CUB and Thrust version 1.17.1
+
+### Known issues
+
+* `BlockRadixRankMatch` is currently broken for the rocPRIM backend
+* `BlockRadixRankMatch` with a warp size that does not divide exactly by the block size is broken for
+  the CUB backend
 
 ## hipCUB-2.12.0 for ROCm 5.3.0
-### Added
-- UniqueByKey device algorithm
-- SubtractLeft, SubtractLeftPartialTile, SubtractRight, SubtractRightPartialTile overloads in BlockAdjacentDifference.
-  - The old overloads (FlagHeads, FlagTails, FlagHeadsAndTails) are deprecated.
-- DeviceAdjacentDifference algorithm.
-- Extended benchmark suite of `DeviceHistogram`, `DeviceScan`, `DevicePartition`, `DeviceReduce`,
-`DeviceSegmentedReduce`, `DeviceSegmentedRadixSort`, `DeviceRadixSort`, `DeviceSpmv`, `DeviceMergeSort`,
-`DeviceSegmentedSort`
-### Changed
-- Obsolated type traits defined in util_type.hpp. Use the standard library equivalents instead.
-- CUB backend references CUB and thrust version 1.16.0.
-- DeviceRadixSort's num_items parameter's type is now templated instead of being an int.
-  - If an integral type with a size at most 4 bytes is passed (i.e. an int), the former logic applies.
-  - Otherwise the algorithm uses a larger indexing type that makes it possible to sort input data over 2**32 elements.
+
+### Additions
+
+* `UniqueByKey` device algorithm
+* `SubtractLeft`, `SubtractLeftPartialTile`, `SubtractRight`, and `SubtractRightPartialTile` overload in
+  `BlockAdjacentDifference`
+  * The old overloads (`FlagHeads`, `FlagTails`, `FlagHeadsAndTails`) are deprecated
+* `DeviceAdjacentDifference` algorithm
+* Extended benchmark suite of `DeviceHistogram`, `DeviceScan`, `DevicePartition`, `DeviceReduce`,
+`DeviceSegmentedReduce`, `DeviceSegmentedRadixSort`, `DeviceRadixSort`, `DeviceSpmv`,
+`DeviceMergeSort`, and `DeviceSegmentedSort`
+
+### Changes
+
+* Obsolete type traits defined in `util_type.hpp`; use the standard library equivalents instead
+* CUB backend references CUB and Thrust version 1.16.0
+* `DeviceRadixSort` `num_items` parameter type is now templated instead of being an int
+  * If an integral type with a maximum size of 4 bytes is passed (an int), the former logic applies;
+    otherwise, the algorithm uses a larger indexing type that makes it possible to sort input data over
+    $2^{32}$ elements
 
 ## hipCUB-2.11.1 for ROCm 5.2.0
-### Added
-- Packages for tests and benchmark executable on all supported OSes using CPack.
+
+### Additions
+
+* Packages for tests and benchmark executables on all supported operating systems using CPack
 
 ## hipCUB-2.11.0 for ROCm 5.1.0
-### Added
-- Device segmented sort
-- Warp merge sort, WarpMask and thread sort from cub 1.15.0 supported in hipCUB
-- Device three way partition
-### Changed
-- Device_scan and device_segmented_scan: inclusive_scan now uses the input-type as accumulator-type, exclusive_scan uses initial-value-type.
-  - This particularly changes behaviour of small-size input types with large-size output types (e.g. short input, int output).
-  - And low-res input with high-res output (e.g. float input, double output)
-  - Block merge sort no longer supports non power of two blocksizes
-### Known Issues
-  - grid unit test hanging on HIP on Windows
+
+### Additions
+
+* Device segmented sort
+* `WarpMergeSort`, `WarpMask`, and thread sort from CUB 1.15.0 are supported in hipCUB
+* Device three-way partition
+
+### Changes
+
+* `device_scan` and `device_segmented_scan`: `inclusive_scan` now uses the `input-type` as
+  `accumulator-type`; `exclusive_scan` uses `initial-value-type`.
+  * This changes the behavior of:
+    * Small-size input types with large-size output types (e.g., short input, int output)
+    * Low-res input with high-res output (e.g., float input, double output)
+* Block merge sort no longer supports non-power of two block sizes
+
+### Known issues
+
+* Grid unit test hangs on HIP for Windows
 
 ## hipCUB-2.10.13 for ROCm 5.0.0
-### Fixed
-- Added missing includes to hipcub.hpp
-### Added
-- Bfloat16 support to test cases (device_reduce & device_radix_sort)
-- Device merge sort
-- Block merge sort
-- API update to CUB 1.14.0
-### Changed
-- The SetupNVCC.cmake automatic target selector select all of the capabalities of all available card for NVIDIA backend.
+
+### Fixes
+
+* Added missing includes to `hipcub.hpp`
+
+### Additions
+
+* Bfloat16 support to test cases (`device_reduce` and `device_radix_sort`)
+* Device merge sort
+* Block merge sort
+* API update to CUB 1.14.0
+
+### Changes
+
+* The `SetupNVCC.cmake` automatic target selector selects all of the capabilities for all available cards
+  with the NVIDIA backend
 
 ## hipCUB-2.10.12 for ROCm 4.5.0
-### Added
-- Initial HIP on Windows support. See README for instructions on how to build and install.
-### Changed
-- Packaging changed to a development package (called hipcub-dev for `.deb` packages, and hipcub-devel for `.rpm` packages). As hipCUB is a header-only library, there is no runtime package. To aid in the transition, the development package sets the "provides" field to provide the package hipcub, so that existing packages depending on hipcub can continue to work. This provides feature is introduced as a deprecated feature and will be removed in a future ROCm release.
 
-## [hipCUB-2.10.11 for ROCm 4.4.0]
-### Added
-- gfx1030 support added.
-- Address Sanitizer build option
-### Fixed
-- BlockRadixRank unit test failure fixed.
+### Additions
 
-## [hipCUB-2.10.10 for ROCm 4.3.0]
-### Added
-- DiscardOutputIterator to backend header
+* Initial HIP on Windows support
 
-## [hipCUB-2.10.9 for ROCm 4.2.0]
-### Added
-- Support for TexObjInputIterator and TexRefInputIterator
-- Support for DevicePartition
-### Changed
-- Minimum cmake version required is now 3.10.2
-- CUB backend has been updated to 1.11.0
-### Fixed
-- Benchmark build fixed
-- nvcc build fixed
+### Changes
 
-## [hipCUB-2.10.8 for ROCm 4.1.0]
-### Added
-- Support for DiscardOutputIterator
+* Packaging changed to a development package (named `hipcub-dev` for `.deb` packages and
+  `hipcub-devel` for `.rpm` packages). Because hipCUB is a header-only library, there is no runtime
+  package. To aid in the transition, the development package sets the `provides` field to `hipcub`, so
+  existing packages that are dependent on hipCUB can continue to work. This `provides` feature is
+  introduced as a deprecated feature because it will be removed in a future ROCm release.
 
-## [hipCUB-2.10.7 for ROCm 4.0.0]
-### Added
-- No new features
+## hipCUB-2.10.11 for ROCm 4.4.0
 
-## [hipCUB-2.10.6 for ROCm 3.10]
-### Added
-- No new features
+### Additions
 
-## [hipCUB-2.10.5 for ROCm 3.9.0]
-### Added
-- No new features
+* gfx1030 support added
+* AddressSanitizer build option
 
-## [hipCUB-2.10.4 for ROCm 3.8.0]
-### Added
-- No new features
+### Fixes
 
-## [hipCUB-2.10.3 for ROCm 3.7.0]
-### Added
-- No new features
+* `BlockRadixRank` unit test failure
 
-## [hipCUB-2.10.2 for ROCm 3.6.0]
-### Added
-- No new features
+## hipCUB-2.10.10 for ROCm 4.3.0
 
-## [hipCUB-2.10.1 for ROCm 3.5.0]
+### Additions
+
+* `DiscardOutputIterator` to backend header
+
+## hipCUB-2.10.9 for ROCm 4.2.0
+
+### Additions
+
+* Support for `TexObjInputIterator` and `TexRefInputIterator`
+* Support for `DevicePartition`
+
+### Changes
+
+* The minimum CMake version required is now 3.10.2
+* The CUB backend has been updated to 1.11.0
+
+### Fixes
+
+* Benchmark build
+* NVCC build
+
+## hipCUB-2.10.8 for ROCm 4.1.0
+
 ### Added
-- Improved tests with fixed and random seeds for test data
-### Changed
-- Switched to hip-clang as default compiler
-- CMake searches for rocPRIM locally first; downloads from github if local search fails
-### Deprecated
-- HCC build deprecated
-### Known Issues
-- The following unit test failures have been observed. These are due to issues in rocclr runtime.
-    - BlockDiscontinuity
-    - BlockExchange
-    - BlockHistogram
-    - BlockRadixSort
-    - BlockReduce
-    - BlockScan
+
+* Support for `DiscardOutputIterator`
+
+## hipCUB-2.10.7 for ROCm 4.0.0
+
+* No changes
+
+## hipCUB-2.10.6 for ROCm 3.10
+
+* No changes
+
+## hipCUB-2.10.5 for ROCm 3.9.0
+
+* No changes
+
+## hipCUB-2.10.4 for ROCm 3.8.0
+
+* No changes
+
+## hipCUB-2.10.3 for ROCm 3.7.0
+
+* No changes
+
+## hipCUB-2.10.2 for ROCm 3.6.0
+
+* No changes
+
+## hipCUB-2.10.1 for ROCm 3.5.0
+
+### Additions
+
+* Improved tests with fixed and random seeds for test data
+
+### Changes
+
+* Switched to hip-clang as default compiler
+* CMake searches for rocPRIM locally first and, if not found, downloads it from GitHub
+
+### Deprecations
+
+* HCC build
+
+### Known issues
+
+* The following unit test failures (due to issues in ROCclr runtime) have been observed:
+  * `BlockDiscontinuity`
+  * `BlockExchange`
+  * `BlockHistogram`
+  * `BlockRadixSort`
+  * `BlockReduce`
+  * `BlockScan`
