@@ -14,6 +14,8 @@ Documentation for hipCUB is available at
 * Add inplace overloads of `DeviceScan` functions.
 * Add inplace overloads of `DeviceSelect::Flagged` and `DeviceSelect::If`.
 * Add `DeviceReduce::TransformReduce`.
+* Add `DeviceSelect::UniqueByKey` overload with `equality_op`.
+* Add support for large indices in `DeviceSelect::UniqueByKey`.
 
 ### Changed
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.4.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.

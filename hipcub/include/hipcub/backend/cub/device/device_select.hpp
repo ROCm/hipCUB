@@ -35,6 +35,8 @@
 
 #include <cub/device/device_select.cuh>
 
+#include <type_traits>
+
 BEGIN_HIPCUB_NAMESPACE
 
 class DeviceSelect
@@ -260,7 +262,40 @@ public:
              typename ValueIteratorT,
              typename OutputKeyIteratorT,
              typename OutputValueIteratorT,
-             typename NumSelectedIteratorT>
+             typename NumSelectedIteratorT,
+             typename NumItemsT,
+             typename EqualityOpT>
+    HIPCUB_RUNTIME_FUNCTION static
+        typename std::enable_if_t<!std::is_convertible<EqualityOpT, hipStream_t>::value, hipError_t>
+        UniqueByKey(void*                d_temp_storage,
+                    size_t&              temp_storage_bytes,
+                    KeyIteratorT         d_keys_input,
+                    ValueIteratorT       d_values_input,
+                    OutputKeyIteratorT   d_keys_output,
+                    OutputValueIteratorT d_values_output,
+                    NumSelectedIteratorT d_num_selected_out,
+                    NumItemsT            num_items,
+                    EqualityOpT          equality_op,
+                    hipStream_t          stream = 0)
+    {
+        return hipCUDAErrorTohipError(::cub::DeviceSelect::UniqueByKey(d_temp_storage,
+                                                                       temp_storage_bytes,
+                                                                       d_keys_input,
+                                                                       d_values_input,
+                                                                       d_keys_output,
+                                                                       d_values_output,
+                                                                       d_num_selected_out,
+                                                                       num_items,
+                                                                       equality_op,
+                                                                       stream));
+    }
+
+    template<typename KeyIteratorT,
+             typename ValueIteratorT,
+             typename OutputKeyIteratorT,
+             typename OutputValueIteratorT,
+             typename NumSelectedIteratorT,
+             typename NumItemsT>
     HIPCUB_RUNTIME_FUNCTION static hipError_t UniqueByKey(void*                d_temp_storage,
                                                           size_t&              temp_storage_bytes,
                                                           KeyIteratorT         d_keys_input,
@@ -268,7 +303,7 @@ public:
                                                           OutputKeyIteratorT   d_keys_output,
                                                           OutputValueIteratorT d_values_output,
                                                           NumSelectedIteratorT d_num_selected_out,
-                                                          int                  num_items,
+                                                          NumItemsT            num_items,
                                                           hipStream_t          stream = 0)
     {
         return hipCUDAErrorTohipError(::cub::DeviceSelect::UniqueByKey(d_temp_storage,
@@ -286,7 +321,8 @@ public:
              typename ValueIteratorT,
              typename OutputKeyIteratorT,
              typename OutputValueIteratorT,
-             typename NumSelectedIteratorT>
+             typename NumSelectedIteratorT,
+             typename NumItemsT>
     HIPCUB_DETAIL_DEPRECATED_DEBUG_SYNCHRONOUS HIPCUB_RUNTIME_FUNCTION static hipError_t
         UniqueByKey(void*                d_temp_storage,
                     size_t&              temp_storage_bytes,
@@ -295,7 +331,7 @@ public:
                     OutputKeyIteratorT   d_keys_output,
                     OutputValueIteratorT d_values_output,
                     NumSelectedIteratorT d_num_selected_out,
-                    int                  num_items,
+                    NumItemsT            num_items,
                     hipStream_t          stream,
                     bool                 debug_synchronous)
     {
