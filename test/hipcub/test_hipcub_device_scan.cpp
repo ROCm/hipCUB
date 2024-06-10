@@ -27,6 +27,8 @@
 #include "hipcub/iterator/constant_input_iterator.hpp"
 #include "hipcub/iterator/counting_input_iterator.hpp"
 #include "hipcub/iterator/transform_input_iterator.hpp"
+
+#include "single_index_iterator.hpp"
 #include "test_utils_bfloat16.hpp"
 #include "test_utils_data_generation.hpp"
 
@@ -878,78 +880,11 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
 // CUB does not support large indices in inclusive and exclusive scans
 #ifndef __HIP_PLATFORM_NVIDIA__
 
-template <typename T>
-class single_index_iterator {
-private:
-    class conditional_discard_value {
-    public:
-        __host__ __device__ explicit conditional_discard_value(T* const value, bool keep)
-            : value_{value}
-            , keep_{keep}
-        {
-        }
-
-        __host__ __device__ conditional_discard_value& operator=(T value) {
-            if(keep_) {
-                *value_ = value;
-            }
-            return *this;
-        }
-    private:
-        T* const   value_;
-        const bool keep_;
-    };
-
-    T*     value_;
-    size_t expected_index_;
-    size_t index_;
-
-public:
-    using value_type        = conditional_discard_value;
-    using reference         = conditional_discard_value;
-    using pointer           = conditional_discard_value*;
-    using iterator_category = std::random_access_iterator_tag;
-    using difference_type   = std::ptrdiff_t;
-
-    __host__ __device__ single_index_iterator(T* value, size_t expected_index, size_t index = 0)
-        : value_{value}
-        , expected_index_{expected_index}
-        , index_{index}
-    {
-    }
-
-    __host__ __device__ single_index_iterator(const single_index_iterator&) = default;
-    __host__ __device__ single_index_iterator& operator=(const single_index_iterator&) = default;
-
-    // clang-format off
-    __host__ __device__ bool operator==(const single_index_iterator& rhs) const { return index_ == rhs.index_; }
-    __host__ __device__ bool operator!=(const single_index_iterator& rhs) const { return !(this == rhs);       }
-
-    __host__ __device__ reference operator*() { return value_type{value_, index_ == expected_index_}; }
-
-    __host__ __device__ reference operator[](const difference_type distance) const { return *(*this + distance); }
-
-    __host__ __device__ single_index_iterator& operator+=(const difference_type rhs) { index_ += rhs; return *this; }
-    __host__ __device__ single_index_iterator& operator-=(const difference_type rhs) { index_ -= rhs; return *this; }
-
-    __host__ __device__ difference_type operator-(const single_index_iterator& rhs) const { return index_ - rhs.index_; }
-
-    __host__ __device__ single_index_iterator operator+(const difference_type rhs) const { return single_index_iterator(*this) += rhs; }
-    __host__ __device__ single_index_iterator operator-(const difference_type rhs) const { return single_index_iterator(*this) -= rhs; }
-
-    __host__ __device__ single_index_iterator& operator++() { ++index_; return *this; }
-    __host__ __device__ single_index_iterator& operator--() { --index_; return *this; }
-
-    __host__ __device__ single_index_iterator operator++(int) { return ++single_index_iterator{*this}; }
-    __host__ __device__ single_index_iterator operator--(int) { return --single_index_iterator{*this}; }
-    // clang-format on
-};
-
 TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
     using T = unsigned int;
     using InputIterator = typename hipcub::CountingInputIterator<T>;
-    using OutputIterator = single_index_iterator<T>;
+    using OutputIterator = test_utils::single_index_iterator<T>;
 
     const size_t size = (1ul << 31) + 1ul;
 
@@ -1025,7 +960,7 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
 {
     using T = unsigned int;
     using InputIterator = typename hipcub::CountingInputIterator<T>;
-    using OutputIterator = single_index_iterator<T>;
+    using OutputIterator = test_utils::single_index_iterator<T>;
 
     const size_t size = (1ul << 31) + 1ul;
 
