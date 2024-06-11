@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include <hipcub/util_type.hpp>
 
-#include <iosfwd>
+#include <ostream>
 
 #if defined(__HIP_PLATFORM_NVIDIA__)
 #include <cuda_bf16.h>

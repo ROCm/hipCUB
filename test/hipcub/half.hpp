@@ -41,7 +41,7 @@
  #endif
 
 #include <cstring>
-#include <iosfwd>
+#include <ostream>
 
 #ifdef __GNUC__
 // There's a ton of type-punning going on in this file.
