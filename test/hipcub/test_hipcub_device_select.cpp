@@ -26,6 +26,8 @@
 #include "hipcub/device/device_select.hpp"
 #include "hipcub/iterator/counting_input_iterator.hpp"
 #include "hipcub/iterator/discard_output_iterator.hpp"
+
+#include "single_index_iterator.hpp"
 #include "test_utils_bfloat16.hpp"
 #include "test_utils_data_generation.hpp"
 #include "test_utils_half.hpp"
@@ -689,11 +691,13 @@ public:
 
 struct TestUniqueEqualityOp
 {
+    static constexpr int segment = 3;
+
     template<typename T>
     HIPCUB_HOST_DEVICE bool operator()(const T& a, const T& b) const
     {
         static_assert(std::is_integral<T>::value, "T must be integral type");
-        return a / 3 == b / 3;
+        return a / segment == b / segment;
     }
 };
 
@@ -876,6 +880,120 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
                 HIP_CHECK(hipFree(d_selected_count_output));
                 HIP_CHECK(hipFree(d_temp_storage));
             }
+        }
+    }
+}
+
+TEST(HipcubDeviceUniqueByKeyTests, LargeIndicesUniqueByKey)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using key_type            = size_t;
+    using value_type          = size_t;
+    using selected_count_type = size_t;
+
+    hipStream_t stream = 0; // default stream
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        const auto sizes = test_utils::get_large_sizes(seed_value);
+
+        for(auto size : sizes)
+        {
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            TestUniqueEqualityOp equality_op;
+
+            const size_t selected_count
+                = (size + TestUniqueEqualityOp::segment - 1) / TestUniqueEqualityOp::segment;
+            const size_t output_index = selected_count - 1;
+            const size_t input_index  = output_index * TestUniqueEqualityOp::segment;
+
+            hipcub::CountingInputIterator<key_type>   d_keys_input(0);
+            hipcub::CountingInputIterator<value_type> d_values_input(123);
+
+            key_type*   d_keys_output;
+            value_type* d_values_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, sizeof(*d_keys_output)));
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_values_output, sizeof(*d_values_output)));
+            test_utils::single_index_iterator<key_type> keys_output_it(d_keys_output, output_index);
+            test_utils::single_index_iterator<value_type> values_output_it(d_values_output,
+                                                                           output_index);
+
+            selected_count_type* d_selected_count_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output,
+                                                         sizeof(*d_selected_count_output)));
+
+            // temp storage
+            size_t temp_storage_size_bytes;
+            // Get the size of d_temp_storage
+            HIP_CHECK(hipcub::DeviceSelect::UniqueByKey(nullptr,
+                                                        temp_storage_size_bytes,
+                                                        d_keys_input,
+                                                        d_values_input,
+                                                        keys_output_it,
+                                                        values_output_it,
+                                                        d_selected_count_output,
+                                                        size,
+                                                        equality_op,
+                                                        stream));
+
+            // temp_storage_size_bytes must be >0
+            ASSERT_GT(temp_storage_size_bytes, 0);
+
+            // allocate temporary storage
+            void* d_temp_storage = nullptr;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+
+            // run
+            HIP_CHECK(hipcub::DeviceSelect::UniqueByKey(d_temp_storage,
+                                                        temp_storage_size_bytes,
+                                                        d_keys_input,
+                                                        d_values_input,
+                                                        keys_output_it,
+                                                        values_output_it,
+                                                        d_selected_count_output,
+                                                        size,
+                                                        equality_op,
+                                                        stream));
+
+            // Check if number of selected value is as expected
+            selected_count_type selected_count_output = 0;
+            HIP_CHECK(hipMemcpy(&selected_count_output,
+                                d_selected_count_output,
+                                sizeof(*d_selected_count_output),
+                                hipMemcpyDeviceToHost));
+
+            ASSERT_EQ(selected_count_output, selected_count);
+
+            // Check if outputs are as expected
+            key_type   output_key;
+            value_type output_value;
+            HIP_CHECK(hipMemcpy(&output_key,
+                                d_keys_output,
+                                sizeof(*d_keys_output),
+                                hipMemcpyDeviceToHost));
+            HIP_CHECK(hipMemcpy(&output_value,
+                                d_values_output,
+                                sizeof(*d_values_output),
+                                hipMemcpyDeviceToHost));
+
+            const key_type   expected_key   = d_keys_input[input_index];
+            const value_type expected_value = d_values_input[input_index];
+            ASSERT_EQ(output_key, expected_key);
+            ASSERT_EQ(output_value, expected_value);
+
+            HIP_CHECK(hipFree(d_keys_output));
+            HIP_CHECK(hipFree(d_values_output));
+            HIP_CHECK(hipFree(d_selected_count_output));
+            HIP_CHECK(hipFree(d_temp_storage));
         }
     }
 }
