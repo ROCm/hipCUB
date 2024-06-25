@@ -3,6 +3,11 @@
 Documentation for hipCUB is available at
 [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
+## (Unreleased) hipCUB-x.x.x for ROCm 6.4.0
+
+### Added
+* Added `ForEach`, `ForEachN`, `ForEachCopy`, `ForEachCopyN` and `Bulk` functions to have parity with CUB.
+
 ## (Unreleased) hipCUB-3.3.0 for ROCm 6.3.0
 
 ### Fixed
