@@ -48,7 +48,7 @@ enum CacheLoadModifier : int32_t
 template<CacheLoadModifier MODIFIER = LOAD_DEFAULT, typename T>
 HIPCUB_DEVICE __forceinline__ T AsmThreadLoad(void * ptr)
 {
-    T retval = 0;
+    T retval;
     __builtin_memcpy(&retval, ptr, sizeof(T));
     return retval;
 }
