@@ -32,186 +32,49 @@
 
 #include "../../../config.hpp"
 
-#include <rocprim/types/key_value_pair.hpp>
-
 #include "iterator_category.hpp"
+#include "iterator_wrapper.hpp"
+
+#include <rocprim/iterator/arg_index_iterator.hpp>
 
 #include <iterator>
 
 BEGIN_HIPCUB_NAMESPACE
 
-/// \class ArgIndexInputIterator
-/// \brief A random-access input (read-only) iterator adaptor for pairing dereferenced values
-/// with their indices.
-///
-/// \par Overview
-/// * Dereferencing ArgIndexInputIterator return a value of \p key_value_pair<Difference, InputValueType>
-/// type, which includes value from the underlying range and its index in that range.
-/// * \p std::iterator_traits<InputIterator>::value_type should be convertible to \p InputValueType.
-///
-/// \tparam InputIterator - type of the underlying random-access input iterator. Must be
-/// a random-access iterator.
-/// \tparam Difference - type used for identify distance between iterators and as the index type
-/// in the output pair type (see \p value_type).
-/// \tparam InputValueType - value type used in the output pair type (see \p value_type).
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
+
 template<class InputIterator,
          class Difference     = std::ptrdiff_t,
          class InputValueType = typename std::iterator_traits<InputIterator>::value_type>
 class ArgIndexInputIterator
+    : public detail::WrapperIterator<
+          rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>,
+          ArgIndexInputIterator<InputIterator, Difference, InputValueType>>
 {
-private:
-    using input_category = typename std::iterator_traits<InputIterator>::iterator_category;
+    using Iterator = rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>;
+    using Base
+        = detail::WrapperIterator<Iterator,
+                                  ArgIndexInputIterator<InputIterator, Difference, InputValueType>>;
 
 public:
-    /// The type of the value that can be obtained by dereferencing the iterator.
-    using value_type = rocprim::key_value_pair<Difference, InputValueType>;
-    /// \brief A reference type of the type iterated over (\p value_type).
-    /// It's `const` since ArgIndexInputIterator is a read-only iterator.
-    using reference = const value_type&;
-    /// \brief A pointer type of the type iterated over (\p value_type).
-    /// It's `const` since ArgIndexInputIterator is a read-only iterator.
-    using pointer = const value_type*;
-    /// A type used for identify distance between iterators.
-    using difference_type = Difference;
-    /// The category of the iterator.
-    using iterator_category = detail::IteratorCategory<value_type, reference>;
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    using self_type = ArgIndexInputIterator;
-#endif
-
-    __host__ __device__ __forceinline__ ~ArgIndexInputIterator() = default;
-
-    /// \brief Creates a new ArgIndexInputIterator.
-    ///
-    /// \param iterator input iterator pointing to the input range.
-    /// \param offset index of the \p iterator in the input range.
-    __host__ __device__ __forceinline__ ArgIndexInputIterator(InputIterator   iterator,
-                                                              difference_type offset = 0)
-        : iterator_(iterator), offset_(offset)
+    __host__ __device__ __forceinline__
+        ArgIndexInputIterator(InputIterator iterator, typename Iterator::difference_type offset = 0)
+        : Base(Iterator(iterator, offset))
     {}
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    __host__ __device__ __forceinline__ ArgIndexInputIterator& operator++()
-    {
-        iterator_++;
-        offset_++;
-        return *this;
-    }
+    // Cast from wrapped iterator to class itself
+    __host__ __device__ __forceinline__ ArgIndexInputIterator(Iterator iterator) : Base(iterator) {}
 
-    __host__ __device__ __forceinline__ ArgIndexInputIterator operator++(int)
-    {
-        ArgIndexInputIterator old_ai = *this;
-        iterator_++;
-        offset_++;
-        return old_ai;
-    }
-
-    __host__ __device__ __forceinline__ value_type operator*() const
-    {
-        value_type ret(offset_, *iterator_);
-        return ret;
-    }
-
-    __host__ __device__ __forceinline__ pointer operator->() const
-    {
-        return &(*(*this));
-    }
-
-    __host__ __device__ __forceinline__ ArgIndexInputIterator
-        operator+(difference_type distance) const
-    {
-        return ArgIndexInputIterator(iterator_ + distance, offset_ + distance);
-    }
-
-    __host__ __device__ __forceinline__ ArgIndexInputIterator& operator+=(difference_type distance)
-    {
-        iterator_ += distance;
-        offset_ += distance;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ ArgIndexInputIterator
-        operator-(difference_type distance) const
-    {
-        return ArgIndexInputIterator(iterator_ - distance, offset_ - distance);
-    }
-
-    __host__ __device__ __forceinline__ ArgIndexInputIterator& operator-=(difference_type distance)
-    {
-        iterator_ -= distance;
-        offset_ -= distance;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ difference_type operator-(ArgIndexInputIterator other) const
-    {
-        return iterator_ - other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ value_type operator[](difference_type distance) const
-    {
-        ArgIndexInputIterator i = (*this) + distance;
-        return *i;
-    }
-
-    __host__ __device__ __forceinline__ bool operator==(ArgIndexInputIterator other) const
-    {
-        return (iterator_ == other.iterator_) && (offset_ == other.offset_);
-    }
-
-    __host__ __device__ __forceinline__ bool operator!=(ArgIndexInputIterator other) const
-    {
-        return (iterator_ != other.iterator_) || (offset_ != other.offset_);
-    }
-
-    __host__ __device__ __forceinline__ bool operator<(ArgIndexInputIterator other) const
-    {
-        return (iterator_ - other.iterator_) > 0;
-    }
-
-    __host__ __device__ __forceinline__ bool operator<=(ArgIndexInputIterator other) const
-    {
-        return (iterator_ - other.iterator_) >= 0;
-    }
-
-    __host__ __device__ __forceinline__ bool operator>(ArgIndexInputIterator other) const
-    {
-        return (iterator_ - other.iterator_) < 0;
-    }
-
-    __host__ __device__ __forceinline__ bool operator>=(ArgIndexInputIterator other) const
-    {
-        return (iterator_ - other.iterator_) <= 0;
-    }
-
-    __host__ __device__ __forceinline__ void normalize()
-    {
-        offset_ = 0;
-    }
-
-    [[deprecated]] friend std::ostream& operator<<(std::ostream& os,
-                                                   const ArgIndexInputIterator& /* iter */)
-    {
-        return os;
-    }
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-
-private:
-    InputIterator   iterator_;
-    difference_type offset_;
+    // Cast from WrapperIterator to class itself
+    __host__ __device__ __forceinline__ ArgIndexInputIterator(Base iterator)
+        : Base(iterator.iterator_)
+    {}
 };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-template<class InputIterator, class Difference, class InputValueType>
-__host__ __device__ __forceinline__ ArgIndexInputIterator<InputIterator, Difference, InputValueType>
-                                    operator+(
-        typename ArgIndexInputIterator<InputIterator, Difference, InputValueType>::difference_type
-                                                                                distance,
-        const ArgIndexInputIterator<InputIterator, Difference, InputValueType>& iterator)
-{
-    return iterator + distance;
-}
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 END_HIPCUB_NAMESPACE
