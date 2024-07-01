@@ -33,194 +33,48 @@
 #include "../../../config.hpp"
 
 #include "iterator_category.hpp"
+#include "iterator_wrapper.hpp"
+
+#include <rocprim/iterator/counting_iterator.hpp>
 
 #include <iterator>
 
 BEGIN_HIPCUB_NAMESPACE
 
-/// \class CountingInputIterator
-/// \brief A random-access input (read-only) iterator over a sequence of consecutive integer values.
-///
-/// \par Overview
-/// * A CountingInputIterator represents a pointer into a range of sequentially increasing values.
-/// * Using it for simulating a range filled with a sequence of consecutive values saves
-/// memory capacity and bandwidth.
-///
-/// \tparam Incrementable - type of value that can be obtained by dereferencing the iterator.
-/// \tparam Difference - a type used for identify distance between iterators
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
+
 template<class Incrementable, class Difference = std::ptrdiff_t>
 class CountingInputIterator
+    : public WrapperIterator<rocprim::counting_iterator<Incrementable, Difference>,
+                             CountingInputIterator<Incrementable, Difference>>
 {
+    using Iterator = rocprim::counting_iterator<Incrementable, Difference>;
+    using Base     = WrapperIterator<Iterator, CountingInputIterator<Incrementable, Difference>>;
+
 public:
-    /// The type of the value that can be obtained by dereferencing the iterator.
-    using value_type = typename std::remove_const<Incrementable>::type;
-    /// \brief A reference type of the type iterated over (\p value_type).
-    /// It's same as `value_type` since constant_iterator is a read-only
-    /// iterator and does not have underlying buffer.
-    using reference = value_type; // CountingInputIterator is not writable
-    /// \brief A pointer type of the type iterated over (\p value_type).
-    /// It's `const` since CountingInputIterator is a read-only iterator.
-    using pointer = const value_type*; // CountingInputIterator is not writable
-    /// A type used for identify distance between iterators.
-    using difference_type = Difference;
-    /// The category of the iterator.
-    using iterator_category = IteratorCategory<value_type, reference>;
+    typedef typename Iterator::value_type      value_type;
+    typedef typename Iterator::reference       reference;
+    typedef typename Iterator::pointer         pointer;
+    typedef typename Iterator::difference_type difference_type;
+    typedef typename IteratorCategory<typename Iterator::value_type,
+                                      typename Iterator::reference>::type
+                                         iterator_category; ///< The iterator category
+    typedef typename Iterator::self_type self_type;
 
-    static_assert(std::is_integral<value_type>::value, "Incrementable must be integral type");
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    using self_type = CountingInputIterator;
-#endif
-
-    __host__ __device__ __forceinline__ CountingInputIterator() = default;
-
-    /// \brief Creates CountingInputIterator with its initial value initialized
-    /// to its default value (usually 0).
-    __host__ __device__ __forceinline__ ~CountingInputIterator() = default;
-
-    /// \brief Creates CountingInputIterator and sets its initial value to \p value_.
-    ///
-    /// \param value initial value
-    __host__ __device__ __forceinline__ explicit CountingInputIterator(const value_type value)
-        : value_(value)
+    __host__ __device__ __forceinline__ CountingInputIterator(const value_type value)
+        : Base(Iterator(value))
     {}
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    __host__ __device__ __forceinline__ CountingInputIterator& operator++()
-    {
-        value_++;
-        return *this;
-    }
+    // Cast from wrapped iterator to class itself
+    __host__ __device__ __forceinline__ CountingInputIterator(Iterator iterator) : Base(iterator) {}
 
-    __host__ __device__ __forceinline__ CountingInputIterator operator++(int)
-    {
-        CountingInputIterator old_ci = *this;
-        value_++;
-        return old_ci;
-    }
-
-    __host__ __device__ __forceinline__ CountingInputIterator& operator--()
-    {
-        value_--;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ CountingInputIterator operator--(int)
-    {
-        CountingInputIterator old_ci = *this;
-        value_--;
-        return old_ci;
-    }
-
-    __host__ __device__ __forceinline__ value_type operator*() const
-    {
-        return value_;
-    }
-
-    __host__ __device__ __forceinline__ pointer operator->() const
-    {
-        return &value_;
-    }
-
-    __host__ __device__ __forceinline__ CountingInputIterator
-        operator+(difference_type distance) const
-    {
-        return CountingInputIterator(value_ + static_cast<value_type>(distance));
-    }
-
-    __host__ __device__ __forceinline__ CountingInputIterator& operator+=(difference_type distance)
-    {
-        value_ += static_cast<value_type>(distance);
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ CountingInputIterator
-        operator-(difference_type distance) const
-    {
-        return CountingInputIterator(value_ - static_cast<value_type>(distance));
-    }
-
-    __host__ __device__ __forceinline__ CountingInputIterator& operator-=(difference_type distance)
-    {
-        value_ -= static_cast<value_type>(distance);
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ difference_type operator-(CountingInputIterator other) const
-    {
-        return static_cast<difference_type>(value_ - other.value_);
-    }
-
-    // CountingInputIterator is not writable, so we don't return reference,
-    // just something convertible to reference. That matches requirement
-    // of RandomAccessIterator concept
-    __host__ __device__ __forceinline__ value_type operator[](difference_type distance) const
-    {
-        return value_ + static_cast<value_type>(distance);
-    }
-
-    __host__ __device__ __forceinline__ bool operator==(CountingInputIterator other) const
-    {
-        return this->equal_value(value_, other.value_);
-    }
-
-    __host__ __device__ __forceinline__ bool operator!=(CountingInputIterator other) const
-    {
-        return !(*this == other);
-    }
-
-    __host__ __device__ __forceinline__ bool operator<(CountingInputIterator other) const
-    {
-        return distance_to(other) > 0;
-    }
-
-    __host__ __device__ __forceinline__ bool operator<=(CountingInputIterator other) const
-    {
-        return distance_to(other) >= 0;
-    }
-
-    __host__ __device__ __forceinline__ bool operator>(CountingInputIterator other) const
-    {
-        return distance_to(other) < 0;
-    }
-
-    __host__ __device__ __forceinline__ bool operator>=(CountingInputIterator other) const
-    {
-        return distance_to(other) <= 0;
-    }
-
-    [[deprecated]] friend std::ostream& operator<<(std::ostream&                os,
-                                                   const CountingInputIterator& iter)
-    {
-        os << "[" << iter.value_ << "]";
-        return os;
-    }
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-
-private:
-    template<class T>
-    inline bool equal_value(const T& x, const T& y) const
-    {
-        return (x == y);
-    }
-
-    inline difference_type distance_to(const CountingInputIterator& other) const
-    {
-        return difference_type(other.value_) - difference_type(value_);
-    }
-
-    value_type value_;
+    // Cast from WrapperIterator to class itself
+    __host__ __device__ __forceinline__ CountingInputIterator(Base iterator)
+        : Base(iterator.iterator_)
+    {}
 };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-template<class Incrementable, class Difference>
-__host__ __device__ __forceinline__ CountingInputIterator<Incrementable, Difference>
-    operator+(typename CountingInputIterator<Incrementable, Difference>::difference_type distance,
-              const CountingInputIterator<Incrementable, Difference>&                    iter)
-{
-    return iter + distance;
-}
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
 END_HIPCUB_NAMESPACE
 

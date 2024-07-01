@@ -33,8 +33,10 @@
 #include "../../../config.hpp"
 
 #include "iterator_category.hpp"
+#include "iterator_wrapper.hpp"
 
 #include "rocprim/type_traits.hpp"
+#include <rocprim/iterator/transform_iterator.hpp>
 
 #include <cstddef>
 #include <iterator>
@@ -42,186 +44,50 @@
 
 BEGIN_HIPCUB_NAMESPACE
 
-/// \class TransformInputIterator
-/// \brief A random-access input (read-only) iterator adaptor for transforming dereferenced values.
-///
-/// \par Overview
-/// * A TransformInputIterator uses functor of type UnaryFunction to transform value obtained
-/// by dereferencing underlying iterator.
-/// * Using it for simulating a range filled with results of applying functor of type
-/// \p UnaryFunction to another range saves memory capacity and/or bandwidth.
-///
-/// \tparam ValueType - type of value that can be obtained by dereferencing the iterator.
-/// \tparam UnaryFunction - type of the transform functor.
-/// By default it is the return type of \p UnaryFunction.
-/// \tparam InputIterator - type of the underlying random-access input iterator. Must be
-/// a random-access iterator.
+#ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
 
 template<class ValueType,
-         class UnaryFunction,
-         class InputIterator,
+         class ConversionOp,
+         class InputIteratorT,
          class OffsetT = std::ptrdiff_t // ignored
          >
 class TransformInputIterator
+    : public WrapperIterator<
+          rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>,
+          TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>
 {
+    using Iterator = rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>;
+    using Base
+        = WrapperIterator<Iterator,
+                          TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>;
+
 public:
-    /// The type of the value that can be obtained by dereferencing the iterator.
-    using value_type = ValueType;
-    /// \brief A reference type of the type iterated over (\p value_type).
-    /// It's `const` since TransformInputIterator is a read-only iterator.
-    using reference = const value_type&;
-    /// \brief A pointer type of the type iterated over (\p value_type).
-    /// It's `const` since TransformInputIterator is a read-only iterator.
-    using pointer = const value_type*;
-    /// A type used for identify distance between iterators.
-    using difference_type = typename std::iterator_traits<InputIterator>::difference_type;
-    /// The category of the iterator.
-    using iterator_category = IteratorCategory<value_type, reference>;
-    /// The type of unary function used to transform input range.
-    using unary_function = UnaryFunction;
+    typedef typename Iterator::value_type      value_type;
+    typedef typename Iterator::reference       reference;
+    typedef typename Iterator::pointer         pointer;
+    typedef typename Iterator::difference_type difference_type;
+    typedef typename IteratorCategory<typename Iterator::value_type,
+                                      typename Iterator::reference>::type
+                                              iterator_category; ///< The iterator category
+    typedef typename Iterator::unary_function unary_function;
+    typedef typename Iterator::self_type      self_type;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    using self_type = TransformInputIterator;
-#endif
-
-    __host__ __device__ __forceinline__ ~TransformInputIterator() = default;
-
-    /// \brief Creates a new TransformInputIterator.
-    ///
-    /// \param iterator input iterator to iterate over and transform.
-    /// \param transform unary function used to transform values obtained
-    /// from range pointed by \p iterator.
-    __host__ __device__ __forceinline__ TransformInputIterator(InputIterator iterator,
-                                                               UnaryFunction transform)
-        : iterator_(iterator), transform_(transform)
+    __host__ __device__ __forceinline__ TransformInputIterator(InputIteratorT iterator,
+                                                               ConversionOp   transform)
+        : Base(Iterator(iterator, transform))
     {}
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-    __host__ __device__ __forceinline__ TransformInputIterator& operator++()
-    {
-        iterator_++;
-        return *this;
-    }
+    // Cast from wrapped iterator to class itself
+    __host__ __device__ __forceinline__ TransformInputIterator(Iterator iterator) : Base(iterator)
+    {}
 
-    __host__ __device__ __forceinline__ TransformInputIterator operator++(int)
-    {
-        TransformInputIterator old = *this;
-        iterator_++;
-        return old;
-    }
-
-    __host__ __device__ __forceinline__ TransformInputIterator& operator--()
-    {
-        iterator_--;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ TransformInputIterator operator--(int)
-    {
-        TransformInputIterator old = *this;
-        iterator_--;
-        return old;
-    }
-
-    __host__ __device__ __forceinline__ value_type operator*() const
-    {
-        return transform_(*iterator_);
-    }
-
-    __host__ __device__ __forceinline__ pointer operator->() const
-    {
-        return &(*(*this));
-    }
-
-    __host__ __device__ __forceinline__ value_type operator[](difference_type distance) const
-    {
-        TransformInputIterator i = (*this) + distance;
-        return *i;
-    }
-
-    __host__ __device__ __forceinline__ TransformInputIterator
-        operator+(difference_type distance) const
-    {
-        return TransformInputIterator(iterator_ + distance, transform_);
-    }
-
-    __host__ __device__ __forceinline__ TransformInputIterator& operator+=(difference_type distance)
-    {
-        iterator_ += distance;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ TransformInputIterator
-        operator-(difference_type distance) const
-    {
-        return TransformInputIterator(iterator_ - distance, transform_);
-    }
-
-    __host__ __device__ __forceinline__ TransformInputIterator& operator-=(difference_type distance)
-    {
-        iterator_ -= distance;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ difference_type
-        operator-(TransformInputIterator other) const
-    {
-        return iterator_ - other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ bool operator==(TransformInputIterator other) const
-    {
-        return iterator_ == other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ bool operator!=(TransformInputIterator other) const
-    {
-        return iterator_ != other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ bool operator<(TransformInputIterator other) const
-    {
-        return iterator_ < other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ bool operator<=(TransformInputIterator other) const
-    {
-        return iterator_ <= other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ bool operator>(TransformInputIterator other) const
-    {
-        return iterator_ > other.iterator_;
-    }
-
-    __host__ __device__ __forceinline__ bool operator>=(TransformInputIterator other) const
-    {
-        return iterator_ >= other.iterator_;
-    }
-
-    [[deprecated]] friend std::ostream& operator<<(std::ostream& os,
-                                                   const TransformInputIterator& /* iter */)
-    {
-        return os;
-    }
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-
-private:
-    InputIterator iterator_;
-    UnaryFunction transform_;
+    // Cast from WrapperIterator to class itself
+    __host__ __device__ __forceinline__ TransformInputIterator(Base iterator)
+        : Base(iterator.iterator_)
+    {}
 };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-template<class InputIterator, class UnaryFunction, class ValueType>
-__host__ __device__ __forceinline__ TransformInputIterator<InputIterator, UnaryFunction, ValueType>
-                                    operator+(
-        typename TransformInputIterator<InputIterator, UnaryFunction, ValueType>::difference_type
-                                                                               distance,
-        const TransformInputIterator<InputIterator, UnaryFunction, ValueType>& iterator)
-{
-    return iterator + distance;
-}
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
 END_HIPCUB_NAMESPACE
 
