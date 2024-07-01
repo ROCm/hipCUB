@@ -12,6 +12,9 @@ Documentation for hipCUB is available at
 ### Added
 * Add support for large indices in `hipcub::DeviceSegmentedReduce::*`. rocPRIM's backend provides support for all reduce variants, but CUB's does not have support yet for `DeviceSegmentedReduce::Arg*`, so large indices support has been excluded for these as well in hipCUB.
 
+### Changed
+* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.3.2. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+
 ## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
 
 ### Added
