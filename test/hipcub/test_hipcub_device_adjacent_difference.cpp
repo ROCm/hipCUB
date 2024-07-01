@@ -134,14 +134,9 @@ typedef ::testing::Types<params<int>,
                          params<int, double>,
                          params<int8_t, int8_t, true, false>,
                          params<float, float, false, true>,
-                         params<double, double, true, true>
-#ifndef __HIP_PLATFORM_NVIDIA__
-                         ,
-                         // Kernel doesn't work on NVidia.
+                         params<double, double, true, true>,
                          params<test_utils::half, test_utils::half>,
-                         params<test_utils::bfloat16, test_utils::bfloat16>
-#endif
-                         >
+                         params<test_utils::bfloat16, test_utils::bfloat16>>
     Params;
 
 std::vector<size_t> get_sizes()
