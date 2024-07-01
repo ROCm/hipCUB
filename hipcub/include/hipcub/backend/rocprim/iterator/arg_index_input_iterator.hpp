@@ -34,25 +34,25 @@
 
 #include <rocprim/iterator/arg_index_iterator.hpp>
 
-#include <iostream>
-#include <iterator>
+#include "iterator_category.hpp"
 
-#if (THRUST_VERSION >= 100700)
-    // This iterator is compatible with Thrust API 1.7 and newer
-    #include <thrust/iterator/iterator_facade.h>
-    #include <thrust/iterator/iterator_traits.h>
-#endif // THRUST_VERSION
+#include <iterator>
 
 BEGIN_HIPCUB_NAMESPACE
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS    // Do not document
 
-template<
-    typename InputIterator,
-    typename Difference = std::ptrdiff_t,
-    typename Value = typename std::iterator_traits<InputIterator>::value_type
->
-using ArgIndexInputIterator = ::rocprim::arg_index_iterator<InputIterator, Difference, Value>;
+template<typename InputIterator,
+         typename Difference = std::ptrdiff_t,
+         typename Value      = typename std::iterator_traits<InputIterator>::value_type>
+class ArgIndexInputIterator : public rocprim::arg_index_iterator<InputIterator, Difference, Value>
+{
+public:
+    typedef typename IteratorCategory<
+        typename rocprim::arg_index_iterator<InputIterator, Difference, Value>::value_type,
+        typename rocprim::arg_index_iterator<InputIterator, Difference, Value>::reference>::type
+        iterator_category; ///< The iterator category
+};
 
 #endif
 

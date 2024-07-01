@@ -32,17 +32,11 @@
 
 #include "../../../config.hpp"
 
-#include <iterator>
-#include <iostream>
-
-#if (THRUST_VERSION >= 100700)
-    // This iterator is compatible with Thrust API 1.7 and newer
-    #include <thrust/iterator/iterator_facade.h>
-    #include <thrust/iterator/iterator_traits.h>
-#endif // THRUST_VERSION
-
-
 #include <rocprim/iterator/texture_cache_iterator.hpp>
+
+#include "iterator_category.hpp"
+
+#include <iterator>
 
 BEGIN_HIPCUB_NAMESPACE
 
@@ -52,7 +46,12 @@ template<
 >
 class TexObjInputIterator : public ::rocprim::texture_cache_iterator<T, OffsetT>
 {
-    public:
+public:
+    typedef
+        typename IteratorCategory<typename rocprim::texture_cache_iterator<T, OffsetT>::value_type,
+                                  typename rocprim::texture_cache_iterator<T, OffsetT>::reference>::
+            type iterator_category; ///< The iterator category
+
     template<class Qualified>
     inline
     hipError_t BindTexture(Qualified* ptr,
@@ -80,7 +79,6 @@ class TexObjInputIterator : public ::rocprim::texture_cache_iterator<T, OffsetT>
         : ::rocprim::texture_cache_iterator<T, OffsetT>(other)
     {
     }
-
 };
 
 END_HIPCUB_NAMESPACE
