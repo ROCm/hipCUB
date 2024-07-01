@@ -69,16 +69,14 @@ public:
     HIPCUB_HOST_DEVICE inline
     ~TexObjInputIterator() = default;
 
-    HIPCUB_HOST_DEVICE inline
-    TexObjInputIterator() : ::rocprim::texture_cache_iterator<T, OffsetT>()
-    {
-    }
+    HIPCUB_HOST_DEVICE inline TexObjInputIterator()
+        : ::rocprim::texture_cache_iterator<T, OffsetT>()
+    {}
 
-    HIPCUB_HOST_DEVICE inline
-    TexObjInputIterator(const ::rocprim::texture_cache_iterator<T, OffsetT> other)
+    HIPCUB_HOST_DEVICE inline TexObjInputIterator(
+        const ::rocprim::texture_cache_iterator<T, OffsetT> other)
         : ::rocprim::texture_cache_iterator<T, OffsetT>(other)
-    {
-    }
+    {}
 };
 
 END_HIPCUB_NAMESPACE
