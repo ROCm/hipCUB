@@ -32,7 +32,6 @@
 
 #include "../../../config.hpp"
 
-#include "iterator_category.hpp"
 #include "iterator_wrapper.hpp"
 
 #include <rocprim/iterator/counting_iterator.hpp>
@@ -44,29 +43,8 @@ BEGIN_HIPCUB_NAMESPACE
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
 
 template<class Incrementable, class Difference = std::ptrdiff_t>
-class CountingInputIterator
-    : public detail::IteratorWrapper<rocprim::counting_iterator<Incrementable, Difference>,
-                                     CountingInputIterator<Incrementable, Difference>>
-{
-    using Iterator = rocprim::counting_iterator<Incrementable, Difference>;
-    using Base
-        = detail::IteratorWrapper<Iterator, CountingInputIterator<Incrementable, Difference>>;
-
-public:
-    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
-                                                                typename Iterator::reference>::type;
-    using self_type         = typename Iterator::self_type;
-
-    __host__ __device__ __forceinline__
-        CountingInputIterator(const typename Iterator::value_type value)
-        : Base(Iterator(value))
-    {}
-
-    // Cast from wrapped iterator to class itself
-    __host__ __device__ __forceinline__ explicit CountingInputIterator(Iterator iterator)
-        : Base(iterator)
-    {}
-};
+using CountingInputIterator
+    = detail::IteratorWrapper<rocprim::counting_iterator<Incrementable, Difference>>;
 
 #endif
 
