@@ -930,24 +930,6 @@ TYPED_TEST(HipcubDeviceSegmentedReduceArgMinMaxSpecialTests, ReduceArgMaxInf)
 // Test for large indices
 // ---------------------------------------------------------
 
-std::vector<size_t> get_large_sizes(int seed_value)
-{
-    // clang-format off
-    std::vector<size_t> sizes = {
-        (size_t{1} << 32) - 1, size_t{1} << 32,
-        (size_t{1} << 35) - 1, size_t{1} << 35
-    };
-    // clang-format on
-    const std::vector<size_t> random_sizes
-        = test_utils::get_random_data<size_t>(2,
-                                              (size_t{1} << 30) + 1,
-                                              (size_t{1} << 35) - 2,
-                                              seed_value);
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    std::sort(sizes.begin(), sizes.end());
-    return sizes;
-}
-
 TEST(HipcubDeviceSegmentedReduceLargeIndicesTests, LargeIndices)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -972,7 +954,7 @@ TEST(HipcubDeviceSegmentedReduceLargeIndicesTests, LargeIndices)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        const std::vector<size_t> sizes = get_large_sizes(seed_value);
+        const std::vector<size_t> sizes = test_utils::get_large_sizes(seed_value);
 
         for(const auto size : sizes)
         {
