@@ -35,8 +35,8 @@
 #include "iterator_category.hpp"
 #include "iterator_wrapper.hpp"
 
-#include "rocprim/type_traits.hpp"
 #include <rocprim/iterator/transform_iterator.hpp>
+#include <rocprim/type_traits.hpp>
 
 #include <cstddef>
 #include <iterator>

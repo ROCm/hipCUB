@@ -32,9 +32,9 @@
 
 #include "../../../config.hpp"
 
-#include <rocprim/iterator/texture_cache_iterator.hpp>
-
 #include "iterator_category.hpp"
+
+#include <rocprim/iterator/texture_cache_iterator.hpp>
 
 #include <iterator>
 
