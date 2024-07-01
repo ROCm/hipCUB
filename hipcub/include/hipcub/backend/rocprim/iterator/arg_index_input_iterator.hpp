@@ -61,8 +61,8 @@ public:
                                                                 typename Iterator::reference>::type;
     using self_type         = typename Iterator::self_type;
 
-    __host__ __device__ __forceinline__
-        ArgIndexInputIterator(InputIterator iterator, typename Iterator::difference_type offset = 0)
+    __host__ __device__ __forceinline__ ArgIndexInputIterator(
+        InputIterator iterator, typename Iterator::difference_type offset = 0)
         : Base(Iterator(iterator, offset))
     {}
 

@@ -56,8 +56,8 @@ public:
                                                                 typename Iterator::reference>::type;
     using self_type         = typename Iterator::self_type;
 
-    __host__ __device__ __forceinline__
-        ConstantInputIterator(const typename Iterator::value_type value, const size_t index = 0)
+    __host__ __device__ __forceinline__ ConstantInputIterator(
+        const typename Iterator::value_type value, const size_t index = 0)
         : Base(Iterator(value, index))
     {}
 

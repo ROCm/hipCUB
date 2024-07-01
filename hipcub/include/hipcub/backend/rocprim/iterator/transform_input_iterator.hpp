@@ -65,10 +65,10 @@ public:
     using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
                                                                 typename Iterator::reference>::type;
     using self_type         = typename Iterator::self_type;
-    using unary_function    = typename Iterator::unary_function;
+    using unary_function = typename Iterator::unary_function;
 
     __host__ __device__ __forceinline__ TransformInputIterator(InputIteratorT iterator,
-                                                               ConversionOp   transform)
+                                                             ConversionOp   transform)
         : Base(Iterator(iterator, transform))
     {}
 

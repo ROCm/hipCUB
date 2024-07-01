@@ -52,111 +52,144 @@ public:
     {}
 
 private:
-    __host__ __device__ __forceinline__ DerivedIterator& derived()
+    __host__ __device__ __forceinline__
+    DerivedIterator& derived()
     {
         return static_cast<DerivedIterator&>(*this);
     }
 
 public:
-    __host__ __device__ __forceinline__ DerivedIterator& operator++()
+    __host__ __device__ __forceinline__
+    DerivedIterator&
+        operator++()
     {
         iterator_++;
         return derived();
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator operator++(int)
+    __host__ __device__ __forceinline__
+    DerivedIterator
+        operator++(int)
     {
         DerivedIterator old_ci = derived();
         iterator_++;
         return old_ci;
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator& operator--()
+    __host__ __device__ __forceinline__
+    DerivedIterator&
+        operator--()
     {
         iterator_--;
         return derived();
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator operator--(int)
+    __host__ __device__ __forceinline__
+    DerivedIterator
+        operator--(int)
     {
         DerivedIterator old_ci = derived();
         iterator_--;
         return old_ci;
     }
 
-    __host__ __device__ __forceinline__ value_type operator*() const
+    __host__ __device__ __forceinline__
+    value_type
+        operator*() const
     {
         return iterator_.operator*();
     }
 
-    __host__ __device__ __forceinline__ pointer operator->() const
+    __host__ __device__ __forceinline__
+    pointer
+        operator->() const
     {
         return iterator_.operator->();
     }
 
-    __host__ __device__ __forceinline__ value_type operator[](difference_type distance) const
+    __host__ __device__ __forceinline__
+    value_type
+        operator[](difference_type distance) const
     {
         return iterator_[distance];
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator operator+(difference_type distance) const
+    __host__ __device__ __forceinline__
+    DerivedIterator
+        operator+(difference_type distance) const
     {
         return DerivedIterator(iterator_ + distance);
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator& operator+=(difference_type distance)
+    __host__ __device__ __forceinline__
+    DerivedIterator&
+        operator+=(difference_type distance)
     {
         iterator_ += distance;
         return derived();
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator operator-(difference_type distance) const
+    __host__ __device__ __forceinline__
+    DerivedIterator
+        operator-(difference_type distance) const
     {
         return DerivedIterator(iterator_ - distance);
     }
 
-    __host__ __device__ __forceinline__ DerivedIterator& operator-=(difference_type distance)
+    __host__ __device__ __forceinline__
+    DerivedIterator&
+        operator-=(difference_type distance)
     {
         iterator_ -= distance;
         return derived();
     }
 
-    __host__ __device__ __forceinline__ difference_type operator-(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    difference_type
+        operator-(DerivedIterator other) const
     {
         return iterator_.operator-(other.iterator_);
     }
 
-    __host__ __device__ __forceinline__ bool operator==(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    bool operator==(DerivedIterator other) const
     {
         return iterator_ == other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator!=(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    bool operator!=(DerivedIterator other) const
     {
         return iterator_ != other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator<(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    bool operator<(DerivedIterator other) const
     {
         return iterator_ < other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator<=(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    bool operator<=(DerivedIterator other) const
     {
         return iterator_ <= other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator>(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    bool operator>(DerivedIterator other) const
     {
         return iterator_ > other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator>=(DerivedIterator other) const
+    __host__ __device__ __forceinline__
+    bool operator>=(DerivedIterator other) const
     {
         return iterator_ >= other.iterator_;
     }
 
-    [[deprecated]] friend std::ostream& operator<<(std::ostream& os, const DerivedIterator& iter)
+    [[deprecated]]
+    friend std::ostream&
+        operator<<(std::ostream& os, const DerivedIterator& iter)
     {
         os << iter.iterator_;
         return os;
