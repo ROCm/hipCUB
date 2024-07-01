@@ -34,11 +34,13 @@ namespace detail
 {
 
 // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
-template<typename ValueType, typename Reference>
+template<typename ValueType, typename Reference, bool AnySystemTag = true>
 struct IteratorCategory
 {
+    using system_tag
+        = std::conditional<AnySystemTag, thrust::any_system_tag, thrust::device_system_tag>::type;
     using type =
-        typename thrust::detail::iterator_facade_category<thrust::any_system_tag,
+        typename thrust::detail::iterator_facade_category<system_tag,
                                                           thrust::random_access_traversal_tag,
                                                           ValueType,
                                                           Reference>::type;
@@ -57,7 +59,7 @@ BEGIN_HIPCUB_NAMESPACE
 namespace detail
 {
 
-template<typename ValueType, typename Reference>
+template<typename ValueType, typename Reference, bool AnySystemTag = true>
 struct IteratorCategory
 {
     using type = typename std::random_access_iterator_tag;

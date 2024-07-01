@@ -75,8 +75,8 @@ public:
     using pointer    = void; ///< The type of a pointer to an element the iterator can point to
     using reference
         = Reference; ///< The type of a reference to an element the iterator can point to
-    using iterator_category =
-        typename detail::IteratorCategory<value_type, reference>::type; ///< The iterator category
+    using iterator_category = typename detail::IteratorCategory<value_type, reference, false>::
+        type; ///< The iterator category
 
 private:
 
