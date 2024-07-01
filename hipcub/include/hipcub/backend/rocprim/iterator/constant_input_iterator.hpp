@@ -32,6 +32,7 @@
 
 #include "../../../config.hpp"
 
+#include "iterator_category.hpp"
 #include "iterator_wrapper.hpp"
 
 #include <rocprim/iterator/constant_iterator.hpp>
@@ -43,8 +44,28 @@ BEGIN_HIPCUB_NAMESPACE
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
 
 template<class ValueType, class Difference = std::ptrdiff_t>
-using ConstantInputIterator
-    = detail::IteratorWrapper<rocprim::constant_iterator<ValueType, Difference>>;
+class ConstantInputIterator
+    : public detail::IteratorWrapper<rocprim::constant_iterator<ValueType, Difference>,
+                                     ConstantInputIterator<ValueType, Difference>>
+{
+    using Iterator = rocprim::constant_iterator<ValueType, Difference>;
+    using Base = detail::IteratorWrapper<Iterator, ConstantInputIterator<ValueType, Difference>>;
+
+public:
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
+
+    __host__ __device__ __forceinline__
+        ConstantInputIterator(const typename Iterator::value_type value, const size_t index = 0)
+        : Base(Iterator(value, index))
+    {}
+
+    // Cast from wrapped iterator to class itself
+    __host__ __device__ __forceinline__ explicit ConstantInputIterator(Iterator iterator)
+        : Base(iterator)
+    {}
+};
 
 #endif
 

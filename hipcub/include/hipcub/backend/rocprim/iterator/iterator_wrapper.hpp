@@ -23,7 +23,7 @@
 
 #include "../../../config.hpp"
 
-#include "iterator_category.hpp"
+#include <iterator>
 
 BEGIN_HIPCUB_NAMESPACE
 
@@ -34,7 +34,8 @@ namespace detail
 /// \brief A wrapper for iterators to be able to make iterator_traits overwritable
 ///
 /// \tparam WrappedIterator - the iterator that is wrapped
-template<class WrappedIterator>
+/// \tparam DerivedIterator - the iterator that this base class inherits
+template<class WrappedIterator, class DerivedIterator>
 class IteratorWrapper
 {
 public:
@@ -42,64 +43,38 @@ public:
     using reference         = typename WrappedIterator::reference;
     using pointer           = typename WrappedIterator::pointer;
     using difference_type   = typename WrappedIterator::difference_type;
-    using iterator_category = typename IteratorCategory<value_type, reference>::type;
-    using self_type         = typename WrappedIterator::self_type;
+    using iterator_category = typename WrappedIterator::iterator_category;
 
     WrappedIterator iterator_;
 
-    __host__ __device__ __forceinline__ IteratorWrapper(const IteratorWrapper& other)
-        : iterator_(other.iterator_)
+    __host__ __device__ __forceinline__ IteratorWrapper(WrappedIterator iterator)
+        : iterator_(iterator)
     {}
 
-    __host__ __device__ __forceinline__ IteratorWrapper(IteratorWrapper& other)
-        : iterator_(other.iterator_)
-    {}
-
-    __host__ __device__ __forceinline__ IteratorWrapper(IteratorWrapper&& other)
-        : iterator_(std::move(other.iterator_))
-    {}
-
-    template<class... Args>
-    __host__ __device__ __forceinline__ IteratorWrapper(Args&&... args)
-        : iterator_(std::forward<Args>(args)...)
-    {}
-
-    __host__ __device__ __forceinline__ IteratorWrapper& operator=(const IteratorWrapper& other)
-    {
-        iterator_ = other.iterator_;
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ IteratorWrapper& operator=(IteratorWrapper&& other)
-    {
-        iterator_ = std::move(other.iterator_);
-        return *this;
-    }
-
-    __host__ __device__ __forceinline__ IteratorWrapper& operator++()
+    __host__ __device__ __forceinline__ DerivedIterator& operator++()
     {
         iterator_++;
-        return *this;
+        return static_cast<DerivedIterator&>(*this);
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper operator++(int)
+    __host__ __device__ __forceinline__ DerivedIterator operator++(int)
     {
-        IteratorWrapper old_ci = *this;
+        DerivedIterator old_ci = static_cast<DerivedIterator&>(*this);
         iterator_++;
-        return old_ci;
+        return DerivedIterator(old_ci);
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper& operator--()
+    __host__ __device__ __forceinline__ DerivedIterator& operator--()
     {
         iterator_--;
-        return *this;
+        return static_cast<DerivedIterator&>(*this);
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper operator--(int)
+    __host__ __device__ __forceinline__ DerivedIterator operator--(int)
     {
-        IteratorWrapper old_ci = *this;
+        DerivedIterator old_ci = static_cast<DerivedIterator&>(*this);
         iterator_--;
-        return old_ci;
+        return DerivedIterator(old_ci);
     }
 
     __host__ __device__ __forceinline__ value_type operator*() const
@@ -117,64 +92,64 @@ public:
         return iterator_[distance];
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper operator+(difference_type distance) const
+    __host__ __device__ __forceinline__ DerivedIterator operator+(difference_type distance) const
     {
-        return iterator_ + distance;
+        return DerivedIterator(iterator_ + distance);
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper& operator+=(difference_type distance)
+    __host__ __device__ __forceinline__ DerivedIterator& operator+=(difference_type distance)
     {
         iterator_ += distance;
-        return *this;
+        return static_cast<DerivedIterator&>(*this);
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper operator-(difference_type distance) const
+    __host__ __device__ __forceinline__ DerivedIterator operator-(difference_type distance) const
     {
-        return iterator_ - distance;
+        return DerivedIterator(iterator_ - distance);
     }
 
-    __host__ __device__ __forceinline__ IteratorWrapper& operator-=(difference_type distance)
+    __host__ __device__ __forceinline__ DerivedIterator& operator-=(difference_type distance)
     {
         iterator_ -= distance;
-        return *this;
+        return static_cast<DerivedIterator&>(*this);
     }
 
-    __host__ __device__ __forceinline__ difference_type operator-(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ difference_type operator-(DerivedIterator other) const
     {
         return iterator_.operator-(other.iterator_);
     }
 
-    __host__ __device__ __forceinline__ bool operator==(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ bool operator==(DerivedIterator other) const
     {
         return iterator_ == other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator!=(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ bool operator!=(DerivedIterator other) const
     {
         return iterator_ != other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator<(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ bool operator<(DerivedIterator other) const
     {
         return iterator_ < other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator<=(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ bool operator<=(DerivedIterator other) const
     {
         return iterator_ <= other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator>(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ bool operator>(DerivedIterator other) const
     {
         return iterator_ > other.iterator_;
     }
 
-    __host__ __device__ __forceinline__ bool operator>=(IteratorWrapper other) const
+    __host__ __device__ __forceinline__ bool operator>=(DerivedIterator other) const
     {
         return iterator_ >= other.iterator_;
     }
 
-    [[deprecated]] friend std::ostream& operator<<(std::ostream& os, const IteratorWrapper& iter)
+    [[deprecated]] friend std::ostream& operator<<(std::ostream& os, const DerivedIterator& iter)
     {
         os << iter.iterator_;
         return os;

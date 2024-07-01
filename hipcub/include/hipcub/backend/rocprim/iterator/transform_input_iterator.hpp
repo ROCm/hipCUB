@@ -32,6 +32,7 @@
 
 #include "../../../config.hpp"
 
+#include "iterator_category.hpp"
 #include "iterator_wrapper.hpp"
 
 #include "rocprim/type_traits.hpp"
@@ -50,8 +51,32 @@ template<class ValueType,
          class InputIteratorT,
          class OffsetT = std::ptrdiff_t // ignored
          >
-using TransformInputIterator
-    = detail::IteratorWrapper<rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>>;
+class TransformInputIterator
+    : public detail::IteratorWrapper<
+          rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>,
+          TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>
+{
+    using Iterator = rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>;
+    using Base     = detail::IteratorWrapper<
+        Iterator,
+        TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>;
+
+public:
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
+    using unary_function    = typename Iterator::unary_function;
+
+    __host__ __device__ __forceinline__ TransformInputIterator(InputIteratorT iterator,
+                                                               ConversionOp   transform)
+        : Base(Iterator(iterator, transform))
+    {}
+
+    // Cast from wrapped iterator to class itself
+    __host__ __device__ __forceinline__ explicit TransformInputIterator(Iterator iterator)
+        : Base(iterator)
+    {}
+};
 
 #endif
 

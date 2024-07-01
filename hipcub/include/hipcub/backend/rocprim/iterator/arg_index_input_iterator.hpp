@@ -32,6 +32,7 @@
 
 #include "../../../config.hpp"
 
+#include "iterator_category.hpp"
 #include "iterator_wrapper.hpp"
 
 #include <rocprim/iterator/arg_index_iterator.hpp>
@@ -45,10 +46,33 @@ BEGIN_HIPCUB_NAMESPACE
 template<class InputIterator,
          class Difference     = std::ptrdiff_t,
          class InputValueType = typename std::iterator_traits<InputIterator>::value_type>
-using ArgIndexInputIterator = detail::IteratorWrapper<
-    rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>>;
+class ArgIndexInputIterator
+    : public detail::IteratorWrapper<
+          rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>,
+          ArgIndexInputIterator<InputIterator, Difference, InputValueType>>
+{
+    using Iterator = rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>;
+    using Base
+        = detail::IteratorWrapper<Iterator,
+                                  ArgIndexInputIterator<InputIterator, Difference, InputValueType>>;
 
-#endif
+public:
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
+
+    __host__ __device__ __forceinline__
+        ArgIndexInputIterator(InputIterator iterator, typename Iterator::difference_type offset = 0)
+        : Base(Iterator(iterator, offset))
+    {}
+
+    // Cast from wrapped iterator to class itself
+    __host__ __device__ __forceinline__ explicit ArgIndexInputIterator(Iterator iterator)
+        : Base(iterator)
+    {}
+};
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 END_HIPCUB_NAMESPACE
 
