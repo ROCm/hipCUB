@@ -49,15 +49,15 @@ class CacheModifiedInputIterator
 {
 public:
     // Required iterator traits
-    typedef CacheModifiedInputIterator self_type; ///< My own type
-    typedef OffsetT
-        difference_type; ///< Type to express the result of subtracting one iterator from another
-    typedef ValueType  value_type; ///< The type of the element the iterator can point to
-    typedef ValueType* pointer; ///< The type of a pointer to an element the iterator can point to
-    typedef ValueType
-        reference; ///< The type of a reference to an element the iterator can point to
-    typedef typename IteratorCategory<value_type, reference>::type
-        iterator_category; ///< The iterator category
+    using self_type = CacheModifiedInputIterator; ///< My own type
+    using difference_type
+        = OffsetT; ///< Type to express the result of subtracting one iterator from another
+    using value_type = ValueType; ///< The type of the element the iterator can point to
+    using pointer = ValueType*; ///< The type of a pointer to an element the iterator can point to
+    using reference
+        = ValueType; ///< The type of a reference to an element the iterator can point to
+    using iterator_category =
+        typename detail::IteratorCategory<value_type, reference>::type; ///< The iterator category
 
 public:
 

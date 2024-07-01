@@ -1,5 +1,3 @@
-
-
 // Copyright (c) 2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,12 +21,25 @@
 #ifndef HIPCUB_ROCPRIM_WRAPPER_ITERATOR_HPP_
 #define HIPCUB_ROCPRIM_WRAPPER_ITERATOR_HPP_
 
+#include "../../../config.hpp"
+
 #include <iterator>
+
+BEGIN_HIPCUB_NAMESPACE
+
+namespace detail
+{
 
 template<class Iterator, class DerivedIterator>
 class WrapperIterator
 {
 public:
+    using value_type        = typename Iterator::value_type;
+    using reference         = typename Iterator::reference;
+    using pointer           = typename Iterator::pointer;
+    using difference_type   = typename Iterator::difference_type;
+    using iterator_category = typename Iterator::iterator_category;
+
     Iterator iterator_;
 
     __host__ __device__ __forceinline__ WrapperIterator(Iterator iterator) : iterator_(iterator) {}
@@ -143,5 +154,9 @@ public:
         return os;
     }
 };
+
+} // namespace detail
+
+END_HIPCUB_NAMESPACE
 
 #endif // HIPCUB_ROCPRIM_WRAPPER_ITERATOR_HPP_

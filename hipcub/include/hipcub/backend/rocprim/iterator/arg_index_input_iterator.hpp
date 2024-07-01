@@ -74,7 +74,7 @@ public:
     /// A type used for identify distance between iterators.
     using difference_type = Difference;
     /// The category of the iterator.
-    using iterator_category = IteratorCategory<value_type, reference>;
+    using iterator_category = detail::IteratorCategory<value_type, reference>;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     using self_type = ArgIndexInputIterator;

@@ -52,25 +52,20 @@ template<class ValueType,
          class OffsetT = std::ptrdiff_t // ignored
          >
 class TransformInputIterator
-    : public WrapperIterator<
+    : public detail::WrapperIterator<
           rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>,
           TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>
 {
     using Iterator = rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>;
-    using Base
-        = WrapperIterator<Iterator,
-                          TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>;
+    using Base     = detail::WrapperIterator<
+        Iterator,
+        TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>;
 
 public:
-    typedef typename Iterator::value_type      value_type;
-    typedef typename Iterator::reference       reference;
-    typedef typename Iterator::pointer         pointer;
-    typedef typename Iterator::difference_type difference_type;
-    typedef typename IteratorCategory<typename Iterator::value_type,
-                                      typename Iterator::reference>::type
-                                              iterator_category; ///< The iterator category
-    typedef typename Iterator::unary_function unary_function;
-    typedef typename Iterator::self_type      self_type;
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
+    using unary_function    = typename Iterator::unary_function;
 
     __host__ __device__ __forceinline__ TransformInputIterator(InputIteratorT iterator,
                                                                ConversionOp   transform)

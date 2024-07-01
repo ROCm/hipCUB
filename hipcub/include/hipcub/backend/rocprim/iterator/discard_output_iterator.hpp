@@ -53,14 +53,14 @@ class DiscardOutputIterator
 {
 public:
     // Required iterator traits
-    typedef DiscardOutputIterator self_type; ///< My own type
-    typedef OffsetT
-        difference_type; ///< Type to express the result of subtracting one iterator from another
-    typedef void value_type; ///< The type of the element the iterator can point to
-    typedef void pointer; ///< The type of a pointer to an element the iterator can point to
-    typedef void reference; ///< The type of a reference to an element the iterator can point to
-    typedef IteratorCategory<value_type, reference>::type
-        iterator_category; ///< The iterator category
+    using self_type = DiscardOutputIterator; ///< My own type
+    using difference_type
+        = OffsetT; ///< Type to express the result of subtracting one iterator from another
+    using value_type = void; ///< The type of the element the iterator can point to
+    using pointer    = void; ///< The type of a pointer to an element the iterator can point to
+    using reference  = void; ///< The type of a reference to an element the iterator can point to
+    using iterator_category =
+        typename detail::IteratorCategory<value_type, reference>::type; ///< The iterator category
 
 private:
 

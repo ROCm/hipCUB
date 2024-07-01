@@ -45,23 +45,20 @@ BEGIN_HIPCUB_NAMESPACE
 
 template<class Incrementable, class Difference = std::ptrdiff_t>
 class CountingInputIterator
-    : public WrapperIterator<rocprim::counting_iterator<Incrementable, Difference>,
-                             CountingInputIterator<Incrementable, Difference>>
+    : public detail::WrapperIterator<rocprim::counting_iterator<Incrementable, Difference>,
+                                     CountingInputIterator<Incrementable, Difference>>
 {
     using Iterator = rocprim::counting_iterator<Incrementable, Difference>;
-    using Base     = WrapperIterator<Iterator, CountingInputIterator<Incrementable, Difference>>;
+    using Base
+        = detail::WrapperIterator<Iterator, CountingInputIterator<Incrementable, Difference>>;
 
 public:
-    typedef typename Iterator::value_type      value_type;
-    typedef typename Iterator::reference       reference;
-    typedef typename Iterator::pointer         pointer;
-    typedef typename Iterator::difference_type difference_type;
-    typedef typename IteratorCategory<typename Iterator::value_type,
-                                      typename Iterator::reference>::type
-                                         iterator_category; ///< The iterator category
-    typedef typename Iterator::self_type self_type;
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
 
-    __host__ __device__ __forceinline__ CountingInputIterator(const value_type value)
+    __host__ __device__ __forceinline__
+        CountingInputIterator(const typename Iterator::value_type value)
         : Base(Iterator(value))
     {}
 

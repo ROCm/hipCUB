@@ -48,10 +48,10 @@ template<
 class TexRefInputIterator : public ::rocprim::texture_cache_iterator<T, OffsetT>
 {
 public:
-    typedef
-        typename IteratorCategory<typename rocprim::texture_cache_iterator<T, OffsetT>::value_type,
-                                  typename rocprim::texture_cache_iterator<T, OffsetT>::reference>::
-            type iterator_category; ///< The iterator category
+    using iterator_category = typename detail::IteratorCategory<
+        typename rocprim::texture_cache_iterator<T, OffsetT>::value_type,
+        typename rocprim::texture_cache_iterator<T, OffsetT>::reference>::
+        type; ///< The iterator category
 
     template<class Qualified>
     inline hipError_t

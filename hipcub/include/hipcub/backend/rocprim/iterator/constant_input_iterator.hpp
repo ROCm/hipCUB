@@ -45,24 +45,19 @@ BEGIN_HIPCUB_NAMESPACE
 
 template<class ValueType, class Difference = std::ptrdiff_t>
 class ConstantInputIterator
-    : public WrapperIterator<rocprim::constant_iterator<ValueType, Difference>,
-                             ConstantInputIterator<ValueType, Difference>>
+    : public detail::WrapperIterator<rocprim::constant_iterator<ValueType, Difference>,
+                                     ConstantInputIterator<ValueType, Difference>>
 {
     using Iterator = rocprim::constant_iterator<ValueType, Difference>;
-    using Base     = WrapperIterator<Iterator, ConstantInputIterator<ValueType, Difference>>;
+    using Base = detail::WrapperIterator<Iterator, ConstantInputIterator<ValueType, Difference>>;
 
 public:
-    typedef typename Iterator::value_type      value_type;
-    typedef typename Iterator::reference       reference;
-    typedef typename Iterator::pointer         pointer;
-    typedef typename Iterator::difference_type difference_type;
-    typedef typename IteratorCategory<typename Iterator::value_type,
-                                      typename Iterator::reference>::type
-                                         iterator_category; ///< The iterator category
-    typedef typename Iterator::self_type self_type;
+    using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
+                                                                typename Iterator::reference>::type;
+    using self_type         = typename Iterator::self_type;
 
-    __host__ __device__ __forceinline__ ConstantInputIterator(const value_type value,
-                                                              const size_t     index = 0)
+    __host__ __device__ __forceinline__
+        ConstantInputIterator(const typename Iterator::value_type value, const size_t index = 0)
         : Base(Iterator(value, index))
     {}
 

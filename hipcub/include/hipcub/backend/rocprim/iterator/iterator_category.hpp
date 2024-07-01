@@ -21,27 +21,52 @@
 #ifndef HIPCUB_ROCPRIM_ITERATOR_CATEGORY_HPP
 #define HIPCUB_ROCPRIM_ITERATOR_CATEGORY_HPP
 
+#include "../../../config.hpp"
+
 #if(THRUST_VERSION >= 100700)
     // This iterator is compatible with Thrust API 1.7 and newer
     #include <thrust/iterator/iterator_facade.h>
     #include <thrust/iterator/iterator_traits.h>
 
+BEGIN_HIPCUB_NAMESPACE
+
+namespace detail
+{
+
 // Use Thrust's iterator categories so we can use these iterators in Thrust 1.7 (or newer) methods
 template<typename ValueType, typename Reference>
 struct IteratorCategory
 {
-    typedef typename thrust::detail::iterator_facade_category<thrust::any_system_tag,
-                                                              thrust::random_access_traversal_tag,
-                                                              ValueType,
-                                                              Reference>::type type;
+    using type =
+        typename thrust::detail::iterator_facade_category<thrust::any_system_tag,
+                                                          thrust::random_access_traversal_tag,
+                                                          ValueType,
+                                                          Reference>::type;
 };
+
+} // namespace detail
+
+END_HIPCUB_NAMESPACE
+
 #else
+
     #include <iterator>
+
+BEGIN_HIPCUB_NAMESPACE
+
+namespace detail
+{
+
 template<typename ValueType, typename Reference>
 struct IteratorCategory
 {
-    typedef typename std::random_access_iterator_tag type;
+    using type = typename std::random_access_iterator_tag;
 };
+
+} // namespace detail
+
+END_HIPCUB_NAMESPACE
+
 #endif // THRUST_VERSION
 
 #endif // HIPCUB_ROCPRIM_ITERATOR_CATEGORY_HPP
