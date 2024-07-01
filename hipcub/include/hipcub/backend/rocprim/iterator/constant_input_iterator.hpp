@@ -45,11 +45,11 @@ BEGIN_HIPCUB_NAMESPACE
 
 template<class ValueType, class Difference = std::ptrdiff_t>
 class ConstantInputIterator
-    : public detail::WrapperIterator<rocprim::constant_iterator<ValueType, Difference>,
+    : public detail::IteratorWrapper<rocprim::constant_iterator<ValueType, Difference>,
                                      ConstantInputIterator<ValueType, Difference>>
 {
     using Iterator = rocprim::constant_iterator<ValueType, Difference>;
-    using Base = detail::WrapperIterator<Iterator, ConstantInputIterator<ValueType, Difference>>;
+    using Base = detail::IteratorWrapper<Iterator, ConstantInputIterator<ValueType, Difference>>;
 
 public:
     using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
@@ -64,7 +64,7 @@ public:
     // Cast from wrapped iterator to class itself
     __host__ __device__ __forceinline__ ConstantInputIterator(Iterator iterator) : Base(iterator) {}
 
-    // Cast from WrapperIterator to class itself
+    // Cast from IteratorWrapper to class itself
     __host__ __device__ __forceinline__ ConstantInputIterator(Base iterator)
         : Base(iterator.iterator_)
     {}

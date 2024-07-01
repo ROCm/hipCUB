@@ -45,12 +45,12 @@ BEGIN_HIPCUB_NAMESPACE
 
 template<class Incrementable, class Difference = std::ptrdiff_t>
 class CountingInputIterator
-    : public detail::WrapperIterator<rocprim::counting_iterator<Incrementable, Difference>,
+    : public detail::IteratorWrapper<rocprim::counting_iterator<Incrementable, Difference>,
                                      CountingInputIterator<Incrementable, Difference>>
 {
     using Iterator = rocprim::counting_iterator<Incrementable, Difference>;
     using Base
-        = detail::WrapperIterator<Iterator, CountingInputIterator<Incrementable, Difference>>;
+        = detail::IteratorWrapper<Iterator, CountingInputIterator<Incrementable, Difference>>;
 
 public:
     using iterator_category = typename detail::IteratorCategory<typename Iterator::value_type,
@@ -65,7 +65,7 @@ public:
     // Cast from wrapped iterator to class itself
     __host__ __device__ __forceinline__ CountingInputIterator(Iterator iterator) : Base(iterator) {}
 
-    // Cast from WrapperIterator to class itself
+    // Cast from IteratorWrapper to class itself
     __host__ __device__ __forceinline__ CountingInputIterator(Base iterator)
         : Base(iterator.iterator_)
     {}

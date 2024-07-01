@@ -47,13 +47,13 @@ template<class InputIterator,
          class Difference     = std::ptrdiff_t,
          class InputValueType = typename std::iterator_traits<InputIterator>::value_type>
 class ArgIndexInputIterator
-    : public detail::WrapperIterator<
+    : public detail::IteratorWrapper<
           rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>,
           ArgIndexInputIterator<InputIterator, Difference, InputValueType>>
 {
     using Iterator = rocprim::arg_index_iterator<InputIterator, Difference, InputValueType>;
     using Base
-        = detail::WrapperIterator<Iterator,
+        = detail::IteratorWrapper<Iterator,
                                   ArgIndexInputIterator<InputIterator, Difference, InputValueType>>;
 
 public:
@@ -69,7 +69,7 @@ public:
     // Cast from wrapped iterator to class itself
     __host__ __device__ __forceinline__ ArgIndexInputIterator(Iterator iterator) : Base(iterator) {}
 
-    // Cast from WrapperIterator to class itself
+    // Cast from IteratorWrapper to class itself
     __host__ __device__ __forceinline__ ArgIndexInputIterator(Base iterator)
         : Base(iterator.iterator_)
     {}

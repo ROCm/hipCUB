@@ -52,12 +52,12 @@ template<class ValueType,
          class OffsetT = std::ptrdiff_t // ignored
          >
 class TransformInputIterator
-    : public detail::WrapperIterator<
+    : public detail::IteratorWrapper<
           rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>,
           TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>
 {
     using Iterator = rocprim::transform_iterator<InputIteratorT, ConversionOp, ValueType>;
-    using Base     = detail::WrapperIterator<
+    using Base     = detail::IteratorWrapper<
         Iterator,
         TransformInputIterator<ValueType, ConversionOp, InputIteratorT, OffsetT>>;
 
@@ -76,7 +76,7 @@ public:
     __host__ __device__ __forceinline__ TransformInputIterator(Iterator iterator) : Base(iterator)
     {}
 
-    // Cast from WrapperIterator to class itself
+    // Cast from IteratorWrapper to class itself
     __host__ __device__ __forceinline__ TransformInputIterator(Base iterator)
         : Base(iterator.iterator_)
     {}
