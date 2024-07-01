@@ -59,9 +59,9 @@ public:
 
     __host__ __device__ __forceinline__ DerivedIterator operator++(int)
     {
-        IteratorWrapper old_ci = static_cast<DerivedIterator&>(*this);
+        DerivedIterator old_ci = static_cast<DerivedIterator&>(*this);
         iterator_++;
-        return old_ci;
+        return DerivedIterator(old_ci);
     }
 
     __host__ __device__ __forceinline__ DerivedIterator& operator--()
@@ -72,9 +72,9 @@ public:
 
     __host__ __device__ __forceinline__ DerivedIterator operator--(int)
     {
-        IteratorWrapper old_ci = static_cast<DerivedIterator&>(*this);
+        DerivedIterator old_ci = static_cast<DerivedIterator&>(*this);
         iterator_--;
-        return old_ci;
+        return DerivedIterator(old_ci);
     }
 
     __host__ __device__ __forceinline__ value_type operator*() const
@@ -94,7 +94,7 @@ public:
 
     __host__ __device__ __forceinline__ DerivedIterator operator+(difference_type distance) const
     {
-        return iterator_ + distance;
+        return DerivedIterator(iterator_ + distance);
     }
 
     __host__ __device__ __forceinline__ DerivedIterator& operator+=(difference_type distance)
@@ -105,7 +105,7 @@ public:
 
     __host__ __device__ __forceinline__ DerivedIterator operator-(difference_type distance) const
     {
-        return iterator_ - distance;
+        return DerivedIterator(iterator_ - distance);
     }
 
     __host__ __device__ __forceinline__ DerivedIterator& operator-=(difference_type distance)

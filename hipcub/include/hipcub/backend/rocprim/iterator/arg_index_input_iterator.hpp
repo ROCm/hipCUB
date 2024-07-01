@@ -67,11 +67,8 @@ public:
     {}
 
     // Cast from wrapped iterator to class itself
-    __host__ __device__ __forceinline__ ArgIndexInputIterator(Iterator iterator) : Base(iterator) {}
-
-    // Cast from IteratorWrapper to class itself
-    __host__ __device__ __forceinline__ ArgIndexInputIterator(Base iterator)
-        : Base(iterator.iterator_)
+    __host__ __device__ __forceinline__ explicit ArgIndexInputIterator(Iterator iterator)
+        : Base(iterator)
     {}
 };
 

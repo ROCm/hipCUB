@@ -63,11 +63,8 @@ public:
     {}
 
     // Cast from wrapped iterator to class itself
-    __host__ __device__ __forceinline__ CountingInputIterator(Iterator iterator) : Base(iterator) {}
-
-    // Cast from IteratorWrapper to class itself
-    __host__ __device__ __forceinline__ CountingInputIterator(Base iterator)
-        : Base(iterator.iterator_)
+    __host__ __device__ __forceinline__ explicit CountingInputIterator(Iterator iterator)
+        : Base(iterator)
     {}
 };
 
