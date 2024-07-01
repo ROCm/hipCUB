@@ -99,10 +99,12 @@ typedef ::testing::Types<
     params<float, 7U>,
     params<float, 15U>
 #ifdef __HIP_PLATFORM_AMD__
-    ,params<float, 37U>,
+    ,
+    params<float, 37U>,
     params<float, 61U>
 #endif
-> HipcubWarpScanTestParams;
+    >
+    HipcubWarpScanTestParams;
 
 TYPED_TEST_SUITE(HipcubWarpScanTests, HipcubWarpScanTestParams);
 
@@ -517,7 +519,8 @@ TYPED_TEST(HipcubWarpScanTests, ExclusiveScan)
         std::vector<T> input = test_utils::get_random_data<T>(size, 2, 50, seed_value);
         std::vector<T> output(size);
         std::vector<T> expected(input.size());
-        const T init = static_cast<T>(test_utils::get_random_value(0, 100, seed_value + seed_value_addition));
+        const T        init = static_cast<T>(
+            test_utils::get_random_value(0, 100, seed_value + seed_value_addition));
 
         // Calculate expected results on host
         for(size_t i = 0; i < input.size() / logical_warp_size; i++)
@@ -678,7 +681,8 @@ TYPED_TEST(HipcubWarpScanTests, ExclusiveReduceScan)
         std::vector<T> output_reductions(size / logical_warp_size);
         std::vector<T> expected(input.size());
         std::vector<T> expected_reductions(output_reductions.size());
-        const T init = static_cast<T>(test_utils::get_random_value(0, 100, seed_value + seed_value_addition));
+        const T        init = static_cast<T>(
+            test_utils::get_random_value(0, 100, seed_value + seed_value_addition));
 
         // Calculate expected results on host
         for(size_t i = 0; i < input.size() / logical_warp_size; i++)
@@ -863,7 +867,8 @@ TYPED_TEST(HipcubWarpScanTests, Scan)
         std::vector<T> output_exclusive(size);
         std::vector<T> expected_inclusive(output_inclusive.size());
         std::vector<T> expected_exclusive(output_exclusive.size());
-        const T init = static_cast<T>(test_utils::get_random_value(0, 100, seed_value + seed_value_addition));
+        const T        init = static_cast<T>(
+            test_utils::get_random_value(0, 100, seed_value + seed_value_addition));
 
         // Calculate expected results on host
         for(size_t i = 0; i < input.size() / logical_warp_size; i++)
