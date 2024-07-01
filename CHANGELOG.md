@@ -3,6 +3,12 @@
 Documentation for hipCUB is available at
 [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
+## (Unreleased) hipCUB-3.3.0 for ROCm 6.3.0
+
+### Fixed
+
+* Not all headers in hipCUB included `config.hpp` which could have resulted in build errors.
+
 ## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
 
 ### Added
@@ -38,7 +44,7 @@ Documentation for hipCUB is available at
     by setting the `CUB_DEBUG_SYNC` (or higher debug level) or the `HIPCUB_DEBUG_SYNC` preprocessor definition.
   * The compile time deprecation warnings can be disabled by defining the `HIPCUB_IGNORE_DEPRECATED_API` preprocessor definition.
 
-## (Unreleased) hipCUB-3.1.0 for ROCm 6.1.0
+## hipCUB-3.1.0 for ROCm 6.1.0
 
 ### Changes
 

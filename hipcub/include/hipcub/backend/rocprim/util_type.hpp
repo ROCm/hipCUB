@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2021-2023, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2021-2024, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,9 +30,6 @@
 #ifndef HIPCUB_ROCPRIM_UTIL_TYPE_HPP_
 #define HIPCUB_ROCPRIM_UTIL_TYPE_HPP_
 
-#include <limits>
-#include <type_traits>
-
 #include "../../config.hpp"
 
 #include <rocprim/detail/various.hpp>
@@ -40,6 +37,9 @@
 
 #include <hip/hip_fp16.h>
 #include <hip/hip_bfloat16.h>
+
+#include <limits>
+#include <type_traits>
 
 BEGIN_HIPCUB_NAMESPACE
 

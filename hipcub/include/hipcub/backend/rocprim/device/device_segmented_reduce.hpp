@@ -30,9 +30,6 @@
 #ifndef HIPCUB_ROCPRIM_DEVICE_DEVICE_SEGMENTED_REDUCE_HPP_
 #define HIPCUB_ROCPRIM_DEVICE_DEVICE_SEGMENTED_REDUCE_HPP_
 
-#include <limits>
-#include <iterator>
-
 #include "../../../config.hpp"
 #include "../../../util_deprecated.hpp"
 
@@ -43,6 +40,9 @@
 #include "rocprim/type_traits.hpp"
 
 #include <rocprim/device/device_segmented_reduce.hpp>
+
+#include <iterator>
+#include <limits>
 
 BEGIN_HIPCUB_NAMESPACE
 

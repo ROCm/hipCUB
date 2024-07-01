@@ -30,11 +30,13 @@
 #ifndef HIPCUB_ROCPRIM_ITERATOR_CACHE_MODIFIED_INPUT_ITERATOR_HPP_
 #define HIPCUB_ROCPRIM_ITERATOR_CACHE_MODIFIED_INPUT_ITERATOR_HPP_
 
-#include <iterator>
-#include <iostream>
+#include "../../../config.hpp"
 
 #include "../thread/thread_load.hpp"
 #include "../util_type.hpp"
+
+#include <iostream>
+#include <iterator>
 
 #if (THRUST_VERSION >= 100700)
     // This iterator is compatible with Thrust API 1.7 and newer
