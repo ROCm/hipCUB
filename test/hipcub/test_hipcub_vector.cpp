@@ -49,8 +49,12 @@ typedef ::testing::Types<params<char>,
                          params<long long>,
                          params<unsigned long long>,
                          params<float>,
-                         params<double>,
-                         params<bool>>
+                         params<double>
+#ifdef __HIP_PLATFORM_AMD__
+                         ,
+                         params<bool> // Doesn't work on NVIDIA / CUB
+#endif
+                         >
     Params;
 
 TYPED_TEST_SUITE(HipcubVector, Params);
@@ -78,7 +82,15 @@ void run_vector_test()
     Vector* device_input;
     HIP_CHECK(test_common_utils::hipMallocHelper(&device_input, size * sizeof(Vector)));
 
-    std::vector<Vector> input(size, Vector(10));
+    T input_num = 10;
+
+    Vector input_vec;
+    for(unsigned int i = 0; i < vec_size; i++)
+    {
+        *(reinterpret_cast<T*>(&input_vec) + i) = input_num;
+    }
+
+    std::vector<Vector> input(size, input_vec);
     HIP_CHECK(hipMemcpy(device_input,
                         input.data(),
                         input.size() * sizeof(Vector),
@@ -96,9 +108,18 @@ void run_vector_test()
                         output.size() * sizeof(Vector),
                         hipMemcpyDeviceToHost));
 
-    std::vector<Vector> expected(size, Vector(20));
+    const T expected_num = input_num + input_num;
 
-    ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+    for(unsigned int i = 0; i < size; i++)
+    {
+        const Vector output_vec = output[i];
+        for(unsigned int j = 0; j < vec_size; j++)
+        {
+            ASSERT_NO_FATAL_FAILURE(
+                test_utils::assert_eq(*(reinterpret_cast<const T*>(&output_vec) + j),
+                                      expected_num));
+        }
+    }
 }
 
 TYPED_TEST(HipcubVector, Vector1)
