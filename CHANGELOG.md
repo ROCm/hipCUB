@@ -7,6 +7,7 @@ Documentation for hipCUB is available at
 
 ### Added
 * Added `ForEach`, `ForEachN`, `ForEachCopy`, `ForEachCopyN` and `Bulk` functions to have parity with CUB.
+* Added the `hipcub::CubVector` type for CUB parity.
 
 ## (Unreleased) hipCUB-3.3.0 for ROCm 6.3.0
 
