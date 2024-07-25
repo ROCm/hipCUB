@@ -33,7 +33,25 @@
 #include "test_utils_data_generation.hpp"
 #include "test_utils_sort_comparator.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
+
+#define HIP_CHECK_MEMORY(condition)                                                         \
+    {                                                                                       \
+        hipError_t error = condition;                                                       \
+        if(error == hipErrorOutOfMemory)                                                    \
+        {                                                                                   \
+            std::cout << "Out of memory. Skipping size = " << size << std::endl;            \
+            break;                                                                          \
+        }                                                                                   \
+        if(error != hipSuccess)                                                             \
+        {                                                                                   \
+            std::cout << "HIP error: " << hipGetErrorString(error) << " line: " << __LINE__ \
+                      << std::endl;                                                         \
+            exit(error);                                                                    \
+        }                                                                                   \
+    }
 
 template<
     class Key,
@@ -1083,6 +1101,87 @@ inline void sort_keys_over_4g()
 
     HIP_CHECK(hipFree(d_keys_input_output));
     HIP_CHECK(hipFree(d_temporary_storage));
+}
+
+inline void sort_keys_large_sizes()
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using key_type                    = uint8_t;
+    constexpr bool         descending = false;
+    constexpr unsigned int start_bit  = 0;
+    constexpr unsigned int end_bit    = 8;
+
+    hipStream_t stream = 0;
+
+    const std::vector<size_t> sizes = test_utils::get_large_sizes(seeds[0]);
+    for(const size_t size : sizes)
+    {
+        SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+        // Generate data
+        std::vector<key_type> keys_input(size);
+        std::iota(keys_input.begin(), keys_input.end(), 0);
+
+        key_type* d_keys;
+        HIP_CHECK_MEMORY(test_common_utils::hipMallocHelper(&d_keys, size * sizeof(key_type)));
+        HIP_CHECK(
+            hipMemcpy(d_keys, keys_input.data(), size * sizeof(key_type), hipMemcpyHostToDevice));
+
+        void*  d_temporary_storage     = nullptr;
+        size_t temporary_storage_bytes = 0;
+        HIP_CHECK(invoke_sort_keys<descending>(d_temporary_storage,
+                                               temporary_storage_bytes,
+                                               d_keys,
+                                               d_keys,
+                                               size,
+                                               start_bit,
+                                               end_bit,
+                                               stream));
+
+        ASSERT_GT(temporary_storage_bytes, 0U);
+
+        HIP_CHECK_MEMORY(
+            test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+
+        HIP_CHECK(invoke_sort_keys<descending>(d_temporary_storage,
+                                               temporary_storage_bytes,
+                                               d_keys,
+                                               d_keys,
+                                               size,
+                                               start_bit,
+                                               end_bit,
+                                               stream));
+
+        HIP_CHECK(hipFree(d_temporary_storage));
+
+        std::vector<key_type> keys_output(size);
+        HIP_CHECK(
+            hipMemcpy(keys_output.data(), d_keys, size * sizeof(key_type), hipMemcpyDeviceToHost));
+
+        HIP_CHECK(hipFree(d_keys));
+
+        // Check if output values are as expected
+        const size_t unique_keys    = size_t(std::numeric_limits<key_type>::max()) + 1;
+        const size_t segment_length = test_utils::ceiling_div(size, unique_keys);
+        const size_t full_segments  = size % unique_keys == 0 ? unique_keys : size % unique_keys;
+        for(size_t i = 0; i < size; i += 4321)
+        {
+            key_type expected;
+            if(i / segment_length < full_segments)
+            {
+                expected = key_type(i / segment_length);
+            }
+            else
+            {
+                expected = key_type((i - full_segments * segment_length) / (segment_length - 1)
+                                    + full_segments);
+            }
+            ASSERT_EQ(keys_output[i], expected) << "with index = " << i;
+        }
+    }
 }
 
 #endif // HIPCUB_TEST_HIPCUB_DEVICE_RADIX_SORT_HPP_
