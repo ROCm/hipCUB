@@ -25,6 +25,8 @@
 // hipcub API
 #include "hipcub/device/device_merge_sort.hpp"
 
+#include "test_utils_data_generation.hpp"
+
 // Only test sizes this big if CheckHugeSizes is set in params.
 constexpr size_t huge_size = 1ull << 20;
 
@@ -66,16 +68,6 @@ typedef ::testing::Types<params<signed char, double, test_utils::greater>,
 
 TYPED_TEST_SUITE(HipcubDeviceMergeSort, Params);
 
-std::vector<size_t> get_sizes()
-{
-    std::vector<size_t> sizes =
-        {1, 10, 53, 211, 1024, 2345, 4096, 34567, (1 << 16) - 1220, (1 << 23) - 76543};
-    const std::vector<size_t> random_sizes =
-        test_utils::get_random_data<size_t>(10, 1, 100000, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    return sizes;
-}
-
 TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -88,18 +80,19 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 
     hipStream_t stream = 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size: sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-            continue;
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value =
-                seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data
             std::vector<key_type> keys_input;
@@ -163,18 +156,19 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
 
     hipStream_t stream = 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size: sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-            continue;
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value =
-                seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data
             std::vector<key_type> keys_input;
@@ -243,19 +237,19 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
 
     hipStream_t stream = 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size: sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-            continue;
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value =
-                seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             std::vector<key_type> keys_input;
             keys_input = test_utils::get_random_data<key_type>(size,
@@ -320,20 +314,19 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
 
     hipStream_t stream = hipStreamDefault;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size : sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-        {
-            continue;
-        }
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data
             std::vector<key_type> keys_input;
@@ -403,19 +396,19 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
 
     hipStream_t stream = 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size: sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-            continue;
-
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value =
-                seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             compare_function compare_op;
             using key_value = std::pair<key_type, value_type>;
 
@@ -527,20 +520,19 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
 
     hipStream_t stream = 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size: sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-            continue;
-
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+        
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value =
-                seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
-            compare_function compare_op;
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);            compare_function compare_op;
             using key_value = std::pair<key_type, value_type>;
 
             // Generate data
@@ -662,19 +654,19 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
 
     hipStream_t stream = 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(size_t size: sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > huge_size && !check_huge_sizes)
-            continue;
-
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value =
-                seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > huge_size && !check_huge_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             compare_function compare_op;
             using key_value = std::pair<key_type, value_type>;
 

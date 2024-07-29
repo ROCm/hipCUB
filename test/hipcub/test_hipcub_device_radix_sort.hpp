@@ -61,14 +61,6 @@ public:
 
 TYPED_TEST_SUITE_P(HipcubDeviceRadixSort);
 
-inline std::vector<unsigned int> get_sizes()
-{
-    std::vector<unsigned int> sizes = { 1, 10, 53, 211, 1024, 2345, 4096, 34567, (1 << 16) - 1220, (1 << 23) - 76543 };
-    const std::vector<unsigned int> random_sizes = test_utils::get_random_data<unsigned int>(10, 1, 100000, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    return sizes;
-}
-
 template<class T>
 auto generate_key_input(size_t size, unsigned int seed_value)
     -> std::enable_if_t<hipcub::NumericTraits<T>::CATEGORY == hipcub::FLOATING_POINT,
@@ -221,17 +213,19 @@ void sort_keys()
 
     hipStream_t stream = 0;
 
-    const std::vector<unsigned int> sizes = get_sizes();
-    for(unsigned int size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > (1 << 20) && !check_large_sizes) continue;
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > (1 << 20) && !check_large_sizes)
+            {
+                continue;
+            }        
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
 
@@ -443,17 +437,19 @@ void sort_pairs()
 
     hipStream_t stream = 0;
 
-    const std::vector<unsigned int> sizes = get_sizes();
-    for(unsigned int size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > (1 << 20) && !check_large_sizes) continue;
-
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > (1 << 20) && !check_large_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
             std::vector<value_type> values_input(size);
@@ -681,17 +677,19 @@ void sort_keys_double_buffer()
 
     hipStream_t stream = 0;
 
-    const std::vector<unsigned int> sizes = get_sizes();
-    for(unsigned int size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > (1 << 20) && !check_large_sizes) continue;
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > (1 << 20) && !check_large_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
             key_type * d_keys_input;
@@ -881,17 +879,19 @@ void sort_pairs_double_buffer()
 
     hipStream_t stream = 0;
 
-    const std::vector<unsigned int> sizes = get_sizes();
-    for(unsigned int size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        if(size > (1 << 20) && !check_large_sizes) continue;
-
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            if(size > (1 << 20) && !check_large_sizes)
+            {
+                continue;
+            }
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
             std::vector<value_type> values_input(size);

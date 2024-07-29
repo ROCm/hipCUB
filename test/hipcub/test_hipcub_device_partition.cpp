@@ -26,6 +26,8 @@
 #include "hipcub/device/device_partition.hpp"
 #include "identity_iterator.hpp"
 
+#include "test_utils_data_generation.hpp"
+
 #include <algorithm>
 #include <array>
 
@@ -63,21 +65,6 @@ typedef ::testing::Types<
     DevicePartitionParams<test_utils::custom_test_type<long long>>
 > HipcubDevicePartitionTestsParams;
 
-std::vector<size_t> get_sizes(int seed_value)
-{
-    std::vector<size_t> sizes = {
-        2, 32, 64, 256,
-        1024, 2048,
-        3072, 4096,
-        27845, (1 << 18) + 1111,
-        1024 * 1024 * 32
-    };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(2, 1, 16384, seed_value);
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    std::sort(sizes.begin(), sizes.end());
-    return sizes;
-}
-
 TYPED_TEST_SUITE(HipcubDevicePartitionTests, HipcubDevicePartitionTestsParams);
 
 TYPED_TEST(HipcubDevicePartitionTests, Flagged)
@@ -95,14 +82,13 @@ TYPED_TEST(HipcubDevicePartitionTests, Flagged)
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        const std::vector<size_t> sizes = get_sizes(seed_value);
-        for(auto size : sizes)
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
             std::vector<F> flags = test_utils::get_random_data01<F>(size, 0.25, seed_value);
@@ -261,14 +247,13 @@ TYPED_TEST(HipcubDevicePartitionTests, If)
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        const std::vector<size_t> sizes = get_sizes(seed_value);
-        for(auto size : sizes)
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             std::vector<T> input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
 
@@ -409,15 +394,13 @@ TYPED_TEST(HipcubDevicePartitionTests, IfThreeWay)
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        const unsigned int seed_value = seed_index < random_seeds_count 
-            ? static_cast<unsigned int>(rand()) : seeds[seed_index - random_seeds_count];
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        const std::vector<size_t> sizes = get_sizes(seed_value);
-        for(auto size : sizes)
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const auto input = test_utils::get_random_data<T>(size, 1, 100, seed_value);
 

@@ -61,16 +61,6 @@ typedef ::testing::Types<DeviceForParams<int>,
                          DeviceForParams<test_utils::bfloat16>>
     HipcubDeviceForTestsParams;
 
-inline std::vector<unsigned int> get_sizes()
-{
-    std::vector<unsigned int> sizes
-        = {1, 10, 53, 211, 1024, 2345, 4096, 34567, (1 << 16) - 1220, (1 << 23) - 76543};
-    const std::vector<unsigned int> random_sizes
-        = test_utils::get_random_data<unsigned int>(10, 1, 100000, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    return sizes;
-}
-
 TYPED_TEST_SUITE(HipcubDeviceForTests, HipcubDeviceForTestsParams);
 
 template<class T>
@@ -98,7 +88,7 @@ TYPED_TEST(HipcubDeviceForTests, ForEach)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
 
-        for(auto size : get_sizes())
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             hipStream_t stream = 0; // default
 
@@ -181,7 +171,7 @@ TEST(HipcubDeviceForTestsTempStore, ForEachTempStore)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
 
-        for(auto size : get_sizes())
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             hipStream_t stream = 0; // default
 
@@ -237,7 +227,7 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
 
-        for(auto size : get_sizes())
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             hipStream_t stream = 0; // default
 
@@ -305,7 +295,7 @@ TEST(HipcubDeviceBulk, Bulk)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
 
-        for(unsigned int size : get_sizes())
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             hipStream_t stream = 0; // default
 

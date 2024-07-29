@@ -73,19 +73,6 @@ typedef ::testing::Types<DeviceScanParams<int, long>,
                          DeviceScanParams<test_utils::half, test_utils::half, hipcub::Max>>
     HipcubDeviceScanTestsParams;
 
-std::vector<size_t> get_sizes()
-{
-    std::vector<size_t> sizes = {
-        1, 10, 53, 211,
-        1024, 2048, 5096,
-        34567, (1 << 18) - 1220
-    };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(2, 1, 16384, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    std::sort(sizes.begin(), sizes.end());
-    return sizes;
-}
-
 // use float for accumulation of bfloat16 and half inputs if operator is plus
 template<typename input_type, typename input_op_type>
 struct accum_type
@@ -158,16 +145,15 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     constexpr float single_op_precision
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(single_op_precision * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -341,15 +327,15 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
     constexpr size_t max_segment_length = 100;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for (auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            const unsigned int seed_value = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(single_op_precision * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -520,16 +506,15 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     constexpr float single_op_precision
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {    
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(single_op_precision * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -712,16 +697,15 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
     constexpr size_t max_segment_length = 100;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for (auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            const unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(single_op_precision * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -1073,16 +1057,15 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     constexpr float single_op_precision
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            const unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(single_op_precision * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size

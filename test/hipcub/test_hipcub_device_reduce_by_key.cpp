@@ -25,6 +25,8 @@
 // hipcub API
 #include "hipcub/device/device_reduce.hpp"
 
+#include "test_utils_data_generation.hpp"
+
 template<
     class Key,
     class Value,
@@ -70,20 +72,6 @@ typedef ::testing::Types<
 
 TYPED_TEST_SUITE(HipcubDeviceReduceByKey, Params);
 
-std::vector<size_t> get_sizes()
-{
-    std::vector<size_t> sizes = {
-        1024, 2048, 4096, 1792,
-        1, 10, 53, 211, 500,
-        2345, 11001, 34567,
-        100000,
-        (1 << 16) - 1220, (1 << 23) - 76543
-    };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(10, 1, 100000, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    return sizes;
-}
-
 TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -103,16 +91,15 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
     reduce_op_type reduce_op;
     hipcub::Equality key_compare_op;
 
-    const std::vector<size_t> sizes = get_sizes();
-
-    for(size_t size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {    
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             hipStream_t stream = 0; // default
 
             // Generate data and calculate expected results

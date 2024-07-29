@@ -29,6 +29,8 @@
 #include "hipcub/device/device_reduce.hpp"
 #include "hipcub/iterator/constant_input_iterator.hpp"
 
+#include "test_utils_data_generation.hpp"
+
 #include <bitset>
 
 // Params for tests
@@ -75,19 +77,6 @@ typedef ::testing::Types<
     >
     HipcubDeviceReduceTestsParams;
 
-std::vector<size_t> get_sizes()
-{
-    std::vector<size_t> sizes = {
-        1, 10, 53, 211,
-        1024, 2048, 5096,
-        34567, (1 << 17) - 1220
-    };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(2, 1, 16384, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    std::sort(sizes.begin(), sizes.end());
-    return sizes;
-}
-
 TYPED_TEST_SUITE(HipcubDeviceReduceTests, HipcubDeviceReduceTestsParams);
 
 TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
@@ -98,16 +87,16 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
 
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
-
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+ 
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(test_utils::precision<U>::value * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -214,15 +203,15 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+    
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {    
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             hipStream_t stream = 0; // default
 
             // Generate data
@@ -357,18 +346,19 @@ void test_argminmax(typename TestFixture::input_type empty_value)
     using key_value = typename Iterator::value_type;
 
     DispatchFunction    function;
-    std::vector<size_t> sizes = get_sizes();
-    sizes.push_back(0);
 
-    for(auto size : sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        std::vector<size_t> sizes = test_utils::get_sizes(seed_value);
+        sizes.push_back(0);
+
+        for (size_t size : sizes)
+        {
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             hipStream_t stream = 0; // default
 
             // Generate data
@@ -569,16 +559,15 @@ TYPED_TEST(HipcubDeviceReduceTests, TransformReduce)
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
-        {
-            unsigned int seed_value
-                = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
+        for (size_t size : test_utils::get_sizes(seed_value))
+        {
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(test_utils::precision<U>::value * size > 0.5)
             {
                 std::cout << "Test is skipped from size " << size
@@ -709,7 +698,7 @@ TYPED_TEST(HipcubDeviceReduceLargeIndicesTests, LargeIndices)
             unsigned int seed_value
                 = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
             SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             hipStream_t stream = 0; // default
 

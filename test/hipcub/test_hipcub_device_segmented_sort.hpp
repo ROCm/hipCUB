@@ -28,6 +28,8 @@
 // hipcub API
 #include "hipcub/device/device_segmented_sort.hpp"
 
+#include "test_utils_data_generation.hpp"
+
 enum class SortMethod
 {
     SortAscending,
@@ -93,20 +95,6 @@ inline void dispatch_sort_keys(const SortMethod method, Args&& ... args)
         default:
             FAIL();
     }
-}
-
-inline std::vector<size_t> get_sizes(const int seed_value)
-{
-    std::vector<size_t> sizes = {
-        1024, 2048, 4096, 1792,
-        1, 10, 53, 211, 500,
-        2345, 11001, 34567,
-        1000000,
-        (1 << 16) - 1220
-    };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(5, 1, 100000, seed_value);
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    return sizes;
 }
 
 template<typename key_type, typename offset_type>
@@ -249,11 +237,13 @@ inline void sort_keys()
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
-        const int seed_value = seed_index < random_seeds_count ? seeds[seed_index] : rand();
-        for (const size_t size : get_sizes(seed_value))
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (const size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             std::vector<key_type> keys_input;
             std::vector<offset_type> offsets;
@@ -323,11 +313,13 @@ inline void sort_keys_double_buffer()
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
-        const int seed_value = seed_index < random_seeds_count ? seeds[seed_index] : rand();
-        for (const size_t size : get_sizes(seed_value))
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (const size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             std::vector<key_type> keys_input;
             std::vector<offset_type> offsets;
@@ -429,11 +421,13 @@ inline void sort_pairs()
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
-        const int seed_value = seed_index < random_seeds_count ? seeds[seed_index] : rand();
-        for (const size_t size : get_sizes(seed_value))
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (const size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             std::vector<key_type> keys_input;
             std::vector<offset_type> offsets;
@@ -520,11 +514,13 @@ inline void sort_pairs_double_buffer()
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; ++seed_index)
     {
-        const int seed_value = seed_index < random_seeds_count ? seeds[seed_index] : rand();
-        for (const size_t size : get_sizes(seed_value))
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (const size_t size : test_utils::get_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             std::vector<key_type> keys_input;          
             std::vector<offset_type> offsets;

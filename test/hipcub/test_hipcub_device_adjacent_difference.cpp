@@ -27,6 +27,7 @@
 #include "hipcub/iterator/counting_input_iterator.hpp"
 #include "hipcub/iterator/discard_output_iterator.hpp"
 #include "hipcub/iterator/transform_input_iterator.hpp"
+
 #include "test_utils.hpp"
 #include "test_utils_data_generation.hpp"
 
@@ -140,14 +141,6 @@ typedef ::testing::Types<params<int>,
                          params<test_utils::bfloat16, test_utils::bfloat16>>
     Params;
 
-std::vector<size_t> get_sizes()
-{
-    std::vector<size_t> sizes = { 1, 10, 53, 211, 1024, 2345, 4096, 34567, (1 << 16) - 1220, (1 << 23) - 76543 };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(10, 1, 100000, rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    return sizes;
-}
-
 TYPED_TEST_SUITE(HipcubDeviceAdjacentDifference, Params);
 
 TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
@@ -163,14 +156,15 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
     static constexpr hipStream_t          stream = 0;
     static constexpr ::hipcub::Difference op;
 
-    const auto sizes = get_sizes();
-    for (size_t size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        SCOPED_TRACE(testing::Message() << "with size = " << size);
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            const unsigned int seed_value = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             const auto input = test_utils::get_random_data<input_type>(
                 size,

@@ -61,20 +61,6 @@ typedef ::testing::Types<DeviceSelectParams<int, long>,
                          DeviceSelectParams<test_utils::bfloat16, test_utils::bfloat16>>
     HipcubDeviceSelectTestsParams;
 
-std::vector<size_t> get_sizes()
-{
-    std::vector<size_t> sizes = {
-        2, 32, 64, 256,
-        1024, 2048,
-        3072, 4096,
-        27845, (1 << 18) + 1111
-    };
-    const std::vector<size_t> random_sizes = test_utils::get_random_data<size_t>(2, static_cast<size_t>(1), static_cast<size_t>(16384), rand());
-    sizes.insert(sizes.end(), random_sizes.begin(), random_sizes.end());
-    std::sort(sizes.begin(), sizes.end());
-    return sizes;
-}
-
 TYPED_TEST_SUITE(HipcubDeviceSelectTests, HipcubDeviceSelectTestsParams);
 
 TYPED_TEST(HipcubDeviceSelectTests, Flagged)
@@ -91,14 +77,15 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
 
     hipStream_t stream = 0; // default stream
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data
             std::vector<T> input
@@ -237,10 +224,11 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
 
     hipStream_t stream = 0; // default stream
 
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+    unsigned int seed_value = rand();
+
+    for (size_t size : test_utils::get_sizes(seed_value))
     {
-        SCOPED_TRACE(testing::Message() << "with size = " << size);
+        SCOPED_TRACE(testing::Message() << "with size= " << size);
 
         hipcub::CountingInputIterator<T> d_input(0);
         hipcub::CountingInputIterator<F> d_flags(1);
@@ -341,15 +329,16 @@ TYPED_TEST(HipcubDeviceSelectTests, SelectOp)
     hipStream_t stream = 0; // default stream
 
     TestSelectOp select_op;
-
-    const std::vector<size_t> sizes = get_sizes();
-    for(auto size : sizes)
+  
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data
             std::vector<T> input
@@ -482,18 +471,19 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
 
     hipStream_t stream = 0; // default stream
 
-    const auto sizes = get_sizes();
     const auto probabilities = get_discontinuity_probabilities();
-    for(auto size : sizes)
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        SCOPED_TRACE(testing::Message() << "with size = " << size);
-        for(auto p : probabilities)
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
+            for(auto p : probabilities)
             {
-                unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
-                SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-                SCOPED_TRACE(testing::Message() << "with p = " << p);
+                SCOPED_TRACE(testing::Message() << "with p= " << p);
 
                 // Generate data
                 std::vector<T> input(size);
@@ -609,10 +599,11 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
 
     hipStream_t stream = 0; //default stream
 
-    const auto sizes = get_sizes();
-    for(auto size : sizes)
+    unsigned int seed_value = rand();
+
+    for (size_t size : test_utils::get_sizes(seed_value))
     {
-        SCOPED_TRACE(testing::Message() << "with size = " << size);
+        SCOPED_TRACE(testing::Message() << "with size= " << size);
 
         hipcub::CountingInputIterator<unsigned int> d_input(0);
         hipcub::DiscardOutputIterator<>             d_output;
@@ -726,22 +717,20 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
 
     hipStream_t stream = 0; // default stream
 
-    const auto sizes         = get_sizes();
     const auto probabilities = get_discontinuity_probabilities();
-
-    for(auto size : sizes)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        SCOPED_TRACE(testing::Message() << "with size = " << size);
+        unsigned int seed_value 
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for(auto p : probabilities)
+        for (size_t size : test_utils::get_sizes(seed_value))
         {
-            for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
+
+            for(auto p : probabilities)
             {
-                unsigned int seed_value = seed_index < random_seeds_count
-                                              ? rand()
-                                              : seeds[seed_index - random_seeds_count];
-                SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
-                SCOPED_TRACE(testing::Message() << "with p = " << p);
+                SCOPED_TRACE(testing::Message() << "with p= " << p);
 
                 // Generate data
                 std::vector<key_type> input_keys(size);
@@ -902,12 +891,9 @@ TEST(HipcubDeviceUniqueByKeyTests, LargeIndicesUniqueByKey)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        const auto sizes = test_utils::get_large_sizes(seed_value);
-
-        for(auto size : sizes)
+        for (size_t size : test_utils::get_large_sizes(seed_value))
         {
-            SCOPED_TRACE(testing::Message() << "with size = " << size);
-
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
             TestUniqueEqualityOp equality_op;
 
             const size_t selected_count
