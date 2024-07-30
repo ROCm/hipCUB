@@ -33,32 +33,34 @@
 #include "test_utils_half.hpp"
 
 // Params for tests
-template<
-    class InputType,
-    class OutputType = InputType,
-    class FlagType = unsigned int
->
+template<class InputType,
+         class OutputType = InputType,
+         class FlagType   = unsigned int,
+         bool UseGraphs   = false>
 struct DeviceSelectParams
 {
-    using input_type = InputType;
-    using output_type = OutputType;
-    using flag_type = FlagType;
+    using input_type                 = InputType;
+    using output_type                = OutputType;
+    using flag_type                  = FlagType;
+    static constexpr bool use_graphs = UseGraphs;
 };
 
 template<class Params>
 class HipcubDeviceSelectTests : public ::testing::Test
 {
 public:
-    using input_type = typename Params::input_type;
-    using output_type = typename Params::output_type;
-    using flag_type   = typename Params::flag_type;
+    using input_type                 = typename Params::input_type;
+    using output_type                = typename Params::output_type;
+    using flag_type                  = typename Params::flag_type;
+    static constexpr bool use_graphs = Params::use_graphs;
 };
 
 typedef ::testing::Types<DeviceSelectParams<int, long>,
                          DeviceSelectParams<float, float>,
                          DeviceSelectParams<unsigned char, float>,
                          DeviceSelectParams<test_utils::half, test_utils::half>,
-                         DeviceSelectParams<test_utils::bfloat16, test_utils::bfloat16>>
+                         DeviceSelectParams<test_utils::bfloat16, test_utils::bfloat16>,
+                         DeviceSelectParams<int, long, unsigned int, true>>
     HipcubDeviceSelectTestsParams;
 
 TYPED_TEST_SUITE(HipcubDeviceSelectTests, HipcubDeviceSelectTestsParams);
@@ -75,7 +77,12 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
 
     constexpr bool inplace = std::is_same<T, U>::value;
 
-    hipStream_t stream = 0; // default stream
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -165,8 +172,21 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
             // allocate temporary storage
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             call(d_temp_storage, temp_storage_size_bytes);
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected
@@ -193,11 +213,12 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
                                     output.size() * sizeof(U),
                                     hipMemcpyDeviceToHost));
             }
-            for(size_t i = 0; i < expected.size(); i++)
+
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
+
+            if(TestFixture::use_graphs)
             {
-                ASSERT_EQ(test_utils::convert_to_native(output[i]),
-                          test_utils::convert_to_native(expected[i]))
-                    << "where index = " << i;
+                test_utils::cleanupGraphHelper(graph, graph_instance);
             }
 
             HIP_CHECK(hipFree(d_input));
@@ -293,10 +314,7 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
         HIP_CHECK(
             hipMemcpy(output.data(), d_output, size * sizeof(*d_output), hipMemcpyDeviceToHost));
 
-        for(size_t i = 0; i < size; i++)
-        {
-            ASSERT_EQ(output[i], expected[i]) << "where index = " << i;
-        }
+        ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
 
         HIP_CHECK(hipFree(d_output));
         HIP_CHECK(hipFree(d_selected_count_output));
@@ -326,7 +344,12 @@ TYPED_TEST(HipcubDeviceSelectTests, SelectOp)
 
     constexpr bool inplace = std::is_same<T, U>::value;
 
-    hipStream_t stream = 0; // default stream
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     TestSelectOp select_op;
   
@@ -408,8 +431,21 @@ TYPED_TEST(HipcubDeviceSelectTests, SelectOp)
             // allocate temporary storage
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             call(d_temp_storage, temp_storage_size_bytes);
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected
@@ -436,11 +472,12 @@ TYPED_TEST(HipcubDeviceSelectTests, SelectOp)
                                     output.size() * sizeof(U),
                                     hipMemcpyDeviceToHost));
             }
-            for(size_t i = 0; i < expected.size(); i++)
+
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
+
+            if(TestFixture::use_graphs)
             {
-                ASSERT_EQ(test_utils::convert_to_native(output[i]),
-                          test_utils::convert_to_native(expected[i]))
-                    << "where index = " << i;
+                test_utils::cleanupGraphHelper(graph, graph_instance);
             }
 
             HIP_CHECK(hipFree(d_input));
@@ -469,7 +506,12 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
     using T = typename TestFixture::input_type;
     using U = typename TestFixture::output_type;
 
-    hipStream_t stream = 0; // default stream
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     const auto probabilities = get_discontinuity_probabilities();
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
@@ -543,6 +585,12 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                 HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
                 HIP_CHECK(hipDeviceSynchronize());
 
+                hipGraph_t graph;
+                if(TestFixture::use_graphs)
+                {
+                    graph = test_utils::createGraphHelper(stream);
+                }
+
                 // Run
                 HIP_CHECK(hipcub::DeviceSelect::Unique(d_temp_storage,
                                                        temp_storage_size_bytes,
@@ -551,6 +599,13 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                                                        d_selected_count_output,
                                                        input.size(),
                                                        stream));
+
+                hipGraphExec_t graph_instance;
+                if(TestFixture::use_graphs)
+                {
+                    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                }
+
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Check if number of selected value is as expected
@@ -575,11 +630,12 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                     )
                 );
                 HIP_CHECK(hipDeviceSynchronize());
-                for(size_t i = 0; i < expected.size(); i++)
+
+                ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
+
+                if(TestFixture::use_graphs)
                 {
-                    ASSERT_EQ(test_utils::convert_to_native(output[i]),
-                              test_utils::convert_to_native(expected[i]))
-                        << "where index = " << i;
+                    test_utils::cleanupGraphHelper(graph, graph_instance);
                 }
 
                 HIP_CHECK(hipFree(d_input));
@@ -657,27 +713,30 @@ template<typename KeyType,
          typename EqualityOp        = hipcub::Equality,
          typename OutputKeyType     = KeyType,
          typename OutputValueType   = ValueType,
-         typename SelectedCountType = unsigned int>
+         typename SelectedCountType = unsigned int,
+         bool UseGraphs             = false>
 struct DeviceUniqueByKeyParams
 {
-    using key_type            = KeyType;
-    using value_type          = ValueType;
-    using equality_op         = EqualityOp;
-    using output_key_type     = OutputKeyType;
-    using output_value_type   = OutputValueType;
-    using selected_count_type = SelectedCountType;
+    using key_type                   = KeyType;
+    using value_type                 = ValueType;
+    using equality_op                = EqualityOp;
+    using output_key_type            = OutputKeyType;
+    using output_value_type          = OutputValueType;
+    using selected_count_type        = SelectedCountType;
+    static constexpr bool use_graphs = UseGraphs;
 };
 
 template<class Params>
 class HipcubDeviceUniqueByKeyTests : public ::testing::Test
 {
 public:
-    using key_type            = typename Params::key_type;
-    using value_type          = typename Params::value_type;
-    using equality_op         = typename Params::equality_op;
-    using output_key_type     = typename Params::output_key_type;
-    using output_value_type   = typename Params::output_value_type;
-    using selected_count_type = typename Params::selected_count_type;
+    using key_type                   = typename Params::key_type;
+    using value_type                 = typename Params::value_type;
+    using equality_op                = typename Params::equality_op;
+    using output_key_type            = typename Params::output_key_type;
+    using output_value_type          = typename Params::output_value_type;
+    using selected_count_type        = typename Params::selected_count_type;
+    static constexpr bool use_graphs = Params::use_graphs;
 };
 
 struct TestUniqueEqualityOp
@@ -698,7 +757,8 @@ typedef ::testing::Types<
     DeviceUniqueByKeyParams<double, float, hipcub::Equality, double, double, size_t>,
     DeviceUniqueByKeyParams<uint8_t, long long>,
     DeviceUniqueByKeyParams<test_utils::custom_test_type<double>,
-                            test_utils::custom_test_type<int>>>
+                            test_utils::custom_test_type<int>>,
+    DeviceUniqueByKeyParams<int, int, hipcub::Equality, int, int, unsigned int, true>>
     HipcubDeviceUniqueByKeyTestsParams;
 
 TYPED_TEST_SUITE(HipcubDeviceUniqueByKeyTests, HipcubDeviceUniqueByKeyTestsParams);
@@ -715,7 +775,12 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
     using output_value_type   = typename TestFixture::output_value_type;
     using selected_count_type = typename TestFixture::selected_count_type;
 
-    hipStream_t stream = 0; // default stream
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     const auto probabilities = get_discontinuity_probabilities();
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
@@ -821,6 +886,12 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
                 HIP_CHECK(
                     test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
 
+                hipGraph_t graph;
+                if(TestFixture::use_graphs)
+                {
+                    graph = test_utils::createGraphHelper(stream);
+                }
+
                 // run
                 HIP_CHECK(hipcub::DeviceSelect::UniqueByKey(d_temp_storage,
                                                             temp_storage_size_bytes,
@@ -832,6 +903,12 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
                                                             input_keys.size(),
                                                             equality_op,
                                                             stream));
+
+                hipGraphExec_t graph_instance;
+                if(TestFixture::use_graphs)
+                {
+                    graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                }
 
                 // Check if number of selected value is as expected
                 selected_count_type selected_count_output = 0;
@@ -862,6 +939,11 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
                 ASSERT_NO_FATAL_FAILURE(
                     test_utils::assert_eq(output_values, expected_values, expected_values.size()));
 
+                if(TestFixture::use_graphs)
+                {
+                    test_utils::cleanupGraphHelper(graph, graph_instance);
+                }
+
                 HIP_CHECK(hipFree(d_keys_input));
                 HIP_CHECK(hipFree(d_values_input));
                 HIP_CHECK(hipFree(d_keys_output));
@@ -870,6 +952,11 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
                 HIP_CHECK(hipFree(d_temp_storage));
             }
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 

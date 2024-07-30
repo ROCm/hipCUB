@@ -32,38 +32,39 @@
 #include <array>
 
 // Params for tests
-template<
-    class InputType,
-    class OutputType = InputType,
-    class FlagType = unsigned int,
-    bool UseIdentityIterator = false
->
+template<class InputType,
+         class OutputType         = InputType,
+         class FlagType           = unsigned int,
+         bool UseIdentityIterator = false,
+         bool UseGraphs           = false>
 struct DevicePartitionParams
 {
-    using input_type = InputType;
-    using output_type = OutputType;
-    using flag_type = FlagType;
+    using input_type                            = InputType;
+    using output_type                           = OutputType;
+    using flag_type                             = FlagType;
     static constexpr bool use_identity_iterator = UseIdentityIterator;
+    static constexpr bool use_graphs            = UseGraphs;
 };
 
 template<class Params>
 class HipcubDevicePartitionTests : public ::testing::Test
 {
 public:
-    using input_type = typename Params::input_type;
-    using output_type = typename Params::output_type;
+    using input_type                            = typename Params::input_type;
+    using output_type                           = typename Params::output_type;
     using flag_type                             = typename Params::flag_type;
     static constexpr bool use_identity_iterator = Params::use_identity_iterator;
+    static constexpr bool use_graphs            = Params::use_graphs;
 };
 
-typedef ::testing::Types<
-    DevicePartitionParams<int, int, unsigned char, true>,
-    DevicePartitionParams<unsigned int, unsigned long>,
-    DevicePartitionParams<unsigned char, float>,
-    DevicePartitionParams<int8_t, int8_t>,
-    DevicePartitionParams<uint8_t, uint8_t>,
-    DevicePartitionParams<test_utils::custom_test_type<long long>>
-> HipcubDevicePartitionTestsParams;
+typedef ::testing::Types<DevicePartitionParams<int, int, unsigned char, true>,
+                         DevicePartitionParams<unsigned int, unsigned long>,
+                         DevicePartitionParams<unsigned char, float>,
+                         DevicePartitionParams<int8_t, int8_t>,
+                         DevicePartitionParams<uint8_t, uint8_t>,
+                         DevicePartitionParams<test_utils::custom_test_type<long long>>,
+                         DevicePartitionParams<int, int, unsigned char, false, true>>
+    HipcubDevicePartitionTestsParams;
 
 TYPED_TEST_SUITE(HipcubDevicePartitionTests, HipcubDevicePartitionTestsParams);
 
@@ -78,7 +79,12 @@ TYPED_TEST(HipcubDevicePartitionTests, Flagged)
     using F = typename TestFixture::flag_type;
     static constexpr bool use_identity_iterator = TestFixture::use_identity_iterator;
 
-    hipStream_t stream = 0; // default stream
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -157,6 +163,12 @@ TYPED_TEST(HipcubDevicePartitionTests, Flagged)
             HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_size_bytes));
             HIP_CHECK(hipDeviceSynchronize());
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             HIP_CHECK(hipcub::DevicePartition::Flagged(
                 d_temp_storage,
@@ -167,6 +179,13 @@ TYPED_TEST(HipcubDevicePartitionTests, Flagged)
                 d_selected_count_output,
                 input.size(),
                 stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected_selected
@@ -201,12 +220,22 @@ TYPED_TEST(HipcubDevicePartitionTests, Flagged)
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             hipFree(d_input);
             hipFree(d_flags);
             hipFree(d_output);
             hipFree(d_selected_count_output);
             hipFree(d_temp_storage);
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -233,17 +262,23 @@ TYPED_TEST(HipcubDevicePartitionTests, If)
     using U = typename TestFixture::output_type;
     static constexpr bool use_identity_iterator = TestFixture::use_identity_iterator;
 
-    hipStream_t stream = 0; // default stream
-
 #ifdef __HIP_PLATFORM_NVIDIA__
     TestSelectOp select_op;
 #else
-    auto select_op = [] __host__ __device__ (const T& value) -> bool
+    auto select_op = [](const T& value) -> bool
     {
-        if(value == T(50)) return true;
+        if(value == T(50))
+            return true;
         return false;
     };
 #endif
+
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -312,6 +347,12 @@ TYPED_TEST(HipcubDevicePartitionTests, If)
             HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_size_bytes));
             HIP_CHECK(hipDeviceSynchronize());
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             HIP_CHECK(hipcub::DevicePartition::If(
                 d_temp_storage,
@@ -322,6 +363,13 @@ TYPED_TEST(HipcubDevicePartitionTests, If)
                 input.size(),
                 select_op,
                 stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected_selected
@@ -356,11 +404,21 @@ TYPED_TEST(HipcubDevicePartitionTests, If)
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected_selected, expected_selected.size()));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output_rejected, expected_rejected, expected_rejected.size()));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             hipFree(d_input);
             hipFree(d_output);
             hipFree(d_selected_count_output);
             hipFree(d_temp_storage);
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -390,7 +448,12 @@ TYPED_TEST(HipcubDevicePartitionTests, IfThreeWay)
     using U = typename TestFixture::output_type;
     static constexpr bool use_identity_iterator = TestFixture::use_identity_iterator;
 
-    const hipStream_t stream = 0; // default stream
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -472,6 +535,12 @@ TYPED_TEST(HipcubDevicePartitionTests, IfThreeWay)
             void* d_temp_storage = nullptr;
             HIP_CHECK(hipMalloc(&d_temp_storage, temp_storage_size_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             HIP_CHECK(hipcub::DevicePartition::If(
                 d_temp_storage,
@@ -485,6 +554,13 @@ TYPED_TEST(HipcubDevicePartitionTests, IfThreeWay)
                 first_op,
                 second_op,
                 stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if number of selected value is as expected_selected
@@ -525,7 +601,12 @@ TYPED_TEST(HipcubDevicePartitionTests, IfThreeWay)
                 return result;
             }();
 
-            ASSERT_EQ(output, expected);
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
+
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
 
             hipFree(d_input);
             hipFree(d_first_output);
@@ -534,5 +615,10 @@ TYPED_TEST(HipcubDevicePartitionTests, IfThreeWay)
             hipFree(d_selected_counts);
             hipFree(d_temp_storage);
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }

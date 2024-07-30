@@ -33,21 +33,20 @@
 #include "test_utils_data_generation.hpp"
 
 // Params for tests
-template<
-    class InputType,
-    class OutputType = InputType,
-    class ScanOp = hipcub::Sum,
-    class KeyType = int
->
+template<class InputType,
+         class OutputType = InputType,
+         class ScanOp     = hipcub::Sum,
+         class KeyType    = int,
+         bool UseGraphs   = false>
 struct DeviceScanParams
 {
-    using input_type = InputType;
-    using output_type = OutputType;
+    using input_type   = InputType;
+    using output_type  = OutputType;
     using scan_op_type = ScanOp;
 
-    static_assert(std::is_integral<KeyType>::value,
-        "Keys must be integral");
-    using key_type = KeyType;
+    static_assert(std::is_integral<KeyType>::value, "Keys must be integral");
+    using key_type                   = KeyType;
+    static constexpr bool use_graphs = UseGraphs;
 };
 
 // ---------------------------------------------------------
@@ -58,10 +57,11 @@ template<class Params>
 class HipcubDeviceScanTests : public ::testing::Test
 {
 public:
-    using input_type = typename Params::input_type;
-    using output_type = typename Params::output_type;
-    using scan_op_type = typename Params::scan_op_type;
-    using key_type     = typename Params::key_type;
+    using input_type                 = typename Params::input_type;
+    using output_type                = typename Params::output_type;
+    using scan_op_type               = typename Params::scan_op_type;
+    using key_type                   = typename Params::key_type;
+    static constexpr bool use_graphs = Params::use_graphs;
 };
 
 typedef ::testing::Types<DeviceScanParams<int, long>,
@@ -70,7 +70,8 @@ typedef ::testing::Types<DeviceScanParams<int, long>,
                          DeviceScanParams<short, float, hipcub::Max>,
                          DeviceScanParams<int, double>,
                          DeviceScanParams<test_utils::bfloat16, test_utils::bfloat16, hipcub::Max>,
-                         DeviceScanParams<test_utils::half, test_utils::half, hipcub::Max>>
+                         DeviceScanParams<test_utils::half, test_utils::half, hipcub::Max>,
+                         DeviceScanParams<int, long, hipcub::Sum, int, true>>
     HipcubDeviceScanTestsParams;
 
 // use float for accumulation of bfloat16 and half inputs if operator is plus
@@ -145,6 +146,13 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
     constexpr float single_op_precision
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value 
@@ -162,8 +170,6 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
                           << std::endl;
                 break;
             }
-
-            hipStream_t stream = 0; // default
 
             // Generate data
             std::vector<T> input
@@ -263,8 +269,21 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             // allocate temporary storage
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             call(d_temp_storage, temp_storage_size_bytes);
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
@@ -289,6 +308,11 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, single_op_precision * size));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             HIP_CHECK(hipFree(d_input));
             if(!inplace)
             {
@@ -296,6 +320,11 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
             }
             HIP_CHECK(hipFree(d_temp_storage));
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -327,6 +356,13 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
     constexpr size_t max_segment_length = 100;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value 
@@ -344,8 +380,6 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
                           << std::endl;
                 break;
             }
-
-            const hipStream_t stream = 0; // default
 
             // Generate data
             const std::vector<K> keys = generate_segments<K>(size, max_segment_length, seed_value);
@@ -429,6 +463,12 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
             HIP_CHECK(hipDeviceSynchronize());
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             if (std::is_same<scan_op_type, hipcub::Sum>::value)
             {
@@ -453,6 +493,13 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
                                                                  hipcub::Equality(),
                                                                  stream));
             }
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
@@ -470,11 +517,21 @@ TYPED_TEST(HipcubDeviceScanTests, InclusiveScanByKey)
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, single_op_precision * size));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             HIP_CHECK(hipFree(d_keys));
             HIP_CHECK(hipFree(d_input));
             HIP_CHECK(hipFree(d_output));
             HIP_CHECK(hipFree(d_temp_storage));
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -506,6 +563,13 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
     constexpr float single_op_precision
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value 
@@ -523,8 +587,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
                           << std::endl;
                 break;
             }
-
-            hipStream_t stream = 0; // default
 
             // Generate data
             std::vector<T> input
@@ -633,8 +695,21 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
             // allocate temporary storage
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             call(d_temp_storage, temp_storage_size_bytes);
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
@@ -659,6 +734,11 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, single_op_precision * size));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             HIP_CHECK(hipFree(d_input));
             if(!inplace)
             {
@@ -666,6 +746,11 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScan)
             }
             HIP_CHECK(hipFree(d_temp_storage));
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -697,6 +782,13 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
     constexpr size_t max_segment_length = 100;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value 
@@ -714,8 +806,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
                           << std::endl;
                 break;
             }
-
-            const hipStream_t stream = 0; // default
 
             // Generate data
             const std::vector<K> keys = generate_segments<K>(size, max_segment_length, seed_value);
@@ -811,6 +901,12 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
             HIP_CHECK(hipDeviceSynchronize());
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             if (std::is_same<scan_op_type, hipcub::Sum>::value)
             {
@@ -836,6 +932,13 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
                                                                  hipcub::Equality(),
                                                                  stream));
             }
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
@@ -853,11 +956,21 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, single_op_precision * size));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             HIP_CHECK(hipFree(d_keys));
             HIP_CHECK(hipFree(d_input));
             HIP_CHECK(hipFree(d_output));
             HIP_CHECK(hipFree(d_temp_storage));
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -1057,6 +1170,13 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
     constexpr float single_op_precision
         = is_add_op::value ? test_utils::precision<acc_type>::value : 0;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value 
@@ -1074,8 +1194,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
                           << std::endl;
                 break;
             }
-
-            const hipStream_t stream = 0; // default
 
             // Generate data
             const std::vector<T> input
@@ -1157,9 +1275,14 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Fill initial value
-            hipLaunchKernelGGL(
-                fill_initial_value, dim3(1), dim3(1), 0, stream, d_initial_value, initial_value);
+            fill_initial_value<<<1, 1, 0, stream>>>(d_initial_value, initial_value);
             HIP_CHECK(hipGetLastError());
+
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
 
             // Run
             HIP_CHECK(hipcub::DeviceScan::ExclusiveScan(d_temp_storage,
@@ -1170,6 +1293,13 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
                                                         future_initial_value,
                                                         input.size(),
                                                         stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipPeekAtLastError());
             HIP_CHECK(hipDeviceSynchronize());
 
@@ -1187,10 +1317,20 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanFuture)
             ASSERT_NO_FATAL_FAILURE(
                 test_utils::assert_near(output, expected, single_op_precision * size));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             HIP_CHECK(hipFree(d_input));
             HIP_CHECK(hipFree(d_output));
             HIP_CHECK(hipFree(d_initial_value));
             HIP_CHECK(hipFree(d_temp_storage));
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }

@@ -27,10 +27,11 @@
 #include <hipcub/device/device_for.hpp>
 
 // Params for tests
-template<class InputType>
+template<class InputType, bool UseGraphs = false>
 struct DeviceForParams
 {
-    using input_type = InputType;
+    using input_type                 = InputType;
+    static constexpr bool use_graphs = UseGraphs;
 };
 
 // ---------------------------------------------------------
@@ -42,6 +43,7 @@ class HipcubDeviceForTests : public ::testing::Test
 {
 public:
     using input_type                        = typename Params::input_type;
+    static constexpr bool use_graphs        = Params::use_graphs;
     static constexpr bool debug_synchronous = false;
 };
 
@@ -58,7 +60,8 @@ typedef ::testing::Types<DeviceForParams<int>,
                          DeviceForParams<float>,
                          DeviceForParams<custom_double2>,
                          DeviceForParams<test_utils::half>,
-                         DeviceForParams<test_utils::bfloat16>>
+                         DeviceForParams<test_utils::bfloat16>,
+                         DeviceForParams<int, true>>
     HipcubDeviceForTestsParams;
 
 TYPED_TEST_SUITE(HipcubDeviceForTests, HipcubDeviceForTestsParams);
@@ -82,6 +85,13 @@ TYPED_TEST(HipcubDeviceForTests, ForEach)
 
     using T = typename TestFixture::input_type;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value
@@ -90,8 +100,6 @@ TYPED_TEST(HipcubDeviceForTests, ForEach)
 
         for(size_t size : test_utils::get_sizes(seed_value))
         {
-            hipStream_t stream = 0; // default
-
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             // Generate data
@@ -107,8 +115,20 @@ TYPED_TEST(HipcubDeviceForTests, ForEach)
             std::vector<T> expected(input);
             std::for_each(expected.begin(), expected.end(), plus<T>());
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             HIP_CHECK(hipcub::ForEach(d_input, d_input + size, plus<T>(), stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipGetLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -123,8 +143,18 @@ TYPED_TEST(HipcubDeviceForTests, ForEach)
             // Check if output values are as expected
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             hipFree(d_input);
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -221,6 +251,13 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
 
     using T = typename TestFixture::input_type;
 
+    hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
         unsigned int seed_value
@@ -229,8 +266,6 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
 
         for(size_t size : test_utils::get_sizes(seed_value))
         {
-            hipStream_t stream = 0; // default
-
             SCOPED_TRACE(testing::Message() << "with size = " << size);
 
             size_t n = size / 2;
@@ -248,8 +283,20 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
             std::vector<T> expected(input);
             std::for_each(expected.begin(), expected.begin() + n, plus<T>());
 
+            hipGraph_t graph;
+            if(TestFixture::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             // Run
             HIP_CHECK(hipcub::ForEachN(d_input, n, plus<T>(), stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipGetLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -264,8 +311,18 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
             // Check if output values are as expected
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected));
 
+            if(TestFixture::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
+
             hipFree(d_input);
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 

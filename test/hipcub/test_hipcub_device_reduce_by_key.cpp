@@ -27,22 +27,22 @@
 
 #include "test_utils_data_generation.hpp"
 
-template<
-    class Key,
-    class Value,
-    class ReduceOp,
-    unsigned int MinSegmentLength,
-    unsigned int MaxSegmentLength,
-    class Aggregate = Value
->
+template<class Key,
+         class Value,
+         class ReduceOp,
+         unsigned int MinSegmentLength,
+         unsigned int MaxSegmentLength,
+         class Aggregate = Value,
+         bool UseGraphs  = false>
 struct params
 {
-    using key_type = Key;
-    using value_type = Value;
-    using reduce_op_type = ReduceOp;
+    using key_type                                   = Key;
+    using value_type                                 = Value;
+    using reduce_op_type                             = ReduceOp;
     static constexpr unsigned int min_segment_length = MinSegmentLength;
     static constexpr unsigned int max_segment_length = MaxSegmentLength;
-    using aggregate_type = Aggregate;
+    using aggregate_type                             = Aggregate;
+    static constexpr bool use_graphs                 = UseGraphs;
 };
 
 template<class Params>
@@ -67,7 +67,8 @@ typedef ::testing::Types<
     params<unsigned long long, unsigned long long, hipcub::Sum, 100000, 100000>,
     // Sum for half and bfloat will result in values too big due to limited range.
     params<test_utils::half, test_utils::half, hipcub::Max, 3, 100>,
-    params<test_utils::bfloat16, test_utils::bfloat16, hipcub::Max, 20, 100>>
+    params<test_utils::bfloat16, test_utils::bfloat16, hipcub::Max, 20, 100>,
+    params<int, int, hipcub::Sum, 1, 1, int, true>>
     Params;
 
 TYPED_TEST_SUITE(HipcubDeviceReduceByKey, Params);
@@ -91,16 +92,22 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
     reduce_op_type reduce_op;
     hipcub::Equality key_compare_op;
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
     {
-        unsigned int seed_value 
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-    
-        for (size_t size : test_utils::get_sizes(seed_value))
-        {    
+
+        for(size_t size : test_utils::get_sizes(seed_value))
+        {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
-            hipStream_t stream = 0; // default
 
             // Generate data and calculate expected results
             std::vector<key_type> unique_expected;
@@ -202,6 +209,12 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceReduce::ReduceByKey(d_temporary_storage,
                                                         temporary_storage_bytes,
                                                         d_keys_input,
@@ -212,6 +225,12 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
                                                         reduce_op,
                                                         size,
                                                         stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -255,6 +274,16 @@ TYPED_TEST(HipcubDeviceReduceByKey, ReduceByKey)
                                         aggregates_expected,
                                         test_utils::precision<aggregate_type>::value
                                             * TestFixture::params::max_segment_length));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }

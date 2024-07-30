@@ -33,13 +33,15 @@ constexpr size_t huge_size = 1ull << 20;
 template<class Key,
          class Value,
          class CompareFunction = test_utils::less,
-         bool CheckHugeSizes   = false>
+         bool CheckHugeSizes   = false,
+         bool UseGraphs        = false>
 struct params
 {
     using key_type                         = Key;
     using value_type                       = Value;
     using compare_function                 = CompareFunction;
     static constexpr bool check_huge_sizes = CheckHugeSizes;
+    static constexpr bool use_graphs       = UseGraphs;
 };
 
 template<class Params>
@@ -61,6 +63,7 @@ typedef ::testing::Types<params<signed char, double, test_utils::greater>,
                          params<test_utils::bfloat16, int>,
                          params<test_utils::bfloat16, int, test_utils::greater>,
                          params<int, test_utils::custom_test_type<float>>,
+                         params<int, short, test_utils::less, false, true>,
 
                          // huge sizes to check correctness of more than 1 block per batch
                          params<float, char, test_utils::greater, true>>
@@ -78,7 +81,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = 0;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -120,12 +128,24 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::SortKeys(d_temporary_storage,
                                                         temporary_storage_bytes,
                                                         d_keys_input,
                                                         size,
                                                         compare_function(),
                                                         stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -140,7 +160,17 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
             bool is_sorted_result = std::is_sorted(keys_output.begin(), keys_output.end(), compare_function());
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(is_sorted_result, true));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -154,7 +184,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = 0;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -199,6 +234,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::SortKeysCopy(d_temporary_storage,
                                                             temporary_storage_bytes,
                                                             d_keys_input,
@@ -206,6 +247,11 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
                                                             size,
                                                             compare_function(),
                                                             stream));
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
             HIP_CHECK(hipFree(d_keys_input));
@@ -221,7 +267,17 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
             bool is_sorted_result = std::is_sorted(keys_output.begin(), keys_output.end(), compare_function());
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(is_sorted_result, true));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -235,7 +291,12 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = 0;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -276,12 +337,24 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::SortKeys(d_temporary_storage,
                                                         temporary_storage_bytes,
                                                         d_keys_input,
                                                         size,
                                                         compare_function(),
                                                         stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -298,7 +371,17 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
             HIP_CHECK(hipFree(d_keys_input));
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, expected));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -312,7 +395,12 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
     using compare_function           = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes  = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = hipStreamDefault;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -356,6 +444,12 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::StableSortKeysCopy(d_temporary_storage,
                                                                   temporary_storage_bytes,
                                                                   d_keys_input,
@@ -363,6 +457,13 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
                                                                   size,
                                                                   compare_function(),
                                                                   stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
+
             HIP_CHECK(hipFree(d_temporary_storage));
             HIP_CHECK(hipFree(d_keys_input));
 
@@ -379,7 +480,17 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
             HIP_CHECK(hipFree(d_keys_output));
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, expected));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -394,7 +505,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = 0;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -468,6 +584,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::SortPairs(d_temporary_storage,
                                                          temporary_storage_bytes,
                                                          d_keys_input,
@@ -475,6 +597,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
                                                          size,
                                                          compare_op,
                                                          stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -503,7 +631,17 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
             HIP_CHECK(hipFree(d_values_input));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, keys_expected));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(values_output, values_expected));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -518,7 +656,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = 0;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -606,6 +749,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::SortPairsCopy(d_temporary_storage,
                                                              temporary_storage_bytes,
                                                              d_keys_input,
@@ -615,6 +764,12 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
                                                              size,
                                                              compare_op,
                                                              stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
             HIP_CHECK(hipFree(d_keys_input));
@@ -637,7 +792,17 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, keys_expected));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(values_output, values_expected));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
@@ -652,7 +817,12 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
     using compare_function          = typename TestFixture::params::compare_function;
     constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
-    hipStream_t stream = 0;
+    hipStream_t stream = 0; // default
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -725,6 +895,12 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(hipcub::DeviceMergeSort::StableSortPairs(d_temporary_storage,
                                                                temporary_storage_bytes,
                                                                d_keys_input,
@@ -732,6 +908,12 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
                                                                size,
                                                                compare_op,
                                                                stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             HIP_CHECK(hipFree(d_temporary_storage));
 
@@ -760,6 +942,16 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
             HIP_CHECK(hipFree(d_values_input));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(keys_output, keys_expected));
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(values_output, values_expected));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }

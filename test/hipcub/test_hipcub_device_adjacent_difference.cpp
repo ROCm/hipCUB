@@ -112,18 +112,18 @@ auto get_expected_result(const std::vector<T>& input,
     return result;
 }
 
-template<
-    class InputT,
-    class OutputT = InputT,
-    bool Left = true,
-    bool Copy = true
->
+template<class InputT,
+         class OutputT  = InputT,
+         bool Left      = true,
+         bool Copy      = true,
+         bool UseGraphs = false>
 struct params
 {
     using input_type = InputT;
-    using output_type = OutputT;
-    static constexpr bool left = Left;
-    static constexpr bool copy = Copy;
+    using output_type                = OutputT;
+    static constexpr bool left       = Left;
+    static constexpr bool copy       = Copy;
+    static constexpr bool use_graphs = UseGraphs;
 };
 
 template<class Params>
@@ -138,7 +138,8 @@ typedef ::testing::Types<params<int>,
                          params<float, float, false, true>,
                          params<double, double, true, true>,
                          params<test_utils::half, test_utils::half>,
-                         params<test_utils::bfloat16, test_utils::bfloat16>>
+                         params<test_utils::bfloat16, test_utils::bfloat16>,
+                         params<int, int, true, true, true>>
     Params;
 
 TYPED_TEST_SUITE(HipcubDeviceAdjacentDifference, Params);
@@ -152,9 +153,16 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
     using input_type = typename TestFixture::params::input_type;
     static constexpr std::integral_constant<bool, TestFixture::params::left> left_constant{};
     static constexpr std::integral_constant<bool, TestFixture::params::copy> copy_constant{};
-    using output_type = std::conditional_t<copy_constant, input_type, typename TestFixture::params::output_type>;
-    static constexpr hipStream_t          stream = 0;
+    using output_type
+        = std::conditional_t<copy_constant, input_type, typename TestFixture::params::output_type>;
     static constexpr ::hipcub::Difference op;
+
+    hipStream_t stream = 0;
+    if(TestFixture::params::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
@@ -207,6 +215,12 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
             void * d_temporary_storage;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
+            hipGraph_t graph;
+            if(TestFixture::params::use_graphs)
+            {
+                graph = test_utils::createGraphHelper(stream);
+            }
+
             HIP_CHECK(dispatch_adjacent_difference(left_constant,
                                                    copy_constant,
                                                    d_temporary_storage,
@@ -216,6 +230,12 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
                                                    size,
                                                    op,
                                                    stream));
+
+            hipGraphExec_t graph_instance;
+            if(TestFixture::params::use_graphs)
+            {
+                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+            }
 
             std::vector<output_type> output(size);
             HIP_CHECK(
@@ -234,7 +254,17 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
             }
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_bit_eq(output, expected));
+
+            if(TestFixture::params::use_graphs)
+            {
+                test_utils::cleanupGraphHelper(graph, graph_instance);
+            }
         }
+    }
+
+    if(TestFixture::params::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 

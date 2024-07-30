@@ -39,6 +39,7 @@
 #include "test_utils_data_generation.hpp"
 #include "test_utils_functional.hpp"
 #include "test_utils_half.hpp"
+#include "test_utils_hipgraphs.hpp"
 #include "test_utils_sort_comparator.hpp"
 
 // Seed values
