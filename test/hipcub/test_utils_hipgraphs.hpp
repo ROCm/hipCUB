@@ -62,18 +62,6 @@ inline void cleanupGraphHelper(hipGraph_t& graph, hipGraphExec_t& instance)
     HIP_CHECK(hipGraphExecDestroy(instance));
 }
 
-inline void resetGraphHelper(hipGraph_t&     graph,
-                             hipGraphExec_t& instance,
-                             hipStream_t&    stream,
-                             const bool      beginCapture = true)
-{
-    // Destroy the old graph and instance
-    cleanupGraphHelper(graph, instance);
-
-    // Create a new graph and optionally begin capture
-    graph = createGraphHelper(stream, beginCapture);
-}
-
 inline hipGraphExec_t endCaptureGraphHelper(hipGraph_t&  graph,
                                             hipStream_t& stream,
                                             const bool   launchGraph = false,
@@ -97,18 +85,6 @@ inline hipGraphExec_t endCaptureGraphHelper(hipGraph_t&  graph,
     }
 
     return instance;
-}
-
-inline void
-    launchGraphHelper(hipGraphExec_t& instance, hipStream_t& stream, const bool sync = false)
-{
-    HIP_CHECK(hipGraphLaunch(instance, stream));
-
-    // Optionally sync after the launch
-    if(sync)
-    {
-        HIP_CHECK(hipStreamSynchronize(stream));
-    }
 }
 
 } // end namespace test_utils

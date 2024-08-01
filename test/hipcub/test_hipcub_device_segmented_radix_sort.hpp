@@ -27,11 +27,12 @@
 
 // hipcub API
 #include "hipcub/device/device_segmented_radix_sort.hpp"
+
+#include "test_utils_data_generation.hpp"
+
 #include <algorithm>
 #include <cstddef>
 #include <vector>
-
-#include "test_utils_data_generation.hpp"
 
 template<
     class Key,

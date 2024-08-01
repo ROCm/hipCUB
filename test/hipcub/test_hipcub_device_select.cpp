@@ -231,6 +231,11 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
             HIP_CHECK(hipFree(d_temp_storage));
         }
     }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 TEST(HipcubDeviceSelectTests, FlagNormalization)
@@ -489,6 +494,11 @@ TYPED_TEST(HipcubDeviceSelectTests, SelectOp)
             HIP_CHECK(hipFree(d_temp_storage));
         }
     }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
+    }
 }
 
 std::vector<float> get_discontinuity_probabilities()
@@ -644,6 +654,11 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                 HIP_CHECK(hipFree(d_temp_storage));
             }
         }
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
 
