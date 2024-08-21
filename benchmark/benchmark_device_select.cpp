@@ -122,6 +122,19 @@ void run_flagged_benchmark(benchmark::State& state,
 }
 
 template<class T>
+struct SelectOperator
+{
+    float true_probability;
+    SelectOperator(float true_probability_) : true_probability(true_probability_) {}
+    HIPCUB_DEVICE
+    inline constexpr bool
+        operator()(const T& value)
+    {
+        return value < T(1000 * true_probability);
+    }
+};
+
+template<class T>
 void run_selectop_benchmark(benchmark::State& state,
                             size_t            size,
                             const hipStream_t stream,
@@ -129,12 +142,7 @@ void run_selectop_benchmark(benchmark::State& state,
 {
     std::vector<T> input = benchmark_utils::get_random_data<T>(size, T(0), T(1000));
 
-    auto select_op = [true_probability](const T& value) -> bool __device__
-    {
-        if(value < T(1000 * true_probability))
-            return true;
-        return false;
-    };
+    SelectOperator<T> select_op(true_probability);
 
     T*            d_input;
     T*            d_output;

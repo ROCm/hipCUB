@@ -33,11 +33,23 @@ const size_t DEFAULT_N = 32 << 20;
 const unsigned int batch_size  = 10;
 const unsigned int warmup_size = 5;
 
+template<class key_type>
+struct CompareFunction
+{
+    HIPCUB_DEVICE
+    inline constexpr bool
+        operator()(const key_type& a, const key_type& b)
+    {
+        return a < b;
+    }
+};
+
 template<class Key>
 void run_sort_keys_benchmark(benchmark::State& state, hipStream_t stream, size_t size)
 {
-    using key_type        = Key;
-    auto compare_function = [](const key_type& a, const key_type& b) __device__ { return a < b; };
+    using key_type = Key;
+
+    CompareFunction<key_type> compare_function;
 
     std::vector<key_type> keys_input = benchmark_utils::get_random_data<key_type>(
         size,
@@ -109,9 +121,10 @@ void run_sort_keys_benchmark(benchmark::State& state, hipStream_t stream, size_t
 template<class Key, class Value>
 void run_sort_pairs_benchmark(benchmark::State& state, hipStream_t stream, size_t size)
 {
-    using key_type        = Key;
-    using value_type      = Value;
-    auto compare_function = [](const key_type& a, const key_type& b) __device__ { return a < b; };
+    using key_type   = Key;
+    using value_type = Value;
+
+    CompareFunction<key_type> compare_function;
 
     std::vector<key_type> keys_input = benchmark_utils::get_random_data<key_type>(
         size,
