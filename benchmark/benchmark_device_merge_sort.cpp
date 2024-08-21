@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,32 +34,15 @@ const unsigned int batch_size  = 10;
 const unsigned int warmup_size = 5;
 
 template<class Key>
-std::vector<Key> generate_keys(size_t size)
-{
-    using key_type = Key;
-
-    if(std::is_floating_point<key_type>::value)
-    {
-        return benchmark_utils::get_random_data<key_type>(size,
-                                                          static_cast<key_type>(-1000),
-                                                          static_cast<key_type>(1000),
-                                                          size);
-    } else
-    {
-        return benchmark_utils::get_random_data<key_type>(size,
-                                                          std::numeric_limits<key_type>::min(),
-                                                          std::numeric_limits<key_type>::max(),
-                                                          size);
-    }
-}
-
-template<class Key>
 void run_sort_keys_benchmark(benchmark::State& state, hipStream_t stream, size_t size)
 {
     using key_type        = Key;
-    auto compare_function = [] __device__(const key_type& a, const key_type& b) { return a < b; };
+    auto compare_function = [](const key_type& a, const key_type& b) __device__ { return a < b; };
 
-    auto keys_input = generate_keys<Key>(size);
+    std::vector<key_type> keys_input = benchmark_utils::get_random_data<key_type>(
+        size,
+        benchmark_utils::generate_limits<key_type>::min(),
+        benchmark_utils::generate_limits<key_type>::max());
 
     key_type* d_keys_input;
     key_type* d_keys_output;
@@ -128,9 +111,13 @@ void run_sort_pairs_benchmark(benchmark::State& state, hipStream_t stream, size_
 {
     using key_type        = Key;
     using value_type      = Value;
-    auto compare_function = [] __device__(const key_type& a, const key_type& b) { return a < b; };
+    auto compare_function = [](const key_type& a, const key_type& b) __device__ { return a < b; };
 
-    auto                    keys_input = generate_keys<Key>(size);
+    std::vector<key_type> keys_input = benchmark_utils::get_random_data<key_type>(
+        size,
+        benchmark_utils::generate_limits<key_type>::min(),
+        benchmark_utils::generate_limits<key_type>::max());
+
     std::vector<value_type> values_input(size);
     for(size_t i = 0; i < size; i++)
     {
