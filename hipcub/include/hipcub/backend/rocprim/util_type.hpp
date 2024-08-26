@@ -459,12 +459,12 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
-        return key_codec::encode(rocprim::detail::bit_cast<T>(key));
+        return key;
     }
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
-        return key_codec::decode(rocprim::detail::bit_cast<T>(key));
+        return key;
     }
 
     static HIPCUB_HOST_DEVICE __forceinline__ T Max()
@@ -508,12 +508,12 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
-        return key_codec::encode(rocprim::detail::bit_cast<T>(key));
+        return key ^ HIGH_BIT;
     };
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
-        return key_codec::decode(rocprim::detail::bit_cast<T>(key));
+        return key ^ HIGH_BIT;
     };
 
     static HIPCUB_HOST_DEVICE __forceinline__ T Max()
@@ -607,12 +607,14 @@ struct BaseTraits<FLOATING_POINT, true, false, _UnsignedBits, T>
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
-        return key_codec::encode(rocprim::detail::bit_cast<T>(key));
+        UnsignedBits mask = (key & HIGH_BIT) ? UnsignedBits(-1) : HIGH_BIT;
+        return key ^ mask;
     };
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
-        return key_codec::decode(rocprim::detail::bit_cast<T>(key));
+        UnsignedBits mask = (key & HIGH_BIT) ? HIGH_BIT : UnsignedBits(-1);
+        return key ^ mask;
     };
 
     static HIPCUB_HOST_DEVICE __forceinline__ T Max() {
@@ -663,12 +665,12 @@ struct NumericTraits<__uint128_t>
 
     static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
-        return key_codec::encode(rocprim::detail::bit_cast<T>(key));
+        return key;
     }
 
     static __host__ __device__ __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
-        return key_codec::decode(rocprim::detail::bit_cast<T>(key));
+        return key;
     }
 
     static __host__ __device__ __forceinline__ T Max()
@@ -700,12 +702,12 @@ struct NumericTraits<__int128_t>
 
     static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
-        return key_codec::encode(rocprim::detail::bit_cast<T>(key));
+        return key ^ HIGH_BIT;
     };
 
     static __host__ __device__ __forceinline__ UnsignedBits TwiddleOut(UnsignedBits key)
     {
-        return key_codec::decode(rocprim::detail::bit_cast<T>(key));
+        return key ^ HIGH_BIT;
     };
 
     static __host__ __device__ __forceinline__ T Max()
