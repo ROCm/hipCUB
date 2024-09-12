@@ -47,7 +47,7 @@ struct params
 template<class Params>
 class HipcubDeviceMergeSort : public ::testing::Test
 {
-    public:
+public:
     using params = Params;
 };
 
@@ -90,7 +90,7 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
@@ -104,18 +104,19 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 
             // Generate data
             std::vector<key_type> keys_input;
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               test_utils::numeric_limits<key_type>::min(),
-                                                               test_utils::numeric_limits<key_type>::max(),
-                                                               seed_value + seed_value_addition);
-            key_type * d_keys_input;
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value + seed_value_addition);
+            key_type* d_keys_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(hipMemcpy(d_keys_input,
                                 keys_input.data(),
                                 size * sizeof(key_type),
                                 hipMemcpyHostToDevice));
 
-            void * d_temporary_storage     = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(hipcub::DeviceMergeSort::SortKeys(d_temporary_storage,
                                                         temporary_storage_bytes,
@@ -157,7 +158,8 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeys)
 
             HIP_CHECK(hipFree(d_keys_input));
 
-            bool is_sorted_result = std::is_sorted(keys_output.begin(), keys_output.end(), compare_function());
+            bool is_sorted_result
+                = std::is_sorted(keys_output.begin(), keys_output.end(), compare_function());
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(is_sorted_result, true));
 
@@ -193,7 +195,7 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
@@ -207,12 +209,13 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
 
             // Generate data
             std::vector<key_type> keys_input;
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               test_utils::numeric_limits<key_type>::min(),
-                                                               test_utils::numeric_limits<key_type>::max(),
-                                                               seed_value + seed_value_addition);
-            key_type * d_keys_input;
-            key_type * d_keys_output;
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value + seed_value_addition);
+            key_type* d_keys_input;
+            key_type* d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));
             HIP_CHECK(hipMemcpy(d_keys_input,
@@ -220,7 +223,7 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
                                 size * sizeof(key_type),
                                 hipMemcpyHostToDevice));
 
-            void * d_temporary_storage     = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(hipcub::DeviceMergeSort::SortKeysCopy(d_temporary_storage,
                                                             temporary_storage_bytes,
@@ -264,7 +267,8 @@ TYPED_TEST(HipcubDeviceMergeSort, SortKeysCopy)
 
             HIP_CHECK(hipFree(d_keys_output));
 
-            bool is_sorted_result = std::is_sorted(keys_output.begin(), keys_output.end(), compare_function());
+            bool is_sorted_result
+                = std::is_sorted(keys_output.begin(), keys_output.end(), compare_function());
 
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(is_sorted_result, true));
 
@@ -300,7 +304,7 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
@@ -313,18 +317,19 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeys)
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             std::vector<key_type> keys_input;
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               test_utils::numeric_limits<key_type>::min(),
-                                                               test_utils::numeric_limits<key_type>::max(),
-                                                               seed_value + seed_value_addition);
-            key_type * d_keys_input;
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value + seed_value_addition);
+            key_type* d_keys_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(hipMemcpy(d_keys_input,
                                 keys_input.data(),
                                 size * sizeof(key_type),
                                 hipMemcpyHostToDevice));
 
-            void * d_temporary_storage     = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(hipcub::DeviceMergeSort::StableSortKeys(d_temporary_storage,
                                                               temporary_storage_bytes,
@@ -391,9 +396,9 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using key_type                   = typename TestFixture::params::key_type;
-    using compare_function           = typename TestFixture::params::compare_function;
-    constexpr bool check_huge_sizes  = TestFixture::params::check_huge_sizes;
+    using key_type                  = typename TestFixture::params::key_type;
+    using compare_function          = typename TestFixture::params::compare_function;
+    constexpr bool check_huge_sizes = TestFixture::params::check_huge_sizes;
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -404,7 +409,7 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortKeysCopy)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
@@ -514,10 +519,10 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-    
+
         for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > huge_size && !check_huge_sizes)
@@ -530,14 +535,15 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
 
             // Generate data
             std::vector<key_type> keys_input;
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               test_utils::numeric_limits<key_type>::min(),
-                                                               test_utils::numeric_limits<key_type>::max(),
-                                                               seed_value + seed_value_addition);
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value + seed_value_addition);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
-            key_type * d_keys_input;
+            key_type* d_keys_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             // -- begin: Calculate expected results on host -- for performance reasons after a hipMalloc --
             using key_value = std::pair<key_type, value_type>;
@@ -552,24 +558,21 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairs)
                                 size * sizeof(key_type),
                                 hipMemcpyHostToDevice));
 
-            value_type * d_values_input;
+            value_type* d_values_input;
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
             // -- continue: Calculate expected results on host -- for performance reasons after a hipMalloc --
             std::stable_sort(expected.begin(),
                              expected.end(),
-                             [compare_op](const key_value & a, const key_value & b)
-                             {
-                                 return compare_op(a.first, b.first);
-                             });
+                             [compare_op](const key_value& a, const key_value& b)
+                             { return compare_op(a.first, b.first); });
             // --
             HIP_CHECK(hipMemcpy(d_values_input,
                                 values_input.data(),
                                 size * sizeof(value_type),
                                 hipMemcpyHostToDevice));
 
-
-            void * d_temporary_storage     = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(hipcub::DeviceMergeSort::SortPairs(d_temporary_storage,
                                                          temporary_storage_bytes,
@@ -665,30 +668,32 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-        
+
         for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > huge_size && !check_huge_sizes)
             {
                 continue;
             }
-            SCOPED_TRACE(testing::Message() << "with size= " << size);            compare_function compare_op;
+            SCOPED_TRACE(testing::Message() << "with size= " << size);
+            compare_function compare_op;
             using key_value = std::pair<key_type, value_type>;
 
             // Generate data
             std::vector<key_type> keys_input;
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               test_utils::numeric_limits<key_type>::min(),
-                                                               test_utils::numeric_limits<key_type>::max(),
-                                                               seed_value + seed_value_addition);
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value + seed_value_addition);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
-            key_type * d_keys_input;
-            key_type * d_keys_output;
+            key_type* d_keys_input;
+            key_type* d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             // -- begin: Calculate expected results on host -- for performance reasons after a hipMalloc --
             using key_value = std::pair<key_type, value_type>;
@@ -702,18 +707,16 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
             // -- continue: Calculate expected results on host -- for performance reasons after a hipMalloc --
             std::stable_sort(expected.begin(),
                              expected.end(),
-                             [compare_op](const key_value & a, const key_value & b)
-                             {
-                                 return compare_op(a.first, b.first);
-                             });
+                             [compare_op](const key_value& a, const key_value& b)
+                             { return compare_op(a.first, b.first); });
             // --
             HIP_CHECK(hipMemcpy(d_keys_input,
                                 keys_input.data(),
                                 size * sizeof(key_type),
                                 hipMemcpyHostToDevice));
 
-            value_type * d_values_input;
-            value_type * d_values_output;
+            value_type* d_values_input;
+            value_type* d_values_output;
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
             // -- continue: Calculate expected results on host -- for performance reasons after a hipFree --
@@ -732,7 +735,7 @@ TYPED_TEST(HipcubDeviceMergeSort, SortPairsCopy)
                                 size * sizeof(value_type),
                                 hipMemcpyHostToDevice));
 
-            void * d_temporary_storage     = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(hipcub::DeviceMergeSort::SortPairsCopy(d_temporary_storage,
                                                              temporary_storage_bytes,
@@ -826,10 +829,10 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-    
+
         for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > huge_size && !check_huge_sizes)
@@ -842,14 +845,15 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
 
             // Generate data
             std::vector<key_type> keys_input;
-            keys_input = test_utils::get_random_data<key_type>(size,
-                                                               test_utils::numeric_limits<key_type>::min(),
-                                                               test_utils::numeric_limits<key_type>::max(),
-                                                               seed_value + seed_value_addition);
+            keys_input
+                = test_utils::get_random_data<key_type>(size,
+                                                        test_utils::numeric_limits<key_type>::min(),
+                                                        test_utils::numeric_limits<key_type>::max(),
+                                                        seed_value + seed_value_addition);
             std::vector<value_type> values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
-            key_type * d_keys_input;
+            key_type* d_keys_input;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             // -- begin: Calculate expected results on host -- for performance reasons after a hipMalloc --
             std::vector<key_value> expected(size);
@@ -863,24 +867,21 @@ TYPED_TEST(HipcubDeviceMergeSort, StableSortPairs)
                                 size * sizeof(key_type),
                                 hipMemcpyHostToDevice));
 
-            value_type * d_values_input;
+            value_type* d_values_input;
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
             // -- continue: Calculate expected results on host -- for performance reasons after a hipMalloc --
             std::stable_sort(expected.begin(),
                              expected.end(),
-                             [compare_op](const key_value & a, const key_value & b)
-                             {
-                                 return compare_op(a.first, b.first);
-                             });
+                             [compare_op](const key_value& a, const key_value& b)
+                             { return compare_op(a.first, b.first); });
             // --
             HIP_CHECK(hipMemcpy(d_values_input,
                                 values_input.data(),
                                 size * sizeof(value_type),
                                 hipMemcpyHostToDevice));
 
-
-            void * d_temporary_storage     = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(hipcub::DeviceMergeSort::StableSortPairs(d_temporary_storage,
                                                                temporary_storage_bytes,

@@ -72,7 +72,8 @@ struct params
 };
 
 template<class Params>
-class HipcubDeviceRadixSort : public ::testing::Test {
+class HipcubDeviceRadixSort : public ::testing::Test
+{
 public:
     using params = Params;
 };
@@ -167,7 +168,8 @@ auto invoke_sort_keys(void*       d_temporary_storage,
                                                  size,
                                                  decomposer_t{},
                                                  stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortKeys(d_temporary_storage,
                                                  temporary_storage_bytes,
@@ -202,7 +204,8 @@ auto invoke_sort_keys(void*       d_temporary_storage,
                                                            size,
                                                            decomposer_t{},
                                                            stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortKeysDescending(d_temporary_storage,
                                                            temporary_storage_bytes,
@@ -223,11 +226,11 @@ void sort_keys()
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using key_type = typename TestFixture::params::key_type;
-    constexpr bool descending = TestFixture::params::descending;
-    constexpr unsigned int start_bit = TestFixture::params::start_bit;
-    constexpr unsigned int end_bit = TestFixture::params::end_bit;
-    constexpr bool check_large_sizes = TestFixture::params::check_large_sizes;
+    using key_type                           = typename TestFixture::params::key_type;
+    constexpr bool         descending        = TestFixture::params::descending;
+    constexpr unsigned int start_bit         = TestFixture::params::start_bit;
+    constexpr unsigned int end_bit           = TestFixture::params::end_bit;
+    constexpr bool         check_large_sizes = TestFixture::params::check_large_sizes;
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -236,37 +239,37 @@ void sort_keys()
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > (1 << 20) && !check_large_sizes)
             {
                 continue;
-            }        
+            }
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
 
-            key_type * d_keys_input;
-            key_type * d_keys_output;
+            key_type* d_keys_input;
+            key_type* d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));
-            HIP_CHECK(
-                hipMemcpy(
-                    d_keys_input, keys_input.data(),
-                    size * sizeof(key_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+            HIP_CHECK(hipMemcpy(d_keys_input,
+                                keys_input.data(),
+                                size * sizeof(key_type),
+                                hipMemcpyHostToDevice));
 
             // Calculate expected results on host
             std::vector<key_type> expected(keys_input);
-            std::stable_sort(expected.begin(), expected.end(), test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
+            std::stable_sort(
+                expected.begin(),
+                expected.end(),
+                test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
 
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(invoke_sort_keys<descending>(nullptr,
@@ -309,13 +312,10 @@ void sort_keys()
             HIP_CHECK(hipFree(d_keys_input));
 
             std::vector<key_type> keys_output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    keys_output.data(), d_keys_output,
-                    size * sizeof(key_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(keys_output.data(),
+                                d_keys_output,
+                                size * sizeof(key_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_keys_output));
 
@@ -409,7 +409,8 @@ auto invoke_sort_pairs(void*       d_temporary_storage,
                                                   size,
                                                   decomposer_t{},
                                                   stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortPairs(d_temporary_storage,
                                                   temporary_storage_bytes,
@@ -450,7 +451,8 @@ auto invoke_sort_pairs(void*       d_temporary_storage,
                                                             size,
                                                             decomposer_t{},
                                                             stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortPairsDescending(d_temporary_storage,
                                                             temporary_storage_bytes,
@@ -473,12 +475,12 @@ void sort_pairs()
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using key_type = typename TestFixture::params::key_type;
-    using value_type = typename TestFixture::params::value_type;
-    constexpr bool descending = TestFixture::params::descending;
-    constexpr unsigned int start_bit = TestFixture::params::start_bit;
-    constexpr unsigned int end_bit = TestFixture::params::end_bit;
-    constexpr bool check_large_sizes = TestFixture::params::check_large_sizes;
+    using key_type                           = typename TestFixture::params::key_type;
+    using value_type                         = typename TestFixture::params::value_type;
+    constexpr bool         descending        = TestFixture::params::descending;
+    constexpr unsigned int start_bit         = TestFixture::params::start_bit;
+    constexpr unsigned int end_bit           = TestFixture::params::end_bit;
+    constexpr bool         check_large_sizes = TestFixture::params::check_large_sizes;
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -487,13 +489,13 @@ void sort_pairs()
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-    
-        for (size_t size : test_utils::get_sizes(seed_value))
+
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > (1 << 20) && !check_large_sizes)
             {
@@ -502,32 +504,28 @@ void sort_pairs()
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
-            std::vector<value_type> values_input(size);
+            std::vector<value_type>     values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
-            key_type * d_keys_input;
-            key_type * d_keys_output;
+            key_type* d_keys_input;
+            key_type* d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));
-            HIP_CHECK(
-                hipMemcpy(
-                    d_keys_input, keys_input.data(),
-                    size * sizeof(key_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+            HIP_CHECK(hipMemcpy(d_keys_input,
+                                keys_input.data(),
+                                size * sizeof(key_type),
+                                hipMemcpyHostToDevice));
 
-            value_type * d_values_input;
-            value_type * d_values_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_output, size * sizeof(value_type)));
+            value_type* d_values_input;
+            value_type* d_values_output;
             HIP_CHECK(
-                hipMemcpy(
-                    d_values_input, values_input.data(),
-                    size * sizeof(value_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_values_output, size * sizeof(value_type)));
+            HIP_CHECK(hipMemcpy(d_values_input,
+                                values_input.data(),
+                                size * sizeof(value_type),
+                                hipMemcpyHostToDevice));
 
             using key_value = std::pair<key_type, value_type>;
 
@@ -538,11 +536,12 @@ void sort_pairs()
                 expected[i] = key_value(keys_input[i], values_input[i]);
             }
             std::stable_sort(
-                expected.begin(), expected.end(),
-                test_utils::key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
-            );
+                expected.begin(),
+                expected.end(),
+                test_utils::
+                    key_value_comparator<key_type, value_type, descending, start_bit, end_bit>());
 
-            void * d_temporary_storage = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(invoke_sort_pairs<descending>(d_temporary_storage,
                                                     temporary_storage_bytes,
@@ -588,31 +587,25 @@ void sort_pairs()
             HIP_CHECK(hipFree(d_values_input));
 
             std::vector<key_type> keys_output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    keys_output.data(), d_keys_output,
-                    size * sizeof(key_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(keys_output.data(),
+                                d_keys_output,
+                                size * sizeof(key_type),
+                                hipMemcpyDeviceToHost));
 
             std::vector<value_type> values_output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    values_output.data(), d_values_output,
-                    size * sizeof(value_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(values_output.data(),
+                                d_values_output,
+                                size * sizeof(value_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_keys_output));
             HIP_CHECK(hipFree(d_values_output));
 
-            std::vector<key_type> keys_expected(size);
+            std::vector<key_type>   keys_expected(size);
             std::vector<value_type> values_expected(size);
             for(size_t i = 0; i < size; i++)
             {
-                keys_expected[i] = expected[i].first;
+                keys_expected[i]   = expected[i].first;
                 values_expected[i] = expected[i].second;
             }
 
@@ -689,7 +682,8 @@ auto invoke_sort_keys(void*                      d_temporary_storage,
                                                  size,
                                                  decomposer_t{},
                                                  stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortKeys(d_temporary_storage,
                                                  temporary_storage_bytes,
@@ -721,7 +715,8 @@ auto invoke_sort_keys(void*                      d_temporary_storage,
                                                            size,
                                                            decomposer_t{},
                                                            stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortKeysDescending(d_temporary_storage,
                                                            temporary_storage_bytes,
@@ -741,11 +736,11 @@ void sort_keys_double_buffer()
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using key_type = typename TestFixture::params::key_type;
-    constexpr bool descending = TestFixture::params::descending;
-    constexpr unsigned int start_bit = TestFixture::params::start_bit;
-    constexpr unsigned int end_bit = TestFixture::params::end_bit;
-    constexpr bool check_large_sizes = TestFixture::params::check_large_sizes;
+    using key_type                           = typename TestFixture::params::key_type;
+    constexpr bool         descending        = TestFixture::params::descending;
+    constexpr unsigned int start_bit         = TestFixture::params::start_bit;
+    constexpr unsigned int end_bit           = TestFixture::params::end_bit;
+    constexpr bool         check_large_sizes = TestFixture::params::check_large_sizes;
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -754,13 +749,13 @@ void sort_keys_double_buffer()
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > (1 << 20) && !check_large_sizes)
             {
@@ -769,21 +764,21 @@ void sort_keys_double_buffer()
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
-            key_type * d_keys_input;
-            key_type * d_keys_output;
+            key_type*                   d_keys_input;
+            key_type*                   d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));
-            HIP_CHECK(
-                hipMemcpy(
-                    d_keys_input, keys_input.data(),
-                    size * sizeof(key_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+            HIP_CHECK(hipMemcpy(d_keys_input,
+                                keys_input.data(),
+                                size * sizeof(key_type),
+                                hipMemcpyHostToDevice));
 
             // Calculate expected results on host
             std::vector<key_type> expected(keys_input);
-            std::stable_sort(expected.begin(), expected.end(), test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
+            std::stable_sort(
+                expected.begin(),
+                expected.end(),
+                test_utils::key_comparator<key_type, descending, start_bit, end_bit>());
 
             hipcub::DoubleBuffer<key_type> d_keys(d_keys_input, d_keys_output);
 
@@ -798,8 +793,9 @@ void sort_keys_double_buffer()
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
-            void * d_temporary_storage;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+            void* d_temporary_storage;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
             hipGraph_t graph;
             if(TestFixture::params::use_graphs)
@@ -824,13 +820,10 @@ void sort_keys_double_buffer()
             HIP_CHECK(hipFree(d_temporary_storage));
 
             std::vector<key_type> keys_output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    keys_output.data(), d_keys.Current(),
-                    size * sizeof(key_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(keys_output.data(),
+                                d_keys.Current(),
+                                size * sizeof(key_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_keys_input));
             HIP_CHECK(hipFree(d_keys_output));
@@ -913,7 +906,8 @@ auto invoke_sort_pairs(void*                        d_temporary_storage,
                                                   size,
                                                   decomposer_t{},
                                                   stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortPairs(d_temporary_storage,
                                                   temporary_storage_bytes,
@@ -948,7 +942,8 @@ auto invoke_sort_pairs(void*                        d_temporary_storage,
                                                             size,
                                                             decomposer_t{},
                                                             stream);
-    } else
+    }
+    else
     {
         return hipcub::DeviceRadixSort::SortPairsDescending(d_temporary_storage,
                                                             temporary_storage_bytes,
@@ -969,12 +964,12 @@ void sort_pairs_double_buffer()
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using key_type = typename TestFixture::params::key_type;
-    using value_type = typename TestFixture::params::value_type;
-    constexpr bool descending = TestFixture::params::descending;
-    constexpr unsigned int start_bit = TestFixture::params::start_bit;
-    constexpr unsigned int end_bit = TestFixture::params::end_bit;
-    constexpr bool check_large_sizes = TestFixture::params::check_large_sizes;
+    using key_type                           = typename TestFixture::params::key_type;
+    using value_type                         = typename TestFixture::params::value_type;
+    constexpr bool         descending        = TestFixture::params::descending;
+    constexpr unsigned int start_bit         = TestFixture::params::start_bit;
+    constexpr unsigned int end_bit           = TestFixture::params::end_bit;
+    constexpr bool         check_large_sizes = TestFixture::params::check_large_sizes;
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -983,13 +978,13 @@ void sort_pairs_double_buffer()
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
-    
-        for (size_t size : test_utils::get_sizes(seed_value))
+
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             if(size > (1 << 20) && !check_large_sizes)
             {
@@ -998,32 +993,28 @@ void sort_pairs_double_buffer()
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             // Generate data
             const std::vector<key_type> keys_input = generate_key_input<key_type>(size, seed_value);
-            std::vector<value_type> values_input(size);
+            std::vector<value_type>     values_input(size);
             std::iota(values_input.begin(), values_input.end(), 0);
 
-            key_type * d_keys_input;
-            key_type * d_keys_output;
+            key_type* d_keys_input;
+            key_type* d_keys_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input, size * sizeof(key_type)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_output, size * sizeof(key_type)));
-            HIP_CHECK(
-                hipMemcpy(
-                    d_keys_input, keys_input.data(),
-                    size * sizeof(key_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+            HIP_CHECK(hipMemcpy(d_keys_input,
+                                keys_input.data(),
+                                size * sizeof(key_type),
+                                hipMemcpyHostToDevice));
 
-            value_type * d_values_input;
-            value_type * d_values_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_output, size * sizeof(value_type)));
+            value_type* d_values_input;
+            value_type* d_values_output;
             HIP_CHECK(
-                hipMemcpy(
-                    d_values_input, values_input.data(),
-                    size * sizeof(value_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(value_type)));
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_values_output, size * sizeof(value_type)));
+            HIP_CHECK(hipMemcpy(d_values_input,
+                                values_input.data(),
+                                size * sizeof(value_type),
+                                hipMemcpyHostToDevice));
 
             using key_value = std::pair<key_type, value_type>;
 
@@ -1034,14 +1025,15 @@ void sort_pairs_double_buffer()
                 expected[i] = key_value(keys_input[i], values_input[i]);
             }
             std::stable_sort(
-                expected.begin(), expected.end(),
-                test_utils::key_value_comparator<key_type, value_type, descending, start_bit, end_bit>()
-            );
+                expected.begin(),
+                expected.end(),
+                test_utils::
+                    key_value_comparator<key_type, value_type, descending, start_bit, end_bit>());
 
-            hipcub::DoubleBuffer<key_type> d_keys(d_keys_input, d_keys_output);
+            hipcub::DoubleBuffer<key_type>   d_keys(d_keys_input, d_keys_output);
             hipcub::DoubleBuffer<value_type> d_values(d_values_input, d_values_output);
 
-            void * d_temporary_storage = nullptr;
+            void*  d_temporary_storage     = nullptr;
             size_t temporary_storage_bytes = 0;
             HIP_CHECK(invoke_sort_pairs<descending>(d_temporary_storage,
                                                     temporary_storage_bytes,
@@ -1081,33 +1073,27 @@ void sort_pairs_double_buffer()
             HIP_CHECK(hipFree(d_temporary_storage));
 
             std::vector<key_type> keys_output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    keys_output.data(), d_keys.Current(),
-                    size * sizeof(key_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(keys_output.data(),
+                                d_keys.Current(),
+                                size * sizeof(key_type),
+                                hipMemcpyDeviceToHost));
 
             std::vector<value_type> values_output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    values_output.data(), d_values.Current(),
-                    size * sizeof(value_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(values_output.data(),
+                                d_values.Current(),
+                                size * sizeof(value_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_keys_input));
             HIP_CHECK(hipFree(d_keys_output));
             HIP_CHECK(hipFree(d_values_input));
             HIP_CHECK(hipFree(d_values_output));
 
-            std::vector<key_type> keys_expected(size);
+            std::vector<key_type>   keys_expected(size);
             std::vector<value_type> values_expected(size);
             for(size_t i = 0; i < size; i++)
             {
-                keys_expected[i] = expected[i].first;
+                keys_expected[i]   = expected[i].first;
                 values_expected[i] = expected[i].second;
             }
 
@@ -1133,17 +1119,17 @@ inline void sort_keys_over_4g()
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using key_type = uint8_t;
-    constexpr unsigned int start_bit = 0;
-    constexpr unsigned int end_bit = 8ull * sizeof(key_type);
+    using key_type                                 = uint8_t;
+    constexpr unsigned int start_bit               = 0;
+    constexpr unsigned int end_bit                 = 8ull * sizeof(key_type);
     constexpr hipStream_t  stream                  = 0;
-    constexpr size_t size = (1ull << 32) + 32;
-    constexpr size_t number_of_possible_keys = 1ull << (8ull * sizeof(key_type));
+    constexpr size_t       size                    = (1ull << 32) + 32;
+    constexpr size_t       number_of_possible_keys = 1ull << (8ull * sizeof(key_type));
     assert(std::is_unsigned<key_type>::value);
 
     hipDeviceProp_t dev_prop;
     HIP_CHECK(hipGetDeviceProperties(&dev_prop, device_id));
-    
+
     // Radix sort requires 2 buffers of `size`, so a minimum of 8 GB of vram for this test.
     // This is more than some cards provide.
     if(static_cast<size_t>(dev_prop.totalGlobalMem * 0.9) < size * 2 * sizeof(key_type))
@@ -1152,23 +1138,24 @@ inline void sort_keys_over_4g()
     }
 
     std::vector<size_t> histogram(number_of_possible_keys, 0);
-    const int seed_value = rand();
+    const int           seed_value = rand();
     SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-    std::vector<key_type> keys_input = test_utils::get_random_data<key_type>(
-        size,
-        std::numeric_limits<key_type>::min(),
-        std::numeric_limits<key_type>::max(),
-        seed_value);
+    std::vector<key_type> keys_input
+        = test_utils::get_random_data<key_type>(size,
+                                                std::numeric_limits<key_type>::min(),
+                                                std::numeric_limits<key_type>::max(),
+                                                seed_value);
 
     //generate histogram of the randomly generated values
-    std::for_each(keys_input.begin(), keys_input.end(), [&](const key_type &a){
-        histogram[a]++;
-    });
+    std::for_each(keys_input.begin(), keys_input.end(), [&](const key_type& a) { histogram[a]++; });
 
-    key_type * d_keys_input_output{};
+    key_type* d_keys_input_output{};
     HIP_CHECK(test_common_utils::hipMallocHelper(&d_keys_input_output, size * sizeof(key_type)));
-    HIP_CHECK(hipMemcpy(d_keys_input_output, keys_input.data(), size * sizeof(key_type), hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(d_keys_input_output,
+                        keys_input.data(),
+                        size * sizeof(key_type),
+                        hipMemcpyHostToDevice));
 
     size_t temporary_storage_bytes;
     HIP_CHECK(hipcub::DeviceRadixSort::SortKeys(nullptr,
@@ -1181,7 +1168,7 @@ inline void sort_keys_over_4g()
                                                 stream));
 
     ASSERT_GT(temporary_storage_bytes, 0);
-    void * d_temporary_storage;
+    void* d_temporary_storage;
     HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
     HIP_CHECK(hipcub::DeviceRadixSort::SortKeys(d_temporary_storage,
@@ -1194,7 +1181,10 @@ inline void sort_keys_over_4g()
                                                 stream));
 
     std::vector<key_type> output(keys_input.size());
-    HIP_CHECK(hipMemcpy(output.data(), d_keys_input_output, size * sizeof(key_type), hipMemcpyDeviceToHost));
+    HIP_CHECK(hipMemcpy(output.data(),
+                        d_keys_input_output,
+                        size * sizeof(key_type),
+                        hipMemcpyDeviceToHost));
 
     size_t counter = 0;
     for(size_t i = 0; i <= std::numeric_limits<key_type>::max(); ++i)

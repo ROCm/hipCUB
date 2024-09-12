@@ -31,69 +31,71 @@
 #include "test_utils.hpp"
 #include "test_utils_data_generation.hpp"
 
-template <class InputIteratorT, class OutputIteratorT, class... Args>
+template<class InputIteratorT, class OutputIteratorT, class... Args>
 hipError_t dispatch_adjacent_difference(std::true_type /*left*/,
                                         std::true_type /*copy*/,
-                                        void* d_temp_storage,
-                                        size_t& temp_storage_bytes,
-                                        InputIteratorT d_input,
+                                        void*           d_temp_storage,
+                                        size_t&         temp_storage_bytes,
+                                        InputIteratorT  d_input,
                                         OutputIteratorT d_output,
                                         Args&&... args)
 {
-    return ::hipcub::DeviceAdjacentDifference::SubtractLeftCopy(
-        d_temp_storage, temp_storage_bytes, d_input, d_output,
-        std::forward<Args>(args)...
-    );
+    return ::hipcub::DeviceAdjacentDifference::SubtractLeftCopy(d_temp_storage,
+                                                                temp_storage_bytes,
+                                                                d_input,
+                                                                d_output,
+                                                                std::forward<Args>(args)...);
 }
 
-template <class InputIteratorT, class OutputIteratorT, class... Args>
+template<class InputIteratorT, class OutputIteratorT, class... Args>
 hipError_t dispatch_adjacent_difference(std::true_type /*left*/,
                                         std::false_type /*copy*/,
-                                        void* d_temp_storage,
-                                        size_t& temp_storage_bytes,
+                                        void*          d_temp_storage,
+                                        size_t&        temp_storage_bytes,
                                         InputIteratorT d_input,
                                         OutputIteratorT /*d_output*/,
                                         Args&&... args)
 {
-    return ::hipcub::DeviceAdjacentDifference::SubtractLeft(
-        d_temp_storage, temp_storage_bytes, d_input,
-        std::forward<Args>(args)...
-    );
+    return ::hipcub::DeviceAdjacentDifference::SubtractLeft(d_temp_storage,
+                                                            temp_storage_bytes,
+                                                            d_input,
+                                                            std::forward<Args>(args)...);
 }
 
-template <class InputIteratorT, class OutputIteratorT, class... Args>
+template<class InputIteratorT, class OutputIteratorT, class... Args>
 hipError_t dispatch_adjacent_difference(std::false_type /*left*/,
                                         std::true_type /*copy*/,
-                                        void* d_temp_storage,
-                                        size_t& temp_storage_bytes,
-                                        InputIteratorT d_input,
+                                        void*           d_temp_storage,
+                                        size_t&         temp_storage_bytes,
+                                        InputIteratorT  d_input,
                                         OutputIteratorT d_output,
                                         Args&&... args)
 {
-    return ::hipcub::DeviceAdjacentDifference::SubtractRightCopy(
-        d_temp_storage, temp_storage_bytes, d_input, d_output,
-        std::forward<Args>(args)...
-    );
+    return ::hipcub::DeviceAdjacentDifference::SubtractRightCopy(d_temp_storage,
+                                                                 temp_storage_bytes,
+                                                                 d_input,
+                                                                 d_output,
+                                                                 std::forward<Args>(args)...);
 }
 
-template <class InputIteratorT, class OutputIteratorT, class... Args>
+template<class InputIteratorT, class OutputIteratorT, class... Args>
 hipError_t dispatch_adjacent_difference(std::false_type /*left*/,
                                         std::false_type /*copy*/,
-                                        void* d_temp_storage,
-                                        size_t& temp_storage_bytes,
+                                        void*          d_temp_storage,
+                                        size_t&        temp_storage_bytes,
                                         InputIteratorT d_input,
                                         OutputIteratorT /*d_output*/,
                                         Args&&... args)
 {
-    return ::hipcub::DeviceAdjacentDifference::SubtractRight(
-        d_temp_storage, temp_storage_bytes, d_input,
-        std::forward<Args>(args)...
-    );
+    return ::hipcub::DeviceAdjacentDifference::SubtractRight(d_temp_storage,
+                                                             temp_storage_bytes,
+                                                             d_input,
+                                                             std::forward<Args>(args)...);
 }
 
-template <typename Output, typename T, typename BinaryFunction>
+template<typename Output, typename T, typename BinaryFunction>
 auto get_expected_result(const std::vector<T>& input,
-                         const BinaryFunction op,
+                         const BinaryFunction  op,
                          std::true_type /*left*/)
 {
     std::vector<Output> result(input.size());
@@ -101,9 +103,9 @@ auto get_expected_result(const std::vector<T>& input,
     return result;
 }
 
-template <typename Output, typename T, typename BinaryFunction>
+template<typename Output, typename T, typename BinaryFunction>
 auto get_expected_result(const std::vector<T>& input,
-                         const BinaryFunction op,
+                         const BinaryFunction  op,
                          std::false_type /*left*/)
 {
     std::vector<Output> result(input.size());
@@ -119,7 +121,7 @@ template<class InputT,
          bool UseGraphs = false>
 struct params
 {
-    using input_type = InputT;
+    using input_type                 = InputT;
     using output_type                = OutputT;
     static constexpr bool left       = Left;
     static constexpr bool copy       = Copy;
@@ -127,7 +129,8 @@ struct params
 };
 
 template<class Params>
-class HipcubDeviceAdjacentDifference : public ::testing::Test {
+class HipcubDeviceAdjacentDifference : public ::testing::Test
+{
 public:
     using params = Params;
 };
@@ -164,13 +167,13 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -180,20 +183,16 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
                 test_utils::convert_to_device<input_type>(50),
                 seed_value);
 
-            input_type * d_input{};
-            output_type * d_output{};
+            input_type*  d_input{};
+            output_type* d_output{};
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, size * sizeof(d_input[0])));
-            if (copy_constant)
+            if(copy_constant)
             {
-                HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, size * sizeof(d_output[0])));
+                HIP_CHECK(
+                    test_common_utils::hipMallocHelper(&d_output, size * sizeof(d_output[0])));
             }
             HIP_CHECK(
-                hipMemcpy(
-                    d_input, input.data(),
-                    size * sizeof(input_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                hipMemcpy(d_input, input.data(), size * sizeof(input_type), hipMemcpyHostToDevice));
 
             const auto expected = get_expected_result<output_type>(input, op, left_constant);
 
@@ -212,8 +211,9 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
             ASSERT_GT(temporary_storage_bytes, 0U);
 #endif
 
-            void * d_temporary_storage;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+            void* d_temporary_storage;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
             hipGraph_t graph;
             if(TestFixture::params::use_graphs)
@@ -238,17 +238,14 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
             }
 
             std::vector<output_type> output(size);
-            HIP_CHECK(
-                hipMemcpy(
-                    output.data(), copy_constant ? d_output : d_input,
-                    size * sizeof(output[0]),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(output.data(),
+                                copy_constant ? d_output : d_input,
+                                size * sizeof(output[0]),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_temporary_storage));
             HIP_CHECK(hipFree(d_input));
-            if (copy_constant)
+            if(copy_constant)
             {
                 HIP_CHECK(hipFree(d_output));
             }
@@ -280,8 +277,8 @@ template<class Params>
 class HipcubDeviceAdjacentDifferenceLargeTests : public ::testing::Test
 {
 public:
-    static constexpr bool left              = Params::left;
-    static constexpr bool copy              = Params::copy;
+    static constexpr bool left = Params::left;
+    static constexpr bool copy = Params::copy;
 };
 
 using HipcubDeviceAdjacentDifferenceLargeTestsParams
@@ -302,15 +299,17 @@ struct discard_write
     {
         return value;
     }
-    __device__ discard_write& operator=(T)
+    __device__
+    discard_write&
+        operator=(T)
     {
         return *this;
     }
 };
 
 template<class T, class InputIterator, class UnaryFunction>
-HIPCUB_HOST_DEVICE inline auto make_transform_iterator(InputIterator iterator,
-                                                       UnaryFunction transform)
+HIPCUB_HOST_DEVICE
+inline auto make_transform_iterator(InputIterator iterator, UnaryFunction transform)
 {
     return ::hipcub::TransformInputIterator<T, UnaryFunction, InputIterator>(iterator, transform);
 }
@@ -318,7 +317,8 @@ HIPCUB_HOST_DEVICE inline auto make_transform_iterator(InputIterator iterator,
 template<class T>
 struct conversion_op : public std::unary_function<T, discard_write<T>>
 {
-    HIPCUB_HOST_DEVICE auto operator()(const T i) const
+    HIPCUB_HOST_DEVICE
+    auto operator()(const T i) const
     {
         return discard_write<T>{i};
     }
@@ -338,8 +338,8 @@ struct flag_expected_op : public std::binary_function<T, T, discard_write<T>>
         , d_flags(d_flags)
     {}
 
-    HIPCUB_HOST_DEVICE T operator()(const discard_write<T>& minuend,
-                                    const discard_write<T>& subtrahend)
+    HIPCUB_HOST_DEVICE
+    T operator()(const discard_write<T>& minuend, const discard_write<T>& subtrahend)
     {
         if(left)
         {
@@ -373,10 +373,10 @@ TYPED_TEST(HipcubDeviceAdjacentDifferenceLargeTests, LargeIndicesAndOpOnce)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using T                                 = size_t;
-    using OutputIterator                    = hipcub::DiscardOutputIterator<>;
-    static constexpr bool left              = TestFixture::left;
-    static constexpr bool copy              = TestFixture::copy;
+    using T                    = size_t;
+    using OutputIterator       = hipcub::DiscardOutputIterator<>;
+    static constexpr bool left = TestFixture::left;
+    static constexpr bool copy = TestFixture::copy;
 
     SCOPED_TRACE(testing::Message() << "left = " << left << ", copy = " << copy);
 

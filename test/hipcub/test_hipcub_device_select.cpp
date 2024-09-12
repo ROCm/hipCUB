@@ -84,13 +84,13 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -100,12 +100,10 @@ TYPED_TEST(HipcubDeviceSelectTests, Flagged)
                                                  test_utils::convert_to_device<T>(1),
                                                  test_utils::convert_to_device<T>(100),
                                                  seed_value);
-            std::vector<F> flags = test_utils::get_random_data<F>(
-                size,
-                static_cast<F>(0),
-                static_cast<F>(1),
-                seed_value + seed_value_addition
-            );
+            std::vector<F> flags = test_utils::get_random_data<F>(size,
+                                                                  static_cast<F>(0),
+                                                                  static_cast<F>(1),
+                                                                  seed_value + seed_value_addition);
 
             T*            d_input;
             F*            d_flags;
@@ -252,7 +250,7 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
 
     unsigned int seed_value = rand();
 
-    for (size_t size : test_utils::get_sizes(seed_value))
+    for(size_t size : test_utils::get_sizes(seed_value))
     {
         SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -330,10 +328,12 @@ TEST(HipcubDeviceSelectTests, FlagNormalization)
 struct TestSelectOp
 {
     template<class T>
-    __host__ __device__ inline
-    bool operator()(const T& value) const
+    __host__ __device__
+    inline bool
+        operator()(const T& value) const
     {
-        if(value > T(50)) return true;
+        if(value > T(50))
+            return true;
         return false;
     }
 };
@@ -357,14 +357,14 @@ TYPED_TEST(HipcubDeviceSelectTests, SelectOp)
     }
 
     TestSelectOp select_op;
-  
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -524,13 +524,13 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
     }
 
     const auto probabilities = get_discontinuity_probabilities();
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             for(auto p : probabilities)
@@ -541,25 +541,24 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                 std::vector<T> input(size);
                 {
                     std::vector<T> input01 = test_utils::get_random_data01<T>(size, p, seed_value);
-                    test_utils::host_inclusive_scan(
-                        input01.begin(), input01.end(), input.begin(), hipcub::Sum()
-                    );
+                    test_utils::host_inclusive_scan(input01.begin(),
+                                                    input01.end(),
+                                                    input.begin(),
+                                                    hipcub::Sum());
                 }
 
                 // Allocate and copy to device
-                T * d_input;
-                U * d_output;
-                unsigned int * d_selected_count_output;
+                T*            d_input;
+                U*            d_output;
+                unsigned int* d_selected_count_output;
                 HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
                 HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, input.size() * sizeof(U)));
-                HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output, sizeof(unsigned int)));
-                HIP_CHECK(
-                    hipMemcpy(
-                        d_input, input.data(),
-                        input.size() * sizeof(T),
-                        hipMemcpyHostToDevice
-                    )
-                );
+                HIP_CHECK(test_common_utils::hipMallocHelper(&d_selected_count_output,
+                                                             sizeof(unsigned int)));
+                HIP_CHECK(hipMemcpy(d_input,
+                                    input.data(),
+                                    input.size() * sizeof(T),
+                                    hipMemcpyHostToDevice));
                 HIP_CHECK(hipDeviceSynchronize());
 
                 // Calculate expected results on host
@@ -591,8 +590,9 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
                 ASSERT_GT(temp_storage_size_bytes, 0U);
 
                 // allocate temporary storage
-                void * d_temp_storage = nullptr;
-                HIP_CHECK(test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
+                void* d_temp_storage = nullptr;
+                HIP_CHECK(
+                    test_common_utils::hipMallocHelper(&d_temp_storage, temp_storage_size_bytes));
                 HIP_CHECK(hipDeviceSynchronize());
 
                 hipGraph_t graph;
@@ -620,25 +620,19 @@ TYPED_TEST(HipcubDeviceSelectTests, Unique)
 
                 // Check if number of selected value is as expected
                 unsigned int selected_count_output = 0;
-                HIP_CHECK(
-                    hipMemcpy(
-                        &selected_count_output, d_selected_count_output,
-                        sizeof(unsigned int),
-                        hipMemcpyDeviceToHost
-                    )
-                );
+                HIP_CHECK(hipMemcpy(&selected_count_output,
+                                    d_selected_count_output,
+                                    sizeof(unsigned int),
+                                    hipMemcpyDeviceToHost));
                 HIP_CHECK(hipDeviceSynchronize());
                 ASSERT_EQ(selected_count_output, expected.size());
 
                 // Check if output values are as expected
                 std::vector<U> output(input.size());
-                HIP_CHECK(
-                    hipMemcpy(
-                        output.data(), d_output,
-                        output.size() * sizeof(U),
-                        hipMemcpyDeviceToHost
-                    )
-                );
+                HIP_CHECK(hipMemcpy(output.data(),
+                                    d_output,
+                                    output.size() * sizeof(U),
+                                    hipMemcpyDeviceToHost));
                 HIP_CHECK(hipDeviceSynchronize());
 
                 ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(output, expected, expected.size()));
@@ -672,7 +666,7 @@ TEST(HipcubDeviceSelectTests, UniqueDiscardOutputIterator)
 
     unsigned int seed_value = rand();
 
-    for (size_t size : test_utils::get_sizes(seed_value))
+    for(size_t size : test_utils::get_sizes(seed_value))
     {
         SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -759,7 +753,8 @@ struct TestUniqueEqualityOp
     static constexpr int segment = 3;
 
     template<typename T>
-    HIPCUB_HOST_DEVICE bool operator()(const T& a, const T& b) const
+    HIPCUB_HOST_DEVICE
+    bool operator()(const T& a, const T& b) const
     {
         static_assert(std::is_integral<T>::value, "T must be integral type");
         return a / segment == b / segment;
@@ -800,11 +795,11 @@ TYPED_TEST(HipcubDeviceUniqueByKeyTests, UniqueByKey)
     const auto probabilities = get_discontinuity_probabilities();
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -993,7 +988,7 @@ TEST(HipcubDeviceUniqueByKeyTests, LargeIndicesUniqueByKey)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_large_sizes(seed_value))
+        for(size_t size : test_utils::get_large_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             TestUniqueEqualityOp equality_op;

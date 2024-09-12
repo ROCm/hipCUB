@@ -247,15 +247,16 @@ public:
              typename TransformOpT,
              typename T,
              typename NumItemsT>
-    HIPCUB_RUNTIME_FUNCTION static hipError_t TransformReduce(void*           d_temp_storage,
-                                                              size_t&         temp_storage_bytes,
-                                                              InputIteratorT  d_in,
-                                                              OutputIteratorT d_out,
-                                                              NumItemsT       num_items,
-                                                              ReductionOpT    reduction_op,
-                                                              TransformOpT    transform_op,
-                                                              T               init,
-                                                              hipStream_t     stream = 0)
+    HIPCUB_RUNTIME_FUNCTION
+    static hipError_t TransformReduce(void*           d_temp_storage,
+                                      size_t&         temp_storage_bytes,
+                                      InputIteratorT  d_in,
+                                      OutputIteratorT d_out,
+                                      NumItemsT       num_items,
+                                      ReductionOpT    reduction_op,
+                                      TransformOpT    transform_op,
+                                      T               init,
+                                      hipStream_t     stream = 0)
     {
         return hipCUDAErrorTohipError(::cub::DeviceReduce::TransformReduce(d_temp_storage,
                                                                            temp_storage_bytes,

@@ -52,7 +52,8 @@ struct params1
 };
 
 template<class Params>
-class HipcubDeviceSegmentedReduceOp : public ::testing::Test {
+class HipcubDeviceSegmentedReduceOp : public ::testing::Test
+{
 public:
     using params = Params;
 };
@@ -78,23 +79,22 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using input_type = typename TestFixture::params::input_type;
-    using output_type = typename TestFixture::params::output_type;
+    using input_type     = typename TestFixture::params::input_type;
+    using output_type    = typename TestFixture::params::output_type;
     using reduce_op_type = typename TestFixture::params::reduce_op_type;
 
     using result_type = output_type;
     using offset_type = unsigned int;
 
     const input_type init = test_utils::convert_to_device<input_type>(TestFixture::params::init);
-    reduce_op_type reduce_op;
+    reduce_op_type   reduce_op;
 
-    std::random_device rd;
+    std::random_device         rd;
     std::default_random_engine gen(rd());
 
     std::uniform_int_distribution<size_t> segment_length_dis(
         TestFixture::params::min_segment_length,
-        TestFixture::params::max_segment_length
-    );
+        TestFixture::params::max_segment_length);
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -103,25 +103,21 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data and calculate expected results
             std::vector<output_type> aggregates_expected;
 
-            std::vector<input_type> values_input = test_utils::get_random_data<input_type>(
-                size,
-                0,
-                100,
-                seed_value
-            );
+            std::vector<input_type> values_input
+                = test_utils::get_random_data<input_type>(size, 0, 100, seed_value);
 
             std::vector<offset_type> offsets;
             unsigned int             segments_count     = 0;
@@ -157,28 +153,26 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
                 continue;
             }
 
-            input_type * d_values_input;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            input_type* d_values_input;
             HIP_CHECK(
-                hipMemcpy(
-                    d_values_input, values_input.data(),
-                    size * sizeof(input_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            HIP_CHECK(hipMemcpy(d_values_input,
+                                values_input.data(),
+                                size * sizeof(input_type),
+                                hipMemcpyHostToDevice));
 
-            offset_type * d_offsets;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_offsets, (segments_count + 1) * sizeof(offset_type)));
+            offset_type* d_offsets;
             HIP_CHECK(
-                hipMemcpy(
-                    d_offsets, offsets.data(),
-                    (segments_count + 1) * sizeof(offset_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_offsets,
+                                                   (segments_count + 1) * sizeof(offset_type)));
+            HIP_CHECK(hipMemcpy(d_offsets,
+                                offsets.data(),
+                                (segments_count + 1) * sizeof(offset_type),
+                                hipMemcpyHostToDevice));
 
-            output_type * d_aggregates_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output, segments_count * sizeof(output_type)));
+            output_type* d_aggregates_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output,
+                                                         segments_count * sizeof(output_type)));
 
             size_t temporary_storage_bytes;
 
@@ -195,8 +189,9 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
-            void * d_temporary_storage;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+            void* d_temporary_storage;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
             hipGraph_t graph;
             if(TestFixture::params::use_graphs)
@@ -224,13 +219,10 @@ TYPED_TEST(HipcubDeviceSegmentedReduceOp, Reduce)
             HIP_CHECK(hipFree(d_temporary_storage));
 
             std::vector<output_type> aggregates_output(segments_count);
-            HIP_CHECK(
-                hipMemcpy(
-                    aggregates_output.data(), d_aggregates_output,
-                    segments_count * sizeof(output_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(aggregates_output.data(),
+                                d_aggregates_output,
+                                segments_count * sizeof(output_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_values_input));
             HIP_CHECK(hipFree(d_offsets));
@@ -267,7 +259,8 @@ struct params2
 };
 
 template<class Params>
-class HipcubDeviceSegmentedReduce : public ::testing::Test {
+class HipcubDeviceSegmentedReduce : public ::testing::Test
+{
 public:
     using params = Params;
 };
@@ -295,22 +288,21 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using input_type = typename TestFixture::params::input_type;
-    using output_type = typename TestFixture::params::output_type;
+    using input_type     = typename TestFixture::params::input_type;
+    using output_type    = typename TestFixture::params::output_type;
     using reduce_op_type = typename hipcub::Sum;
-    using result_type = output_type;
-    using offset_type = unsigned int;
+    using result_type    = output_type;
+    using offset_type    = unsigned int;
 
     const input_type init = input_type(0);
     reduce_op_type   reduce_op;
 
-    std::random_device rd;
+    std::random_device         rd;
     std::default_random_engine gen(rd());
 
     std::uniform_int_distribution<size_t> segment_length_dis(
         TestFixture::params::min_segment_length,
-        TestFixture::params::max_segment_length
-    );
+        TestFixture::params::max_segment_length);
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -319,25 +311,21 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data and calculate expected results
             std::vector<output_type> aggregates_expected;
 
-            std::vector<input_type> values_input = test_utils::get_random_data<input_type>(
-                size,
-                0,
-                100,
-                seed_value
-            );
+            std::vector<input_type> values_input
+                = test_utils::get_random_data<input_type>(size, 0, 100, seed_value);
 
             std::vector<offset_type> offsets;
             unsigned int             segments_count     = 0;
@@ -373,28 +361,26 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
                 continue;
             }
 
-            input_type * d_values_input;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            input_type* d_values_input;
             HIP_CHECK(
-                hipMemcpy(
-                    d_values_input, values_input.data(),
-                    size * sizeof(input_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            HIP_CHECK(hipMemcpy(d_values_input,
+                                values_input.data(),
+                                size * sizeof(input_type),
+                                hipMemcpyHostToDevice));
 
-            offset_type * d_offsets;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_offsets, (segments_count + 1) * sizeof(offset_type)));
+            offset_type* d_offsets;
             HIP_CHECK(
-                hipMemcpy(
-                    d_offsets, offsets.data(),
-                    (segments_count + 1) * sizeof(offset_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_offsets,
+                                                   (segments_count + 1) * sizeof(offset_type)));
+            HIP_CHECK(hipMemcpy(d_offsets,
+                                offsets.data(),
+                                (segments_count + 1) * sizeof(offset_type),
+                                hipMemcpyHostToDevice));
 
-            output_type * d_aggregates_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output, segments_count * sizeof(output_type)));
+            output_type* d_aggregates_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output,
+                                                         segments_count * sizeof(output_type)));
 
             size_t temporary_storage_bytes;
 
@@ -409,8 +395,9 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
-            void * d_temporary_storage;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+            void* d_temporary_storage;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
             hipGraph_t graph;
             if(TestFixture::params::use_graphs)
@@ -436,13 +423,10 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Sum)
             HIP_CHECK(hipFree(d_temporary_storage));
 
             std::vector<output_type> aggregates_output(segments_count);
-            HIP_CHECK(
-                hipMemcpy(
-                    aggregates_output.data(), d_aggregates_output,
-                    segments_count * sizeof(output_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(aggregates_output.data(),
+                                d_aggregates_output,
+                                segments_count * sizeof(output_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_values_input));
             HIP_CHECK(hipFree(d_offsets));
@@ -470,22 +454,21 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using input_type = typename TestFixture::params::input_type;
-    using output_type = typename TestFixture::params::output_type;
+    using input_type     = typename TestFixture::params::input_type;
+    using output_type    = typename TestFixture::params::output_type;
     using reduce_op_type = typename hipcub::Min;
-    using result_type = output_type;
-    using offset_type = unsigned int;
+    using result_type    = output_type;
+    using offset_type    = unsigned int;
 
     constexpr input_type init = std::numeric_limits<input_type>::max();
-    reduce_op_type reduce_op;
+    reduce_op_type       reduce_op;
 
-    std::random_device rd;
+    std::random_device         rd;
     std::default_random_engine gen(rd());
 
     std::uniform_int_distribution<size_t> segment_length_dis(
         TestFixture::params::min_segment_length,
-        TestFixture::params::max_segment_length
-    );
+        TestFixture::params::max_segment_length);
 
     hipStream_t stream = 0; // default
     if(TestFixture::params::use_graphs)
@@ -494,25 +477,21 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
             // Generate data and calculate expected results
             std::vector<output_type> aggregates_expected;
 
-            std::vector<input_type> values_input = test_utils::get_random_data<input_type>(
-                size,
-                0,
-                100,
-                seed_value
-            );
+            std::vector<input_type> values_input
+                = test_utils::get_random_data<input_type>(size, 0, 100, seed_value);
 
             std::vector<offset_type> offsets;
             unsigned int             segments_count     = 0;
@@ -548,28 +527,26 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
                 continue;
             }
 
-            input_type * d_values_input;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            input_type* d_values_input;
             HIP_CHECK(
-                hipMemcpy(
-                    d_values_input, values_input.data(),
-                    size * sizeof(input_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_values_input, size * sizeof(input_type)));
+            HIP_CHECK(hipMemcpy(d_values_input,
+                                values_input.data(),
+                                size * sizeof(input_type),
+                                hipMemcpyHostToDevice));
 
-            offset_type * d_offsets;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_offsets, (segments_count + 1) * sizeof(offset_type)));
+            offset_type* d_offsets;
             HIP_CHECK(
-                hipMemcpy(
-                    d_offsets, offsets.data(),
-                    (segments_count + 1) * sizeof(offset_type),
-                    hipMemcpyHostToDevice
-                )
-            );
+                test_common_utils::hipMallocHelper(&d_offsets,
+                                                   (segments_count + 1) * sizeof(offset_type)));
+            HIP_CHECK(hipMemcpy(d_offsets,
+                                offsets.data(),
+                                (segments_count + 1) * sizeof(offset_type),
+                                hipMemcpyHostToDevice));
 
-            output_type * d_aggregates_output;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output, segments_count * sizeof(output_type)));
+            output_type* d_aggregates_output;
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_aggregates_output,
+                                                         segments_count * sizeof(output_type)));
 
             size_t temporary_storage_bytes;
 
@@ -584,8 +561,9 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
 
             ASSERT_GT(temporary_storage_bytes, 0U);
 
-            void * d_temporary_storage;
-            HIP_CHECK(test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
+            void* d_temporary_storage;
+            HIP_CHECK(
+                test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
             hipGraph_t graph;
             if(TestFixture::params::use_graphs)
@@ -611,13 +589,10 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Min)
             HIP_CHECK(hipFree(d_temporary_storage));
 
             std::vector<output_type> aggregates_output(segments_count);
-            HIP_CHECK(
-                hipMemcpy(
-                    aggregates_output.data(), d_aggregates_output,
-                    segments_count * sizeof(output_type),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(aggregates_output.data(),
+                                d_aggregates_output,
+                                segments_count * sizeof(output_type),
+                                hipMemcpyDeviceToHost));
 
             HIP_CHECK(hipFree(d_values_input));
             HIP_CHECK(hipFree(d_offsets));
@@ -713,11 +688,11 @@ void test_argminmax(typename TestFixture::params::input_type empty_value)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -904,7 +879,7 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
     using key_value   = typename Iterator::value_type;
     using offset_type = unsigned int;
 
-    hipStream_t                stream            = 0; // default
+    hipStream_t                stream = 0; // default
     DispatchFunction           function;
     std::random_device         rd;
     std::default_random_engine gen(rd());
@@ -1062,7 +1037,7 @@ TEST(HipcubDeviceSegmentedReduceLargeIndicesTests, LargeIndices)
         for(const auto size : sizes)
         {
             SCOPED_TRACE(testing::Message() << "with size = " << size);
-            
+
             // Generate data
             const size_t min_segment_length = size_t{1} << 31;
             const size_t max_segment_length = std::max(min_segment_length, size);

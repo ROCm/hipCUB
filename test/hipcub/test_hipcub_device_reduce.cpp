@@ -95,13 +95,13 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
         HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
     }
 
-    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(test_utils::precision<U>::value * size > 0.5)
@@ -114,25 +114,15 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
             }
 
             // Generate data
-            std::vector<T> input = test_utils::get_random_data<T>(
-                size,
-                1.0f,
-                100.0f,
-                seed_value
-            );
-            std::vector<U> output(1, (U) 0.0f);
+            std::vector<T> input = test_utils::get_random_data<T>(size, 1.0f, 100.0f, seed_value);
+            std::vector<U> output(1, (U)0.0f);
 
-            T * d_input;
-            U * d_output;
+            T* d_input;
+            U* d_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
             HIP_CHECK(
-                hipMemcpy(
-                    d_input, input.data(),
-                    input.size() * sizeof(T),
-                    hipMemcpyHostToDevice
-                )
-            );
+                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
             HIP_CHECK(hipDeviceSynchronize());
 
             // Calculate expected results on host using the same accumulator type than on device
@@ -149,7 +139,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
 
             // temp storage
             size_t temp_storage_size_bytes;
-            void * d_temp_storage = nullptr;
+            void*  d_temp_storage = nullptr;
             // Get size of d_temp_storage
             DeviceReduceSelector<T, U> reduce_selector;
             reduce_selector.reduce_sum(d_temp_storage,
@@ -190,13 +180,10 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Copy output to host
-            HIP_CHECK(
-                hipMemcpy(
-                    output.data(), d_output,
-                    output.size() * sizeof(U),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(output.data(),
+                                d_output,
+                                output.size() * sizeof(U),
+                                hipMemcpyDeviceToHost));
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if output values are as expected
@@ -244,7 +231,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -252,17 +239,12 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
             std::vector<T> input = test_utils::get_random_data<T>(size, 1.0f, 100.0f, seed_value);
             std::vector<U> output(1, U(0.0f));
 
-            T * d_input;
-            U * d_output;
+            T* d_input;
+            U* d_output;
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_input, input.size() * sizeof(T)));
             HIP_CHECK(test_common_utils::hipMallocHelper(&d_output, output.size() * sizeof(U)));
             HIP_CHECK(
-                hipMemcpy(
-                    d_input, input.data(),
-                    input.size() * sizeof(T),
-                    hipMemcpyHostToDevice
-                )
-            );
+                hipMemcpy(d_input, input.data(), input.size() * sizeof(T), hipMemcpyHostToDevice));
             HIP_CHECK(hipDeviceSynchronize());
 
             // Calculate expected results on host using the same accumulator type than on device
@@ -279,7 +261,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 
             // temp storage
             size_t temp_storage_size_bytes;
-            void * d_temp_storage = nullptr;
+            void*  d_temp_storage = nullptr;
             // Get size of d_temp_storage
             HIP_CHECK(hipcub::DeviceReduce::Min(d_temp_storage,
                                                 temp_storage_size_bytes,
@@ -319,13 +301,10 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
             HIP_CHECK(hipDeviceSynchronize());
 
             // Copy output to host
-            HIP_CHECK(
-                hipMemcpy(
-                    output.data(), d_output,
-                    output.size() * sizeof(U),
-                    hipMemcpyDeviceToHost
-                )
-            );
+            HIP_CHECK(hipMemcpy(output.data(),
+                                d_output,
+                                output.size() * sizeof(U),
+                                hipMemcpyDeviceToHost));
             HIP_CHECK(hipDeviceSynchronize());
 
             // Check if output values are as expected
@@ -402,7 +381,7 @@ void test_argminmax(typename TestFixture::input_type empty_value)
     using Iterator  = typename hipcub::ArgIndexInputIterator<T*, int>;
     using key_value = typename Iterator::value_type;
 
-    DispatchFunction    function;
+    DispatchFunction function;
 
     hipStream_t stream = 0; // default
     if(TestFixture::use_graphs)
@@ -413,14 +392,14 @@ void test_argminmax(typename TestFixture::input_type empty_value)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
         std::vector<size_t> sizes = test_utils::get_sizes(seed_value);
         sizes.push_back(0);
 
-        for (size_t size : sizes)
+        for(size_t size : sizes)
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
 
@@ -553,7 +532,7 @@ void test_argminmax_allinf(TypeParam value, TypeParam empty_value)
     using Iterator  = typename hipcub::ArgIndexInputIterator<T*, int>;
     using key_value = typename Iterator::value_type;
 
-    hipStream_t      stream            = 0; // default
+    hipStream_t      stream = 0; // default
     DispatchFunction function;
     constexpr size_t size = 100'000;
 
@@ -630,7 +609,8 @@ TYPED_TEST(HipcubDeviceReduceArgMinMaxSpecialTests, ReduceArgMaxInf)
 struct TestTransformOp
 {
     template<class T>
-    HIPCUB_HOST_DEVICE T operator()(const T& x) const
+    HIPCUB_HOST_DEVICE
+    T operator()(const T& x) const
     {
         return x + T(5);
     }
@@ -654,11 +634,11 @@ TYPED_TEST(HipcubDeviceReduceTests, TransformReduce)
 
     for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
     {
-        unsigned int seed_value 
+        unsigned int seed_value
             = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
         SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
 
-        for (size_t size : test_utils::get_sizes(seed_value))
+        for(size_t size : test_utils::get_sizes(seed_value))
         {
             SCOPED_TRACE(testing::Message() << "with size= " << size);
             if(test_utils::precision<U>::value * size > 0.5)
@@ -779,8 +759,8 @@ template<class Params>
 class HipcubDeviceReduceLargeIndicesTests : public ::testing::Test
 {
 public:
-    using input_type                        = typename Params::input_type;
-    using output_type                       = typename Params::output_type;
+    using input_type  = typename Params::input_type;
+    using output_type = typename Params::output_type;
 };
 
 typedef ::testing::Types<DeviceReduceParams<short, size_t>,
@@ -799,9 +779,9 @@ TYPED_TEST(HipcubDeviceReduceLargeIndicesTests, LargeIndices)
     SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
     HIP_CHECK(hipSetDevice(device_id));
 
-    using T                      = typename TestFixture::input_type;
-    using U                      = typename TestFixture::output_type;
-    using IteratorType           = hipcub::ConstantInputIterator<T>;
+    using T            = typename TestFixture::input_type;
+    using U            = typename TestFixture::output_type;
+    using IteratorType = hipcub::ConstantInputIterator<T>;
 
     const std::vector<size_t> exponents = {30, 31, 32, 33, 34};
     for(auto exponent : exponents)
