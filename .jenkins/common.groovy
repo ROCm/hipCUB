@@ -21,11 +21,7 @@ def runCompileCommand(platform, project, jobName, settings)
                 cd ${project.paths.project_build_prefix}
                 mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
                 ${auxiliary.gfxTargetParser()}
-<<<<<<< HEAD
-                ${cmake} --toolchain=toolchain-linux.cmake ${buildTypeArg} ${amdgpuTargets} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
-=======
-                ${cmake} -DCMAKE_CXX_COMPILER=/opt/rocm/bin/hipcc ${buildTypeArg} ${amdgpuTargets} ${asanFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
->>>>>>> tehansen/ASAN-CI
+                ${cmake} --toolchain=toolchain-linux.cmake ${buildTypeArg} ${amdgpuTargets} ${asanFlag} -DBUILD_TEST=ON -DBUILD_BENCHMARK=ON ../..
                 make -j\$(nproc)
                 """
 
@@ -37,10 +33,7 @@ def runTestCommand (platform, project, settings)
 {
     String sudo = auxiliary.sudo(platform.jenkinsLabel)
 
-<<<<<<< HEAD
     def testCommand = "ctest --output-on-failure --verbose --timeout 900"
-=======
-    def testCommand = "ctest --output-on-failure"
     def LD_PATH = 'export LD_LIBRARY_PATH=/opt/rocm/lib/'
     if (settings.addressSanitizer)
     {
@@ -50,7 +43,6 @@ def runTestCommand (platform, project, settings)
                   """
     }
 
->>>>>>> tehansen/ASAN-CI
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}
