@@ -3,6 +3,12 @@
 Documentation for hipCUB is available at
 [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
+## (Unreleased) hipCUB-3.2.1 for ROCm 6.2.4
+
+### Added
+
+* GFX1151 Support
+
 ## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
 
 ### Added
