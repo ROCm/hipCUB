@@ -207,9 +207,7 @@ TYPED_TEST(HipcubDeviceAdjacentDifference, SubtractLeftCopy)
                                                    op,
                                                    stream));
 
-#ifdef __HIP_PLATFORM_AMD__
             ASSERT_GT(temporary_storage_bytes, 0U);
-#endif
 
             void* d_temporary_storage;
             HIP_CHECK(
