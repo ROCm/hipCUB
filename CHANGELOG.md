@@ -3,15 +3,16 @@
 Documentation for hipCUB is available at
 [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
-## (Unreleased) hipCUB-3.2.1 for ROCm 6.2.4
+## hipCUB 3.2.1 for ROCm 6.2.4
 
 ### Added
 
-* GFX1151 Support
+* gfx1151 Support
 
-## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
+## hipCUB 3.2.0 for ROCm 6.2.0
 
 ### Added
+
 * Add `DeviceCopy` function to have parity with CUB.
 * In the rocPRIM backend, added `enum WarpExchangeAlgorithm`, which is used as the new optional template argument for `WarpExchange`.
   * The potential values for the enum are `WARP_EXCHANGE_SMEM` and `WARP_EXCHANGE_SHUFFLE`.
