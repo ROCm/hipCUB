@@ -17,7 +17,7 @@ Documentation for hipCUB is available at
 
 * Not all headers in hipCUB included `config.hpp` which could have resulted in build errors.
 
-## (Unreleased) hipCUB-3.2.0 for ROCm 6.2.0
+## hipCUB-3.2.0 for ROCm 6.2.0
 
 ### Added
 * Add `DeviceCopy` function to have parity with CUB.
