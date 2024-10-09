@@ -16,7 +16,7 @@ def runCompileCommand(platform, project, jobName, settings)
     def getRocPRIM = auxiliary.getLibrary('rocPRIM', platform.jenkinsLabel, null, sameOrg)
 
     if (settings.addressSanitizer){
-        amdgpuTargets = '-DAMDGPU_TARGETS=\$gfx_arch:xnack' 
+        amdgpuTargets = '-DAMDGPU_TARGETS=\$gfx_arch:xnack+' 
     }
     def command = """#!/usr/bin/env bash
                 set -x
