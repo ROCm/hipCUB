@@ -7,7 +7,7 @@ Documentation for hipCUB is available at
 
 ### Added
 
-* GFX1151 Support
+* Support for the gfx1034 and gfx1151 architectures
 
 ## hipCUB-3.2.0 for ROCm 6.2.0
 
