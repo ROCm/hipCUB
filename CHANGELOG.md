@@ -1,7 +1,7 @@
 # Changelog for hipCUB
 
-Documentation for hipCUB is available at
-[https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
+> [!NOTE]
+> The published documentation is available at [hipCUB](https://rocm.docs.amd.com/projects/hipCUB/en/latest/) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
 ## (Unreleased) hipCUB-3.3.0 for ROCm 6.3.0
 
