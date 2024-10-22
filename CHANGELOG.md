@@ -17,6 +17,7 @@ Documentation for hipCUB is available at
 
 ### Added
 * Add support for large indices in `hipcub::DeviceSegmentedReduce::*`. rocPRIM's backend provides support for all reduce variants, but CUB's does not have support yet for `DeviceSegmentedReduce::Arg*`, so large indices support has been excluded for these as well in hipCUB.
+* Add -t smoke option in rtest.py. It will run a subset of tests such that the total test time is in 5 minutes. Use python3 ./rtest.py --test smoke or python3 ./rtest.py -t smoke to execute smoke test.
 * Add inplace overloads of `DeviceScan` functions.
 * Add inplace overloads of `DeviceSelect::Flagged` and `DeviceSelect::If`.
 * Add `DeviceReduce::TransformReduce`.
