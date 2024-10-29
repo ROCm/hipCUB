@@ -3,7 +3,18 @@
 Documentation for hipCUB is available at
 [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
-## (Unreleased) hipCUB-3.3.0 for ROCm 6.3.0
+## (Unreleased) rocPRIM 3.4.0 for ROCm 6.4.0
+
+### Added
+
+* Added --emulation/-e option in rtest.py to run tests in rtest.xml file. E.g python3 rtest.py --emulation=smoke
+
+### Changed
+  * Modified smoke tests to complete in faster run-time and to never exceed 2GB of vram usage
+  * Old smoke tests can be ran with python3 rtest.py --test/-t smoke_old or python3 rtest.py --emulation/-e smoke_old instead
+
+
+## hipCUB-3.3.0 for ROCm 6.3.0
 
 ### Fixed
 
