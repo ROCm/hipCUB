@@ -17,7 +17,6 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 ## hipCUB-3.3.0 for ROCm 6.3.0
 
 ### Fixed
-
 * Not all headers in hipCUB included `config.hpp` which could have resulted in build errors.
 
 ### Added
