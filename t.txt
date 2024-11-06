@@ -1,0 +1,91 @@
+Test project /home/zenguyen/forks/hipCUB/build
+      Start  1: hipcub.BasicTest
+ 1/44 Test  #1: hipcub.BasicTest ..................   Passed    0.56 sec
+      Start  2: hipcub.CachingDeviceAllocator
+ 2/44 Test  #2: hipcub.CachingDeviceAllocator .....   Passed    0.90 sec
+      Start  3: hipcub.BlockAdjacentDifference
+ 3/44 Test  #3: hipcub.BlockAdjacentDifference ....   Passed   14.57 sec
+      Start  4: hipcub.BlockDiscontinuity
+ 4/44 Test  #4: hipcub.BlockDiscontinuity .........   Passed   17.27 sec
+      Start  5: hipcub.BlockExchange
+ 5/44 Test  #5: hipcub.BlockExchange ..............   Passed    0.62 sec
+      Start  6: hipcub.BlockHistogram
+ 6/44 Test  #6: hipcub.BlockHistogram .............   Passed    0.68 sec
+      Start  7: hipcub.BlockLoadStore
+ 7/44 Test  #7: hipcub.BlockLoadStore .............   Passed   10.69 sec
+      Start  8: hipcub.BlockMergeSort
+ 8/44 Test  #8: hipcub.BlockMergeSort .............   Passed    4.02 sec
+      Start  9: hipcub.BlockRadixRank
+ 9/44 Test  #9: hipcub.BlockRadixRank .............   Passed    6.17 sec
+      Start 10: hipcub.BlockRadixSort
+10/44 Test #10: hipcub.BlockRadixSort .............   Passed    8.62 sec
+      Start 11: hipcub.BlockReduce
+11/44 Test #11: hipcub.BlockReduce ................   Passed    0.72 sec
+      Start 12: hipcub.BlockRunLengthDecode
+12/44 Test #12: hipcub.BlockRunLengthDecode .......   Passed    1.50 sec
+      Start 13: hipcub.BlockScan
+13/44 Test #13: hipcub.BlockScan ..................   Passed    1.75 sec
+      Start 14: hipcub.BlockShuffle
+14/44 Test #14: hipcub.BlockShuffle ...............   Passed   98.01 sec
+      Start 15: hipcub.DeviceAdjacentDifference
+15/44 Test #15: hipcub.DeviceAdjacentDifference ...   Passed    6.96 sec
+      Start 16: hipcub.DeviceCopy
+16/44 Test #16: hipcub.DeviceCopy .................   Passed    2.48 sec
+      Start 17: hipcub.DeviceFor
+17/44 Test #17: hipcub.DeviceFor ..................   Passed    6.10 sec
+      Start 18: hipcub.DeviceHistogram
+18/44 Test #18: hipcub.DeviceHistogram ............   Passed   40.64 sec
+      Start 19: hipcub.DeviceMemcpy
+19/44 Test #19: hipcub.DeviceMemcpy ...............   Passed    2.09 sec
+      Start 20: hipcub.DeviceMergeSort
+20/44 Test #20: hipcub.DeviceMergeSort ............   Passed   29.12 sec
+      Start 21: hipcub.DeviceRadixSort
+21/44 Test #21: hipcub.DeviceRadixSort ............   Passed  234.95 sec
+      Start 22: hipcub.DeviceReduce
+22/44 Test #22: hipcub.DeviceReduce ...............   Passed   16.09 sec
+      Start 23: hipcub.DeviceRunLengthEncode
+23/44 Test #23: hipcub.DeviceRunLengthEncode ......   Passed    3.20 sec
+      Start 24: hipcub.DeviceReduceByKey
+24/44 Test #24: hipcub.DeviceReduceByKey ..........   Passed    3.58 sec
+      Start 25: hipcub.DeviceScan
+25/44 Test #25: hipcub.DeviceScan .................   Passed    9.92 sec
+      Start 26: hipcub.DeviceSegmentedRadixSort
+26/44 Test #26: hipcub.DeviceSegmentedRadixSort ...   Passed   56.23 sec
+      Start 28: hipcub.DeviceSegmentedSort
+ 1/17 Test #28: hipcub.DeviceSegmentedSort .......   Passed   46.63 sec
+      Start 29: hipcub.DeviceSelect
+ 2/17 Test #29: hipcub.DeviceSelect ..............   Passed   43.89 sec
+      Start 30: hipcub.DeviceSpmv
+ 3/17 Test #30: hipcub.DeviceSpmv ................   Passed    0.61 sec
+      Start 31: hipcub.DevicePartition
+ 4/17 Test #31: hipcub.DevicePartition ...........   Passed    6.92 sec
+      Start 32: hipcub.Grid
+ 5/17 Test #32: hipcub.Grid ......................   Passed    0.53 sec
+      Start 33: hipcub.UtilPtx
+ 6/17 Test #33: hipcub.UtilPtx ...................   Passed    0.68 sec
+      Start 34: hipcub.Vector
+ 7/17 Test #34: hipcub.Vector ....................   Passed    0.57 sec
+      Start 35: hipcub.WarpExchange
+ 8/17 Test #35: hipcub.WarpExchange ..............   Passed    0.62 sec
+      Start 36: hipcub.WarpLoad
+ 9/17 Test #36: hipcub.WarpLoad ..................   Passed    0.58 sec
+      Start 37: hipcub.WarpMergeSort
+10/17 Test #37: hipcub.WarpMergeSort .............   Passed    3.50 sec
+      Start 38: hipcub.WarpReduce
+11/17 Test #38: hipcub.WarpReduce ................   Passed    0.66 sec
+      Start 39: hipcub.WarpScan
+12/17 Test #39: hipcub.WarpScan ..................   Passed    0.46 sec
+      Start 40: hipcub.WarpStore
+13/17 Test #40: hipcub.WarpStore .................   Passed    0.36 sec
+      Start 41: hipcub.Iterators
+14/17 Test #41: hipcub.Iterators .................   Passed    0.56 sec
+      Start 42: hipcub.Thread
+15/17 Test #42: hipcub.Thread ....................   Passed    0.62 sec
+      Start 43: hipcub.ThreadOperators
+16/17 Test #43: hipcub.ThreadOperators ...........   Passed    0.60 sec
+      Start 44: hipcub.ThreadSort
+17/17 Test #44: hipcub.ThreadSort ................   Passed    4.69 sec
+
+100% tests passed, 0 tests failed out of 17
+
+Total Test time (real) = 112.50 sec
