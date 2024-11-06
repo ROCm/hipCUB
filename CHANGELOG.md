@@ -5,14 +5,17 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 ## (Unreleased) hipCUB-x.x.x for ROCm 6.4.0
 
 ### Added
+* Added regression tests to `rtest.py`. Regression tests are a subset of tests that caused hardware problems for past emulation environments.
+  * Can be run with `python rtest.py [--emulation|-e|--test|-t]=regression`
 * Added `ForEach`, `ForEachN`, `ForEachCopy`, `ForEachCopyN` and `Bulk` functions to have parity with CUB.
 * Added the `hipcub::CubVector` type for CUB parity.
-* Added `--emulation` option added for `rtest.py`
+* Added `--emulation` option for `rtest.py`
+* Unit tests can be ran with `[--emulation|-e|--test|-t]=<test_name>`
 
 ### Changed
 * Edited smoke test options, which runs a subset of the unit tests and ensuring that less than 2gb of VRAM will be used
   * Smoke tests can be ran with `[--emulation|-e|--test|-t]=smoke`
-* `--test|-t` no longer a required flag for `rtest.py`, instead user can use either `--emulation|-e` or `--test|-t` but not both
+* `--test|-t` is no longer a required flag for `rtest.py`. Instead, the user can use either `--emulation|-e` or `--test|-t`, but not both.
 
 ## hipCUB-3.3.0 for ROCm 6.3.0
 
