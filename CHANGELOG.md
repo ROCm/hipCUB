@@ -5,7 +5,7 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 ## (Unreleased) hipCUB-x.x.x for ROCm 6.4.0
 
 ### Added
-* Added regression tests to `rtest.py`. Regression tests are a subset of tests that caused hardware problems for past emulation environments.
+* Added regression tests to `rtest.py`. These tests recreate scenarios that have caused hardware problems in past emulation environments. Use `python rtest.py [--emulation|-e|--test|-t]=regression` to run these tests.
   * Can be run with `python rtest.py [--emulation|-e|--test|-t]=regression`
 * Added `ForEach`, `ForEachN`, `ForEachCopy`, `ForEachCopyN` and `Bulk` functions to have parity with CUB.
 * Added the `hipcub::CubVector` type for CUB parity.
