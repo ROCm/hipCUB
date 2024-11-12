@@ -12,7 +12,7 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
   * Unit tests can be ran with `[--emulation|-e|--test|-t]=<test_name>`
 
 ### Changed
-* Changed subset of tests to be ran for smoke tests such that it will complete in faster run-time and to never exceed 2GB of vram usage. Use `python rtest.py [--emulation|-e|--test|-t]=smoke` to run these tests.
+* Changed the subset of tests that are run for smoke tests such that the smoke test will complete with faster run-time and to never exceed 2GB of vram usage. Use `python rtest.py [--emulation|-e|--test|-t]=smoke` to run these tests.
 * The `rtest.py` options have changed. `rtest.py` is now run with at least either `--test|-t` or `--emulation|-e`, but not both options.
 
 ## hipCUB-3.3.0 for ROCm 6.3.0
