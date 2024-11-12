@@ -9,7 +9,7 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * Added `ForEach`, `ForEachN`, `ForEachCopy`, `ForEachCopyN` and `Bulk` functions to have parity with CUB.
 * Added the `hipcub::CubVector` type for CUB parity.
 * Added `--emulation` option for `rtest.py`
-  * Unit tests can be ran with `[--emulation|-e|--test|-t]=<test_name>`
+  * Unit tests can be run with `[--emulation|-e|--test|-t]=<test_name>`
 
 ### Changed
 * Changed the subset of tests that are run for smoke tests such that the smoke test will complete with faster run-time and to never exceed 2GB of vram usage. Use `python rtest.py [--emulation|-e|--test|-t]=smoke` to run these tests.
