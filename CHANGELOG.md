@@ -10,7 +10,7 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 
 ### Changed
 
-* Changed the default value of `rmake.py -a` to `gfx906:xnack-,gfx1030,gfx1100,gfx1101,gfx1102,gfx1151,gfx1200,gfx1201`.
+* Changed the default value of `rmake.py -a` to `default_gpus`. This is equivalent to `gfx906:xnack-,gfx1030,gfx1100,gfx1101,gfx1102,gfx1151,gfx1200,gfx1201`.
 * The NVIDIA backend now requires CUB, Thrust, and libcu++ 2.3.2.
 
 ### Resolved issues
