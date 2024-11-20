@@ -18,25 +18,19 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.5.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
 * Changed the C++ version from 14 to 17. C++14 will be deprecated in the next major release.
 
-## hipCUB-3.3.0 for ROCm 6.3.0
-
-### Fixed
-* Not all headers in hipCUB included `config.hpp` which could have resulted in build errors.
+## hipCUB 3.3.0 for ROCm 6.3.0
 
 ### Added
+
 * Support for large indices in `hipcub::DeviceSegmentedReduce::*` has been added, with the exception of `DeviceSegmentedReduce::Arg*`. Although rocPRIM's backend provides support for all reduce variants, CUB does not support large indices in `DeviceSegmentedReduce::Arg*`. For this reason, large index support is not available for `hipcub::DeviceSegmentedReduce::Arg*`.
-* Add -t smoke option in rtest.py. It will run a subset of tests such that the total test time is in 5 minutes. Use python3 ./rtest.py --test smoke or python3 ./rtest.py -t smoke to execute smoke test.
-* Add inplace overloads of `DeviceScan` functions.
-* Add inplace overloads of `DeviceSelect::Flagged` and `DeviceSelect::If`.
-* Add `DeviceReduce::TransformReduce`.
-* Add `DeviceSelect::UniqueByKey` overload with `equality_op`.
-* Add support for large indices in `DeviceSelect::UniqueByKey`.
 
 ### Changed
-* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.4.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+
+* Changed the default value of `rmake.py -a` to `default_gpus`. This is equivalent to `gfx906:xnack-,gfx1030,gfx1100,gfx1101,gfx1102,gfx1151,gfx1200,gfx1201`.
+* The NVIDIA backend now requires CUB, Thrust, and libcu++ 2.3.2.
 
 ### Resolved issues
-
+* Fixed an issue in `rmake.py` where the list storing cmake options would contain individual characters instead of a full string of options.
 * Fixed an issue where `config.hpp` was not included in all hipCUB headers, resulting in build errors.
 
 ## hipCUB-3.2.0 for ROCm 6.2.0
