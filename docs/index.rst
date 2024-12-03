@@ -19,6 +19,13 @@ The documentation is structured as follows:
 
 .. grid:: 2
 
+  .. grid-item-card:: Installation
+
+    * :doc:`Prerequisites <install/hipCUB-prerequisites>`
+    * :doc:`Installation overview <install/hipCUB-install-overview>`
+    * :doc:`Installing on Windows <install/hipCUB-install-on-Windows>`
+    * :doc:`Installing on Linux and Windows with CMake <install/hipCUB-install-with-cmake>`
+
   .. grid-item-card:: API Reference
 
     * :ref:`data-type-support`
