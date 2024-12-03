@@ -1,7 +1,6 @@
 /******************************************************************************
- * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
- * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2021-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
+ * Modifications Copyright (c) 2024, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -14,10 +13,10 @@
  *       names of its contributors may be used to endorse or promote products
  *       derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL NVIDIA CORPORATION BE LIABLE FOR ANY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL NVIDIA CORPORATION BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
@@ -27,14 +26,13 @@
  *
  ******************************************************************************/
 
-#ifndef HIPCUB_TEX_REF_INPUT_ITERATOR_HPP_
-#define HIPCUB_TEX_REF_INPUT_ITERATOR_HPP_
+#ifndef HIPCUB_DEVICE_DEVICE_FOR_HPP_
+#define HIPCUB_DEVICE_DEVICE_FOR_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "../backend/rocprim/iterator/tex_ref_input_iterator.hpp"
+    #include "../backend/rocprim/device/device_for.hpp"
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "../backend/cub/iterator/tex_ref_input_iterator.hpp"
-    #include "../config.hpp"
+    #include "../backend/cub/device/device_for.hpp"
 #endif
 
-#endif // HIPCUB_ITERATOR_DISCARD_OUTPUT__HPP_
+#endif // HIPCUB_DEVICE_DEVICE_FOR_HPP_

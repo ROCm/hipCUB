@@ -41,7 +41,7 @@
  #endif
 
 #include <cstring>
-#include <iosfwd>
+#include <ostream>
 
 #ifdef __GNUC__
 // There's a ton of type-punning going on in this file.
@@ -69,8 +69,23 @@ struct half_t
     }
 
     /// Constructor from integer
-    __host__ __device__ __forceinline__
-    half_t(int a)
+    __host__ __device__ __forceinline__ half_t(int a)
+    {
+        *this = half_t(float(a));
+    }
+
+    /// Constructor from std::size_t
+    __host__ __device__ __forceinline__ half_t(std::size_t a)
+    {
+        *this = half_t(float(a));
+    }
+
+    /// Constructor from unsigned long long int
+    template<typename T,
+             typename = typename std::enable_if<
+                 std::is_same<T, unsigned long long int>::value
+                 && (!std::is_same<std::size_t, unsigned long long int>::value)>::type>
+    __host__ __device__ __forceinline__ half_t(T a)
     {
         *this = half_t(float(a));
     }
@@ -220,20 +235,31 @@ struct half_t
 
     /// Multiply
     __host__ __device__ __forceinline__
-    half_t operator*(const half_t &other)
+    half_t
+        operator*(const half_t& other) const
     {
         return half_t(float(*this) * float(other));
     }
 
     /// Divide
-    __host__ __device__ __forceinline__ half_t operator/(const half_t& other) const
+    __host__ __device__ __forceinline__
+    half_t&
+        operator/=(const half_t& other)
     {
-        return half_t(float(*this) / float(other));
+        return *this = half_t(float(*this) / float(other));
+    }
+
+    friend __host__ __device__ __forceinline__
+    half_t
+        operator/(half_t self, const half_t& other)
+    {
+        return self /= other;
     }
 
     /// Add
     __host__ __device__ __forceinline__
-    half_t operator+(const half_t &other)
+    half_t
+        operator+(const half_t& other) const
     {
         return half_t(float(*this) + float(other));
     }
