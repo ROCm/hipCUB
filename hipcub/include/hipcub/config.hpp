@@ -94,6 +94,7 @@ END_HIPCUB_NAMESPACE
 #define HIPCUB_HOST __host__
 #define HIPCUB_DEVICE __device__
 #define HIPCUB_HOST_DEVICE __host__ __device__
+#define HIPCUB_FORCEINLINE __forceinline__
 #define HIPCUB_SHARED_MEMORY __shared__
 
 // Helper macros to disable warnings in clang
@@ -110,6 +111,12 @@ END_HIPCUB_NAMESPACE
 #define HIPCUB_CLANG_SUPPRESS_WARNING_POP
 #define HIPCUB_CLANG_SUPPRESS_WARNING_WITH_PUSH(w)
 #endif // __clang__
+
+#define HIPCUB_CLANG_SUPPRESS_DEPRECATED_PUSH     \
+    HIPCUB_CLANG_SUPPRESS_WARNING_PUSH            \
+    HIPCUB_CLANG_SUPPRESS_WARNING("-Wdeprecated") \
+    HIPCUB_CLANG_SUPPRESS_WARNING("-Wdeprecated-declarations")
+#define HIPCUB_CLANG_SUPPRESS_DEPRECATED_POP HIPCUB_CLANG_SUPPRESS_WARNING_POP
 
 /// hipCUB error reporting macro (prints error messages to stderr)
 #if (defined(DEBUG) || defined(_DEBUG)) && !defined(HIPCUB_STDERR)

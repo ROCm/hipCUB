@@ -30,6 +30,7 @@ include:
         - /deps-format.yaml
         - /deps-rocm.yaml
         - /deps-nvcc.yaml
+        - /deps-compiler-acceleration.yaml
         - /gpus-rocm.yaml
         - /gpus-nvcc.yaml
         - /rules.yaml
@@ -66,9 +67,11 @@ copyright-date:
   extends:
     - .deps:rocm
     - .deps:cmake-minimum
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:rocm", before_script]
     - !reference [".deps:cmake-minimum", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
     # Install rocPRIM from git
     - BRANCH_NAME="$ROCPRIM_GIT_BRANCH"
     - if [ "$CI_COMMIT_BRANCH" = develop -o "$CI_COMMIT_BRANCH" = master ]; then BRANCH_NAME="$CI_COMMIT_BRANCH"
@@ -83,6 +86,9 @@ copyright-date:
       -D BUILD_EXAMPLE=OFF
       -D ROCM_DEP_ROCMCORE=OFF
       -D GPU_TARGETS="$GPU_TARGETS"
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+      -D CMAKE_CXX_STANDARD=14
       -B $CI_PROJECT_DIR/rocPRIM/build
       -S $CI_PROJECT_DIR/rocPRIM
     - cd $CI_PROJECT_DIR/rocPRIM/build
@@ -109,6 +115,9 @@ build:rocm:
       -D GPU_TARGETS="$GPU_TARGETS"
       -D GPU_TEST_TARGETS="$GPU_TARGETS"
       -D ROCM_SYMLINK_LIBS=OFF
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+      -D CMAKE_CXX_STANDARD="$BUILD_VERSION"
       -B $CI_PROJECT_DIR/build
       -S $CI_PROJECT_DIR
     - cmake --build $CI_PROJECT_DIR/build
@@ -126,6 +135,9 @@ build:rocm:
       - $CI_PROJECT_DIR/build/hipcub*.zip
       - $CI_PROJECT_DIR/build/.ninja_log
     expire_in: 2 weeks
+  parallel:
+    matrix:
+      - BUILD_VERSION: [14, 17]
 
 build:rocm-benchmark:
   extends:
@@ -144,6 +156,9 @@ build:rocm-benchmark:
       -D CMAKE_BUILD_TYPE=Release
       -D BUILD_BENCHMARK=ON
       -D GPU_TARGETS="$GPU_TARGETS"
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+      -D CMAKE_CXX_STANDARD=14
       -B $CI_PROJECT_DIR/build
       -S $CI_PROJECT_DIR
     - cmake --build $CI_PROJECT_DIR/build
@@ -167,6 +182,7 @@ test:rocm:
     - cd $CI_PROJECT_DIR/build
     - cmake
       -D CMAKE_PREFIX_PATH=/opt/rocm
+      -D CMAKE_CXX_STANDARD=14
       -P $CI_PROJECT_DIR/cmake/GenerateResourceSpec.cmake
     - cat ./resources.json
     # Parallel execution (with other AMDGPU processes) can oversubscribe the SDMA queue.
@@ -222,6 +238,7 @@ benchmark:rocm:
       -G Ninja
       -D CMAKE_CXX_FLAGS="-Wall -Wextra -Werror"
       "$GPU_TARGETS_ARG"
+      -D CMAKE_CXX_STANDARD=14
       -S $CI_PROJECT_DIR/test/extra
       -B $CI_PROJECT_DIR/build/package_test
     - cmake --build $CI_PROJECT_DIR/build/package_test
@@ -242,6 +259,7 @@ benchmark:rocm:
     - cmake
       -G Ninja
       -D BUILD_TEST=OFF
+      -D CMAKE_CXX_STANDARD=14
       -S $CI_PROJECT_DIR
       -B $CI_PROJECT_DIR/build_only_install
     # Preserve $PATH when sudoing
@@ -283,9 +301,11 @@ test:rocm_install:
     - .deps:nvcc
     - .gpus:nvcc-gpus
     - .deps:cmake-minimum
+    - .deps:compiler-acceleration
   before_script:
     - !reference [".deps:nvcc", before_script]
     - !reference [".deps:cmake-minimum", before_script]
+    - !reference [".deps:compiler-acceleration", before_script]
 
 build:nvcc:
   stage: build
@@ -304,6 +324,10 @@ build:nvcc:
       -D BUILD_EXAMPLE=ON
       -D NVGPU_TARGETS="$GPU_TARGETS"
       -D ROCM_SYMLINK_LIBS=OFF
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+      -D CMAKE_CUDA_COMPILER_LAUNCHER=phc_sccache_cuda
+      -D CMAKE_CXX_STANDARD="$BUILD_VERSION"
       -B $CI_PROJECT_DIR/build
       -S $CI_PROJECT_DIR
     - cmake --build $CI_PROJECT_DIR/build
@@ -321,6 +345,9 @@ build:nvcc:
       - $CI_PROJECT_DIR/build/hipcub*.zip
       - $CI_PROJECT_DIR/build/.ninja_log
     expire_in: 2 weeks
+  parallel:
+    matrix:
+      - BUILD_VERSION: [14, 17]
 
 build:nvcc-benchmark:
   stage: build
@@ -337,6 +364,10 @@ build:nvcc-benchmark:
       -D CMAKE_BUILD_TYPE=Release
       -D BUILD_BENCHMARK=ON
       -D NVGPU_TARGETS="$GPU_TARGETS"
+      -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
+      -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
+      -D CMAKE_CUDA_COMPILER_LAUNCHER=phc_sccache_cuda
+      -D CMAKE_CXX_STANDARD=14
       -B $CI_PROJECT_DIR/build
       -S $CI_PROJECT_DIR
     - cmake --build $CI_PROJECT_DIR/build

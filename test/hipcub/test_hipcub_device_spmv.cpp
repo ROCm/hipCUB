@@ -30,24 +30,24 @@
 
 hipcub::CachingDeviceAllocator g_allocator;
 
-static constexpr float alpha = 1.0f;
-static constexpr float beta = 0.0f;
+static constexpr float alpha_const = 1.0f;
+static constexpr float beta_const  = 0.0f;
 
 // Params for tests
-template<
-    class Type,
-    int32_t Grid2D = -1,
-    int32_t Grid3D = -1,
-    int32_t Wheel = -1,
-    int32_t Dense = -1
->
+template<class Type,
+         int32_t Grid2D    = -1,
+         int32_t Grid3D    = -1,
+         int32_t Wheel     = -1,
+         int32_t Dense     = -1,
+         bool    UseGraphs = false>
 struct DeviceSpmvParams
 {
-    using value_type = Type;
-    static constexpr int32_t grid_2d = Grid2D;
-    static constexpr int32_t grid_3d = Grid3D;
-    static constexpr int32_t wheel   = Wheel;
-    static constexpr int32_t dense   = Dense;
+    using value_type                    = Type;
+    static constexpr int32_t grid_2d    = Grid2D;
+    static constexpr int32_t grid_3d    = Grid3D;
+    static constexpr int32_t wheel      = Wheel;
+    static constexpr int32_t dense      = Dense;
+    static constexpr bool    use_graphs = UseGraphs;
 };
 
 // ---------------------------------------------------------
@@ -58,16 +58,17 @@ template<class Params>
 class HipcubDeviceSpmvTests : public ::testing::Test
 {
 public:
-    using value_type = typename Params::value_type;
-    static constexpr int32_t grid_2d = Params::grid_2d;
-    static constexpr int32_t grid_3d = Params::grid_3d;
-    static constexpr int32_t wheel   = Params::wheel;
-    static constexpr int32_t dense   = Params::dense;
+    using value_type                    = typename Params::value_type;
+    static constexpr int32_t grid_2d    = Params::grid_2d;
+    static constexpr int32_t grid_3d    = Params::grid_3d;
+    static constexpr int32_t wheel      = Params::wheel;
+    static constexpr int32_t dense      = Params::dense;
+    static constexpr bool    use_graphs = Params::use_graphs;
 };
 
-typedef ::testing::Types<
-    DeviceSpmvParams<float, 4, 0, 0, 0>
-> HipcubDeviceSpmvTestsParams;
+typedef ::testing::Types<DeviceSpmvParams<float, 4, 0, 0, 0>,
+                         DeviceSpmvParams<float, 4, 0, 0, 0, true>>
+    HipcubDeviceSpmvTestsParams;
 
 template<typename T, typename OffsetType>
 static void
@@ -146,6 +147,11 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
     constexpr int32_t dense   = TestFixture::dense;
 
     hipStream_t stream = 0; // default
+    if(TestFixture::use_graphs)
+    {
+        // Default stream does not support hipGraph stream capture, so create one
+        HIP_CHECK(hipStreamCreateWithFlags(&stream, hipStreamNonBlocking));
+    }
 
     CooMatrix<T, OffsetType> coo_matrix;
     generate_matrix(coo_matrix, grid_2d, grid_3d, wheel, dense);
@@ -166,7 +172,7 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
         vector_y_in[row] = 1.0;
 
     // Compute reference answer
-    SpmvGold(csr_matrix, vector_x, vector_y_in, vector_y_out, alpha, beta);
+    SpmvGold(csr_matrix, vector_x, vector_y_in, vector_y_out, alpha_const, beta_const);
 
     // Allocate and initialize GPU problem
     hipcub::DeviceSpmv::SpmvParams<T, OffsetType> params;
@@ -180,8 +186,8 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
     params.num_rows     = csr_matrix.num_rows;
     params.num_cols     = csr_matrix.num_cols;
     params.num_nonzeros = csr_matrix.num_nonzeros;
-    params.alpha        = alpha;
-    params.beta         = beta;
+    params.alpha        = alpha_const;
+    params.beta         = beta_const;
 
     HIP_CHECK(hipMemcpy(params.d_values,            csr_matrix.values,         sizeof(T) * csr_matrix.num_nonzeros, hipMemcpyHostToDevice));
     HIP_CHECK(hipMemcpy(params.d_row_end_offsets,   csr_matrix.row_offsets,    sizeof(OffsetType) * (csr_matrix.num_rows + 1), hipMemcpyHostToDevice));
@@ -211,6 +217,12 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
     HIP_CHECK(g_allocator.DeviceAllocate(&d_temp_storage, temp_storage_bytes));
     HIP_CHECK(hipDeviceSynchronize());
 
+    hipGraph_t graph;
+    if(TestFixture::use_graphs)
+    {
+        graph = test_utils::createGraphHelper(stream);
+    }
+
     HIP_CHECK(hipcub::DeviceSpmv::CsrMV(d_temp_storage,
                                         temp_storage_bytes,
                                         params.d_values,
@@ -222,6 +234,12 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
                                         params.num_cols,
                                         params.num_nonzeros,
                                         stream));
+
+    hipGraphExec_t graph_instance;
+    if(TestFixture::use_graphs)
+    {
+        graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+    }
 
     HIP_CHECK(hipMemcpy(vector_y_in, params.d_vector_y, sizeof(T) * params.num_rows, hipMemcpyDeviceToHost));
 
@@ -235,5 +253,11 @@ TYPED_TEST(HipcubDeviceSpmvTests, Spmv)
     {
         ASSERT_NO_FATAL_FAILURE(test_utils::assert_near(vector_y_in[i], vector_y_out[i], diff))
             << "where index = " << i;
+    }
+
+    if(TestFixture::use_graphs)
+    {
+        test_utils::cleanupGraphHelper(graph, graph_instance);
+        HIP_CHECK(hipStreamDestroy(stream));
     }
 }
