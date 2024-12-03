@@ -10,6 +10,9 @@ def runCI =
     
     def prj = new rocProject('hipCUB', 'Static Library PreCheckin')
 
+    prj.libraryDependencies = ["rocPRIM"]
+    prj.timeout.compile = 500
+
     def nodes = new dockerNodes(nodeDetails, jobName, prj)
 
     def commonGroovy
@@ -55,6 +58,7 @@ ci: {
                        "rocm-docker":([ubuntu16:['gfx900'],centos7:['gfx906'],sles15sp1:['gfx908']])]
     jobNameList = auxiliary.appendJobNameList(jobNameList)
 
+    auxiliary.registerDependencyBranchParameter(["rocPRIM"])
     propertyList.each 
     {
         jobName, property->
