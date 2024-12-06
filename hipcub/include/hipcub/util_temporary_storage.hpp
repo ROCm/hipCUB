@@ -31,9 +31,9 @@
 #define HIPCUB_UTIL_TEMPORARY_STORAGE_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "backend/rocprim/util_temporary_storage.hpp"
+    #include "backend/rocprim/util_temporary_storage.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "backend/cub/util_temporary_storage.hpp"
+    #include "backend/cub/util_temporary_storage.hpp" // IWYU pragma: export
 #endif
 
 #endif // HIPCUB_UTIL_TEMPORARY_STORAGE_HPP_

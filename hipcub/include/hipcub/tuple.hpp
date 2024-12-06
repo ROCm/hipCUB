@@ -24,9 +24,9 @@
 #include "config.hpp"
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "./backend/rocprim/tuple.hpp"
+    #include "./backend/rocprim/tuple.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "./backend/cub/tuple.hpp"
+    #include "./backend/cub/tuple.hpp" // IWYU pragma: export
 #endif
 
 #endif // HIPCUB_TUPLE_HPP_

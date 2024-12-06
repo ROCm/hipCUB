@@ -36,10 +36,10 @@
         #define HIPCUB_THREAD_STORE_USE_CACHE_MODIFIERS 1
     #endif
 
-    #include "../backend/rocprim/thread/thread_store.hpp"
+    #include "../backend/rocprim/thread/thread_store.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
     #include "../config.hpp"
-    #include <cub/thread/thread_store.cuh>
+    #include <cub/thread/thread_store.cuh> // IWYU pragma: export
 #endif
 
 #endif

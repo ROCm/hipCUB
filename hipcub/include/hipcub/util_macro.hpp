@@ -29,9 +29,9 @@
 #define HIPCUB_UTIL_MACRO_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "backend/rocprim/util_macro.hpp"
+    #include "backend/rocprim/util_macro.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "backend/cub/util_macro.hpp"
+    #include "backend/cub/util_macro.hpp" // IWYU pragma: export
 #endif
 
 #endif // HIPCUB_UTIL_MACRO_HPP_

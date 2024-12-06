@@ -31,10 +31,10 @@
 #define HIPCUB_ITERATOR_CACHE_MODIFIED_INPUT_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "../backend/rocprim/iterator/cache_modified_input_iterator.hpp"
+    #include "../backend/rocprim/iterator/cache_modified_input_iterator.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
     #include "../config.hpp"
-    #include <cub/iterator/cache_modified_input_iterator.cuh>
+    #include <cub/iterator/cache_modified_input_iterator.cuh> // IWYU pragma: export
 #endif
 
 #endif

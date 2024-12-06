@@ -34,7 +34,7 @@
 
 #include <rocprim/block/block_load.hpp>
 
-#include "block_load_func.hpp"
+#include "block_load_func.hpp" // IWYU pragma: export
 
 #include <type_traits>
 

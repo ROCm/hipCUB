@@ -30,9 +30,9 @@
 #define HIPCUB_DEVICE_DEVICE_FOR_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "../backend/rocprim/device/device_for.hpp"
+    #include "../backend/rocprim/device/device_for.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "../backend/cub/device/device_for.hpp"
+    #include "../backend/cub/device/device_for.hpp" // IWYU pragma: export
 #endif
 
 #endif // HIPCUB_DEVICE_DEVICE_FOR_HPP_

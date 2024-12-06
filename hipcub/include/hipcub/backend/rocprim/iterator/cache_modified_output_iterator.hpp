@@ -32,9 +32,7 @@
 
 #include "../../../config.hpp"
 
-#include "../thread/thread_load.hpp"
 #include "../thread/thread_store.hpp"
-#include "../util_type.hpp"
 
 #include "iterator_category.hpp"
 

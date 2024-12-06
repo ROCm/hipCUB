@@ -45,6 +45,7 @@
     #define HIPCUB_RUNTIME_FUNCTION __host__
 
     #include <rocprim/device/config_types.hpp>
+    #include <rocprim/intrinsics/thread.hpp>
 
 BEGIN_HIPCUB_NAMESPACE
 namespace detail

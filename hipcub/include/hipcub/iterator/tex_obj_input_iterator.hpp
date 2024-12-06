@@ -31,9 +31,9 @@
 #define HIPCUB_TEX_OBJ_INPUT_ITERATOR_HPP_
 
 #ifdef __HIP_PLATFORM_AMD__
-    #include "../backend/rocprim/iterator/tex_obj_input_iterator.hpp"
+    #include "../backend/rocprim/iterator/tex_obj_input_iterator.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "../backend/cub/iterator/tex_obj_input_iterator.hpp"
+    #include "../backend/cub/iterator/tex_obj_input_iterator.hpp" // IWYU pragma: export
     #include "../config.hpp"
 #endif
 

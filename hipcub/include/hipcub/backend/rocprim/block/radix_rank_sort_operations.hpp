@@ -36,12 +36,11 @@
  #define HIPCUB_ROCPRIM_BLOCK_RADIX_RANK_SORT_OPERATIONS_HPP_
 
 #include "../../../config.hpp"
+#include "../util_type.hpp"
 
 #include <rocprim/config.hpp>
 #include <rocprim/detail/various.hpp>
 #include <rocprim/type_traits.hpp>
-
-#include <type_traits>
 
 BEGIN_HIPCUB_NAMESPACE
 
