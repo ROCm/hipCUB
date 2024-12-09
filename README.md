@@ -1,7 +1,7 @@
 # hipCUB
 
 > [!NOTE]
-> The published documentation is available at [hipCUB](https://rocm.docs.amd.com/projects/hipCUB/en/latest/index.html) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
+> The published hipCUB documentation is available [here](https://rocm.docs.amd.com/projects/hipCUB/en/latest/) in an organized, easy-to-read format, with search and a table of contents. The documentation source files reside in the `docs` folder of this repository. As with all ROCm projects, the documentation is open source. For more information on contributing to the documentation, see [Contribute to ROCm documentation](https://rocm.docs.amd.com/en/latest/contribute/contributing.html).
 
 hipCUB is a thin wrapper library on top of
 [rocPRIM](https://github.com/ROCm/rocPRIM) or
@@ -12,28 +12,6 @@ hipCUB is a thin wrapper library on top of
 In the [ROCm](https://rocm.docs.amd.com/en/latest/)
 environment, hipCUB uses the rocPRIM library as the backend. On CUDA platforms, it uses CUB as the
 backend.
-
-## Documentation
-
-Documentation for hipCUB is available at
-[https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
-
-To build our documentation locally, run the following code:
-
-```shell
-# Go to the hipCUB docs directory
-cd hipCUB; cd docs
-
-# Install required pip packages
-python3 -m pip install -r .sphinx/requirements.txt
-
-# Build the documentation
-python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
-
-# For e.g. serve the HTML docs locally
-cd _build/html
-python3 -m http.server
-```
 
 ## Requirements
 
@@ -207,6 +185,58 @@ cd hipCUB; cd build
 # [] Fields are optional
 ./benchmark/benchmark_device_<function_name> [--size <size>] [--trials <trials>]
 ```
+
+## Building the documentation locally
+
+### Requirements
+
+#### Doxygen
+
+The build system uses Doxygen [version 1.9.4](https://github.com/doxygen/doxygen/releases/tag/Release_1_9_4). You can try using a newer version, but that might cause issues.
+
+After you have downloaded Doxygen version 1.9.4:
+
+```shell
+# Add doxygen to your PATH
+echo 'export PATH=<doxygen 1.9.4 path>/bin:$PATH' >> ~/.bashrc
+
+# Apply the updated .bashrc
+source ~/.bashrc
+
+# Confirm that you are using version 1.9.4
+doxygen --version
+```
+
+#### Python
+
+The build system uses Python version 3.10. You can try using a newer version, but that might cause issues.
+
+You can install Python 3.10 alongside your other Python versions using [pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation):
+
+```shell
+# Install Python 3.10
+pyenv install 3.10
+
+# Create a Python 3.10 virtual environment
+pyenv virtualenv 3.10 venv_hipcub
+
+# Activate the virtual environment
+pyenv activate venv_hipcub
+```
+
+### Building
+
+After cloning this repository, and `cd`ing into it:
+
+```shell
+# Install Python dependencies
+python3 -m pip install -r docs/sphinx/requirements.txt
+
+# Build the documentation
+python3 -m sphinx -T -E -b html -d docs/_build/doctrees -D language=en docs docs/_build/html
+```
+
+You can then open `docs/_build/html/index.html` in your browser to view the documentation.
 
 ## Support
 
