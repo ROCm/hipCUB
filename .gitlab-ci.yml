@@ -41,6 +41,10 @@ stages:
   - test
   - benchmark
 
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_LABELS !~ /CI Skip/
+
 clang-format:
   extends:
     - .lint:clang-format
@@ -113,7 +117,6 @@ build:rocm:
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
       -D GPU_TARGETS="$GPU_TARGETS"
-      -D GPU_TEST_TARGETS="$GPU_TARGETS"
       -D ROCM_SYMLINK_LIBS=OFF
       -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
       -D CMAKE_CXX_COMPILER_LAUNCHER=phc_sccache_cxx
@@ -170,13 +173,15 @@ build:rocm-benchmark:
       - $CI_PROJECT_DIR/build/CMakeCache.txt
     expire_in: 2 weeks
 
-test:rocm:
+.test:rocm:
   stage: test
   needs:
     - build:rocm
+  tags:
+    - rocm
+    - $GPU
   extends:
     - .rocm
-    - .gpus:rocm
     - .rules:test
   script:
     - cd $CI_PROJECT_DIR/build
@@ -191,9 +196,35 @@ test:rocm:
     - HSA_ENABLE_SDMA=0 ctest
       --output-on-failure
       --repeat-until-fail 2
-      --tests-regex "$GPU_TARGET"
       --resource-spec-file ./resources.json
       --parallel $PARALLEL_JOBS
+
+test:rocm-any-gpu:
+  variables:
+    GPU: ""
+    PARALLEL_JOBS: 1
+  extends:
+    - .test:rocm
+  rules:
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ &&
+          $CI_MERGE_REQUEST_LABELS !~ /Arch::/
+      when: always
+    - when: never
+
+test:rocm-label-arch:
+  extends:
+    - .gpus:rocm
+    - .test:rocm
+    - .rules:arch-labels
+
+test:rocm-all-gpus:
+  extends:
+    - .gpus:rocm
+    - .test:rocm
+  rules:
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /Draft:/'
+      when: always
+    - when: never
 
 .benchmark:
   stage: benchmark
@@ -379,13 +410,15 @@ build:nvcc-benchmark:
       - $CI_PROJECT_DIR/build/CMakeCache.txt
     expire_in: 2 weeks
 
-test:nvcc:
+.test:nvcc:
   stage: test
+  tags:
+    - nvcc
+    - $GPU
   needs:
     - build:nvcc
   extends:
     - .nvcc
-    - .gpus:nvcc
     - .rules:test
   before_script:
     # This is only needed because of the legacy before_script in .gpus:nvcc would otherwise overwrite before_script
@@ -393,6 +426,26 @@ test:nvcc:
   script:
     - cd $CI_PROJECT_DIR/build
     - ctest --output-on-failure --repeat-until-fail 2
+
+test:nvcc-any-gpu:
+  variables:
+    GPU: ""
+    PARALLEL_JOBS: 1
+  extends:
+    - .test:nvcc
+  rules:
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/
+      when: always
+    - when: never
+
+test:nvcc-all-gpus:
+  extends:
+    - .gpus:nvcc
+    - .test:nvcc
+  rules:
+    - if: '$CI_MERGE_REQUEST_TITLE !~ /Draft:/'
+      when: always
+    - when: never
 
 benchmark:nvcc:
   needs:
