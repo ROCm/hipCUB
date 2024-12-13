@@ -182,7 +182,6 @@ build:rocm-benchmark:
     - $GPU
   extends:
     - .rocm
-    - .rules:test
   script:
     - cd $CI_PROJECT_DIR/build
     - cmake
@@ -206,10 +205,7 @@ test:rocm-any-gpu:
   extends:
     - .test:rocm
   rules:
-    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ &&
-          $CI_MERGE_REQUEST_LABELS !~ /Arch::/
-      when: always
-    - when: never
+    - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/ && $CI_MERGE_REQUEST_LABELS !~ /Arch::/
 
 test:rocm-label-arch:
   extends:
@@ -218,13 +214,12 @@ test:rocm-label-arch:
     - .rules:arch-labels
 
 test:rocm-all-gpus:
+  variables:
+    SHOULD_BE_UNDRAFTED: "true"
   extends:
     - .gpus:rocm
     - .test:rocm
-  rules:
-    - if: '$CI_MERGE_REQUEST_TITLE !~ /Draft:/'
-      when: always
-    - when: never
+    - .rules:test
 
 .benchmark:
   stage: benchmark
@@ -419,7 +414,6 @@ build:nvcc-benchmark:
     - build:nvcc
   extends:
     - .nvcc
-    - .rules:test
   before_script:
     # This is only needed because of the legacy before_script in .gpus:nvcc would otherwise overwrite before_script
     - !reference [.nvcc, before_script]
@@ -435,17 +429,14 @@ test:nvcc-any-gpu:
     - .test:nvcc
   rules:
     - if: $CI_MERGE_REQUEST_TITLE =~ /Draft:/
-      when: always
-    - when: never
 
 test:nvcc-all-gpus:
+  variables:
+    SHOULD_BE_UNDRAFTED: "true"
   extends:
     - .gpus:nvcc
     - .test:nvcc
-  rules:
-    - if: '$CI_MERGE_REQUEST_TITLE !~ /Draft:/'
-      when: always
-    - when: never
+    - .rules:test
 
 benchmark:nvcc:
   needs:
