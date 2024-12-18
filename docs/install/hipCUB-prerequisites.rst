@@ -27,7 +27,8 @@ On NVIDIA GPUs:
 
 The CCCL library is automatically downloaded and built by the CMake script. If libcu++ isn't found on the system, it will be downloaded from the CCCL repository.
 
-On Windows:
+On Microsoft Windows:
+
 
 * Python verion 3.6 or later
 * Visual Studio 2019 with Clang support
