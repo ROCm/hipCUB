@@ -8,7 +8,7 @@ hipCUB prerequisites
 
 hipCUB has the following prerequisites on all platforms:
 
-* CMake version 3.16 or higher
+* `CMake <https://cmake.org/>`_ version 3.16 or higher
 
 On AMD GPUs:
 
