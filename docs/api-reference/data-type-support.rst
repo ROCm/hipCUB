@@ -18,6 +18,6 @@ hipCUB supports the following data types on both ROCm and CUDA:
 
 ``float8``, ``bfloat8``, and ``tensorfloat32`` are not supported by hipCUB on neither ROCm nor CUDA.
 
-The Nvidia back end does not support ``float16`` nor ``bfloat16`` with the following API calls: ``block_adjacent_difference``, ``device_adjacent_difference``, ``device_reduce``, ``device_scan``, ``device_segmented_reduce`` and ``device_select``.
+The NVIDIA back end does not support ``float16`` nor ``bfloat16`` with the following API calls: ``block_adjacent_difference``, ``device_adjacent_difference``, ``device_reduce``, ``device_scan``, ``device_segmented_reduce`` and ``device_select``.
 
-The Nvidia backend also does not support ``bfloat16`` with ``device_histogram``.
+The NVIDIA backend also does not support ``bfloat16`` with ``device_histogram``.
