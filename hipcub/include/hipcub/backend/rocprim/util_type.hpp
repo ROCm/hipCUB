@@ -53,19 +53,7 @@ using NullType = ::rocprim::empty_type;
 #endif
 
 #ifndef HIPCUB_IS_INT128_ENABLED
-    #if defined(__HIPCC_RTC__)
-        #if defined(__HIPCC_RTC_INT128__)
-            #define HIPCUB_IS_INT128_ENABLED 1
-        #endif // !defined(__HIPCC_RTC_INT128__)
-    #else // !defined(__HIPCC_RTC__)
-        #if HIP_VERSION >= 50400000
-            #if(HIPCUB_HOST_COMPILER == HIPCUB_HOST_COMPILER_GCC)                         \
-                || (HIPCUB_HOST_COMPILER == HIPCUB_HOST_COMPILER_CLANG) || defined(__ICC) \
-                || defined(__GNUC__) || defined(__clang__)
-                #define HIPCUB_IS_INT128_ENABLED 1
-            #endif // GCC || CLANG || ICC
-        #endif // VER >= 5.4
-    #endif // !defined(__HIPCC_RTC__)
+    #define HIPCUB_IS_INT128_ENABLED 1
 #endif // !defined(HIPCUB_IS_INT128_ENABLED)
 
 template<bool B, typename T, typename F> struct

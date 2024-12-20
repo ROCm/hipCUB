@@ -1007,7 +1007,6 @@ TEST(HipcubDeviceSegmentedReduceLargeIndicesTests, LargeIndices)
             const size_t min_segment_length = size_t{1} << 31;
             const size_t max_segment_length = std::max(min_segment_length, size);
 
-            std::random_device                    rd;
             std::default_random_engine            gen(seed_value);
             std::uniform_int_distribution<size_t> segment_length_dis(min_segment_length,
                                                                      max_segment_length);

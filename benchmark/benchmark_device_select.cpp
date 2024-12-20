@@ -307,12 +307,11 @@ void run_flagged_if_benchmark(benchmark::State& state,
     state.SetBytesProcessed(state.iterations() * batch_size * size * sizeof(T));
     state.SetItemsProcessed(state.iterations() * batch_size * size);
 
-    hipFree(d_input);
-    hipFree(d_flags);
-    hipFree(d_output);
-    hipFree(d_selected_count_output);
-    hipFree(d_temp_storage);
-    HIP_CHECK(hipDeviceSynchronize());
+    HIP_CHECK(hipFree(d_input));
+    HIP_CHECK(hipFree(d_flags));
+    HIP_CHECK(hipFree(d_output));
+    HIP_CHECK(hipFree(d_selected_count_output));
+    HIP_CHECK(hipFree(d_temp_storage));
 }
 
 template<class T>

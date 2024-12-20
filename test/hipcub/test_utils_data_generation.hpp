@@ -138,15 +138,11 @@ using is_int128 = std::is_same<__int128_t, typename std::remove_cv<T>::type>;
 template<class T>
 using is_uint128 = std::is_same<__uint128_t, typename std::remove_cv<T>::type>;
 #else
-struct dummy_type
-{
-    static constexpr bool value = false;
-};
 template<class T>
-using is_int128 = dummy_type;
+using is_int128 = std::false_type;
 template<class T>
-using is_uint128 = dummy_type;
-#endif
+using is_uint128 = std::false_type;
+#endif // HIPCUB_IS_INT128_ENABLED
 
 template<class T>
 using is_half = std::is_same<test_utils::half, typename std::remove_cv<T>::type>;
