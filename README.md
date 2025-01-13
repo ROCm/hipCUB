@@ -105,10 +105,10 @@ To use hipCUB in a CMake project, we recommended using the package configuration
 
 ```cmake
 # On ROCm hipCUB requires rocPRIM
-find_package(rocprim REQUIRED CONFIG PATHS "/opt/rocm/rocprim")
+find_package(rocprim REQUIRED CONFIG PATHS "/opt/rocm/lib/cmake/rocprim")
 
 # "/opt/rocm" - default install prefix
-find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/hipcub")
+find_package(hipcub REQUIRED CONFIG PATHS "/opt/rocm/lib/cmake/hipcub")
 
 ...
 # On ROCm: includes hipCUB headers and roc::rocprim_hip target
