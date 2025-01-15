@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2024, Advanced Micro Devices, Inc. All rights reserved.
+ * Modifications Copyright (c) 2024-2025, Advanced Micro Devices, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -189,6 +189,16 @@ enum ScanTileStatus
     SCAN_TILE_INVALID   = static_cast<int>(rocprim::detail::prefix_flag::EMPTY),
     SCAN_TILE_PARTIAL   = static_cast<int>(rocprim::detail::prefix_flag::PARTIAL),
     SCAN_TILE_INCLUSIVE = static_cast<int>(rocprim::detail::prefix_flag::COMPLETE),
+};
+
+/**
+ * Enum class used in CUB for specifying the memory order that shall be enforced while reading
+ * and writing the tile status. Not used in rocPRIM backend, but it's present for compatibility.
+ */
+enum class MemoryOrder
+{
+    relaxed,
+    acquire_release
 };
 
 /**

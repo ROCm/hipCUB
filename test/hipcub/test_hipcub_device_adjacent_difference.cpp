@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -135,15 +135,14 @@ public:
     using params = Params;
 };
 
-typedef ::testing::Types<params<int>,
-                         params<int, double>,
-                         params<int8_t, int8_t, true, false>,
-                         params<float, float, false, true>,
-                         params<double, double, true, true>,
-                         params<test_utils::half, test_utils::half>,
-                         params<test_utils::bfloat16, test_utils::bfloat16>,
-                         params<int, int, true, true, true>>
-    Params;
+using Params = ::testing::Types<params<int>,
+                                params<int, double>,
+                                params<int8_t, int8_t, true, false>,
+                                params<float, float, false, true>,
+                                params<double, double, true, true>,
+                                params<test_utils::half, test_utils::half>,
+                                params<test_utils::bfloat16, test_utils::bfloat16>,
+                                params<int, int, true, true, true>>;
 
 TYPED_TEST_SUITE(HipcubDeviceAdjacentDifference, Params);
 

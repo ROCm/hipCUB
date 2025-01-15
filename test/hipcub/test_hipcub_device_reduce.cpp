@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ public:
     static constexpr bool use_graphs = Params::use_graphs;
 };
 
-typedef ::testing::Types<
+using HipcubDeviceReduceTestsParams = ::testing::Types<
     DeviceReduceParams<int, long>,
     DeviceReduceParams<unsigned long>,
     DeviceReduceParams<short>,
@@ -74,8 +74,7 @@ typedef ::testing::Types<
     DeviceReduceParams<test_utils::custom_test_type<float>, test_utils::custom_test_type<float>>,
     DeviceReduceParams<test_utils::custom_test_type<int>, test_utils::custom_test_type<float>>
 #endif
-    >
-    HipcubDeviceReduceTestsParams;
+    >;
 
 TYPED_TEST_SUITE(HipcubDeviceReduceTests, HipcubDeviceReduceTestsParams);
 
@@ -724,13 +723,13 @@ public:
     using output_type = typename Params::output_type;
 };
 
-typedef ::testing::Types<DeviceReduceParams<short, size_t>,
-                         DeviceReduceParams<int, size_t>,
-                         DeviceReduceParams<unsigned int, size_t>,
-                         DeviceReduceParams<unsigned long, size_t>,
-                         DeviceReduceParams<float, size_t>,
-                         DeviceReduceParams<double, size_t>>
-    HipcubDeviceReduceLargeIndicesTestsParams;
+using HipcubDeviceReduceLargeIndicesTestsParams
+    = ::testing::Types<DeviceReduceParams<short, size_t>,
+                       DeviceReduceParams<int, size_t>,
+                       DeviceReduceParams<unsigned int, size_t>,
+                       DeviceReduceParams<unsigned long, size_t>,
+                       DeviceReduceParams<float, size_t>,
+                       DeviceReduceParams<double, size_t>>;
 
 TYPED_TEST_SUITE(HipcubDeviceReduceLargeIndicesTests, HipcubDeviceReduceLargeIndicesTestsParams);
 

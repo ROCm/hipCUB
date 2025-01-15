@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2017-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2017-2025, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -60,7 +60,7 @@ public:
     static constexpr hipcub::CacheStoreModifier store_modifier = Params::store_modifier;
 };
 
-typedef ::testing::Types<
+using ThreadOperationTestParams = ::testing::Types<
     params<int8_t, hipcub::LOAD_CA, hipcub::STORE_WB>,
     params<int16_t, hipcub::LOAD_CA, hipcub::STORE_WB>,
     params<uint8_t, hipcub::LOAD_CA, hipcub::STORE_WB>,
@@ -84,8 +84,7 @@ typedef ::testing::Types<
     params<test_utils::bfloat16, hipcub::LOAD_CV, hipcub::STORE_WB>,
     params<test_utils::half, hipcub::LOAD_CV, hipcub::STORE_WB>,
     params<test_utils::custom_test_type<uint64_t>, hipcub::LOAD_CV, hipcub::STORE_WB>,
-    params<test_utils::custom_test_type<double>, hipcub::LOAD_CV, hipcub::STORE_WB>>
-    ThreadOperationTestParams;
+    params<test_utils::custom_test_type<double>, hipcub::LOAD_CV, hipcub::STORE_WB>>;
 
 TYPED_TEST_SUITE(HipcubThreadOperationTests, ThreadOperationTestParams);
 

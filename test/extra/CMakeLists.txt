@@ -42,7 +42,7 @@ include(VerifyCompiler)
 
 # CUB (only for CUDA platform)
 if(HIP_COMPILER STREQUAL "nvcc")
-  set(CCCL_MINIMUM_VERSION 2.5.0)
+  set(CCCL_MINIMUM_VERSION 2.6.0)
   if(NOT DOWNLOAD_CUB)
     find_package(CUB ${CCCL_MINIMUM_VERSION} CONFIG)
     find_package(Thrust ${CCCL_MINIMUM_VERSION} CONFIG)

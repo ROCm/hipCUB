@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2017-2024 Advanced Micro Devices, Inc. All rights reserved.
+// Copyright (c) 2017-2025 Advanced Micro Devices, Inc. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -54,22 +54,21 @@ public:
     using params = Params;
 };
 
-typedef ::testing::Types<params<int, int, 1, 1>,
-                         params<double, int, 3, 5>,
-                         params<float, int, 1, 10>,
-                         params<unsigned long long, size_t, 1, 30>,
-                         params<int, unsigned int, 20, 100>,
-                         params<float, unsigned long long, 100, 400>,
-                         params<unsigned int, unsigned int, 200, 600>,
-                         params<double, int, 100, 2000>,
-                         params<int, unsigned int, 1000, 5000>,
-                         params<unsigned int, size_t, 2048, 2048>,
-                         params<unsigned int, unsigned int, 1000, 50000>,
-                         params<unsigned long long, unsigned long long, 100000, 100000>,
-                         // Test graph capture
-                         params<int, int, 1, 1, true>,
-                         params<float, int, 1, 10, true>>
-    Params;
+using Params = ::testing::Types<params<int, int, 1, 1>,
+                                params<double, int, 3, 5>,
+                                params<float, int, 1, 10>,
+                                params<unsigned long long, size_t, 1, 30>,
+                                params<int, unsigned int, 20, 100>,
+                                params<float, unsigned long long, 100, 400>,
+                                params<unsigned int, unsigned int, 200, 600>,
+                                params<double, int, 100, 2000>,
+                                params<int, unsigned int, 1000, 5000>,
+                                params<unsigned int, size_t, 2048, 2048>,
+                                params<unsigned int, unsigned int, 1000, 50000>,
+                                params<unsigned long long, unsigned long long, 100000, 100000>,
+                                // Test graph capture
+                                params<int, int, 1, 1, true>,
+                                params<float, int, 1, 10, true>>;
 
 TYPED_TEST_SUITE(HipcubDeviceRunLengthEncode, Params);
 

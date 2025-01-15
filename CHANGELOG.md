@@ -12,8 +12,17 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
   * `ScanTileState`
   * `ReduceByKeyScanTileState`
   * `TilePrefixCallbackOp`
-  
-* gfx950 support
+* Added gfx950 support.
+* Added overload of `BlockScan::InclusiveScan` accepting an initial value that seeds the scan.
+* Added overload of `WarpScan::InclusiveScan` accepting an initial value that seeds the scan.
+
+### Changed
+* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.6.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+
+### Known issues
+
+* The deprecated `BlockAdjacentDifference::FlagHeads`, `BlockAdjacentDifference::FlagTails` and `BlockAdjacentDifference::FlagHeadsAndTails` are not present in CCCL (CUB) from release 2.6.0 on, and thus neither they are in hipCUB's CUB backend for versions strictly greater than 3.4.0. These will be definitely removed from both backends in a future release.
+* `BlockScan::InclusiveScan` for the NVIDIA backend does not compute the block aggregate correctly when passing an initial value parameter. This behavior is not matched by the AMD backend.
 
 ## hipCUB-3.4.0 for ROCm 6.4.0
 
