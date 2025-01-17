@@ -256,7 +256,7 @@ public:
     /// \param[in] temp_storage_bytes
     /// Size in bytes of \t d_temp_storage allocation
     HIPCUB_FORCEINLINE
-    HIPCUB_HOST
+    HIPCUB_HOST_DEVICE
     hipError_t Init(int num_tiles, void* d_temp_storage, size_t /* temp_storage_bytes */)
     {
         // rocprim::detail::lookback_scan_state::create(...) is host only, so this function
@@ -272,7 +272,7 @@ public:
     /// \param[out] temp_storage_bytes
     ///   Size in bytes of \t d_temp_storage allocation
     HIPCUB_FORCEINLINE
-    HIPCUB_HOST
+    HIPCUB_HOST_DEVICE
     static hipError_t AllocationSize(int num_tiles, size_t& temp_storage_bytes)
     {
         // rocprim::detail::lookback_scan_state::create(...) is host only, so this function
