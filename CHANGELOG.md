@@ -15,9 +15,12 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * Added gfx950 support.
 * Added overload of `BlockScan::InclusiveScan` accepting an initial value that seeds the scan.
 * Added overload of `WarpScan::InclusiveScan` accepting an initial value that seeds the scan.
+* Added `UnrolledThreadLoad` and `UnrolledCopy` for CUB parity which do a multiple thread loads or a copy instructions.
+* Added `ThreadLoadVolatilePointer` for CUB parity.
 
 ### Changed
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.6.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
+* Updated `thread_load` API for cuda parity.
 
 ### Known issues
 
