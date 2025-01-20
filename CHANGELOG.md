@@ -19,8 +19,10 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * Added `ThreadLoadVolatilePointer` for CUB parity.
 
 ### Changed
+
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.6.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
 * Updated `thread_load` API for cuda parity.
+* Changed symbol visibility: all kernels now have hidden visibility, inline namespace with the library version is added, e.g. `hipcub::HIPCUB_300400_NS::...`. This allows to link multiple libraries built with different versions of hipCUB.
 
 ### Known issues
 
