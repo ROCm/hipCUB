@@ -168,10 +168,10 @@ TYPED_TEST(HipcubDeviceRunLengthEncode, Encode)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            hipGraph_t graph;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::params::use_graphs)
             {
-                graph = test_utils::createGraphHelper(stream);
+                gHelper.startStreamCapture(stream);
             }
 
             HIP_CHECK(hipcub::DeviceRunLengthEncode::Encode(d_temporary_storage,
@@ -183,10 +183,9 @@ TYPED_TEST(HipcubDeviceRunLengthEncode, Encode)
                                                             size,
                                                             stream));
 
-            hipGraphExec_t graph_instance;
             if(TestFixture::params::use_graphs)
             {
-                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                gHelper.createAndLaunchGraph(stream);
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -224,7 +223,7 @@ TYPED_TEST(HipcubDeviceRunLengthEncode, Encode)
 
             if(TestFixture::params::use_graphs)
             {
-                test_utils::cleanupGraphHelper(graph, graph_instance);
+                gHelper.cleanupGraphHelper();
             }
         }
     }
@@ -347,10 +346,10 @@ TYPED_TEST(HipcubDeviceRunLengthEncode, NonTrivialRuns)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            hipGraph_t graph;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::params::use_graphs)
             {
-                graph = test_utils::createGraphHelper(stream);
+                gHelper.startStreamCapture(stream);
             }
 
             HIP_CHECK(hipcub::DeviceRunLengthEncode::NonTrivialRuns(d_temporary_storage,
@@ -362,10 +361,9 @@ TYPED_TEST(HipcubDeviceRunLengthEncode, NonTrivialRuns)
                                                                     size,
                                                                     stream));
 
-            hipGraphExec_t graph_instance;
             if(TestFixture::params::use_graphs)
             {
-                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                gHelper.createAndLaunchGraph(stream);
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -406,7 +404,7 @@ TYPED_TEST(HipcubDeviceRunLengthEncode, NonTrivialRuns)
 
             if(TestFixture::params::use_graphs)
             {
-                test_utils::cleanupGraphHelper(graph, graph_instance);
+                gHelper.cleanupGraphHelper();
             }
         }
     }
