@@ -185,10 +185,10 @@ struct ScanTileStateConverter<ScanTileState<T, SINGLE_WORD>>
 // line up with CUB.
 enum ScanTileStatus
 {
-    SCAN_TILE_OOB       = static_cast<int>(rocprim::detail::prefix_flag::INVALID),
-    SCAN_TILE_INVALID   = static_cast<int>(rocprim::detail::prefix_flag::EMPTY),
-    SCAN_TILE_PARTIAL   = static_cast<int>(rocprim::detail::prefix_flag::PARTIAL),
-    SCAN_TILE_INCLUSIVE = static_cast<int>(rocprim::detail::prefix_flag::COMPLETE),
+    SCAN_TILE_OOB       = static_cast<int>(rocprim::detail::lookback_scan_prefix_flag::invalid),
+    SCAN_TILE_INVALID   = static_cast<int>(rocprim::detail::lookback_scan_prefix_flag::empty),
+    SCAN_TILE_PARTIAL   = static_cast<int>(rocprim::detail::lookback_scan_prefix_flag::partial),
+    SCAN_TILE_INCLUSIVE = static_cast<int>(rocprim::detail::lookback_scan_prefix_flag::complete),
 };
 
 /**
@@ -227,7 +227,7 @@ private:
 
 public:
     using StatusValueT = T;
-    using StatusWord   = rocprim::detail::prefix_flag;
+    using StatusWord   = rocprim::detail::lookback_scan_prefix_flag;
 
     enum
     {
@@ -374,7 +374,7 @@ private:
 
 public:
     using TempStorage = typename NativeT::storage_type;
-    using StatusWord  = rocprim::detail::prefix_flag;
+    using StatusWord  = rocprim::detail::lookback_scan_prefix_flag;
 
     // 'tile_idx' and 'scan_op' are exposed by CUB as non-const and *technically*
     // available through rocPRIM, but they're protected/private and it's not
