@@ -17,11 +17,13 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * Added overload of `WarpScan::InclusiveScan` accepting an initial value that seeds the scan.
 * Added `UnrolledThreadLoad` and `UnrolledCopy` for CUB parity which do a multiple thread loads or a copy instructions.
 * Added `ThreadLoadVolatilePointer` for CUB parity.
+* Added `IterateThreadStore` struct to execute multiple stores for cuda parity.
+* Added `ThreadStoreVolatilePtr` for cuda parity.
 
 ### Changed
 
 * The NVIDIA backend now requires CUB, Thrust and libcu++ 2.6.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
-* Updated `thread_load` API for cuda parity.
+* Updated `thread_load` and `thread_store` API for cuda parity.
 * Changed symbol visibility: all kernels now have hidden visibility, inline namespace with the library version is added, e.g. `hipcub::HIPCUB_300400_NS::...`. This allows to link multiple libraries built with different versions of hipCUB.
 
 ### Known issues
