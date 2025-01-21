@@ -449,6 +449,7 @@ build:nvcc:
       -D CMAKE_BUILD_TYPE=Release
       -D BUILD_TEST=ON
       -D BUILD_EXAMPLE=ON
+      "$(if [ "$SCHEDULE" == "nightly" ]; then echo "-D BUILD_COMPUTE_SANITIZER=ON"; fi)"
       -D NVGPU_TARGETS="$GPU_TARGETS"
       -D ROCM_SYMLINK_LIBS=OFF
       -D CMAKE_C_COMPILER_LAUNCHER=phc_sccache_c
