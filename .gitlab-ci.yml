@@ -582,6 +582,10 @@ test:doc:
   extends:
     - .rules:test
     - .build:docs
+  artifacts:
+    paths:
+      - $DOCS_DIR/_build/html/
+    expire_in: 2 weeks
 
 scheduled-check-changes:
   extends: .rules:scheduled-check-changes
