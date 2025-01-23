@@ -26,8 +26,12 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 
 ### Known issues
 
-* The deprecated `BlockAdjacentDifference::FlagHeads`, `BlockAdjacentDifference::FlagTails` and `BlockAdjacentDifference::FlagHeadsAndTails` are not present in CCCL (CUB) from release 2.6.0 on, and thus neither they are in hipCUB's CUB backend for versions strictly greater than 3.4.0. These will be definitely removed from both backends in a future release.
+* `BlockAdjacentDifference::FlagHeads`, `BlockAdjacentDifference::FlagTails` and `BlockAdjacentDifference::FlagHeadsAndTails` have been removed from hipCUB's CUB backend. They were already deprecated as of version 2.12.0 of hipCUB and they were removed from CCCL (CUB) as of CCCL's 2.6.0 release.
 * `BlockScan::InclusiveScan` for the NVIDIA backend does not compute the block aggregate correctly when passing an initial value parameter. This behavior is not matched by the AMD backend.
+
+### Upcoming Changes
+
+* `BlockAdjacentDifference::FlagHeads`, `BlockAdjacentDifference::FlagTails` and `BlockAdjacentDifference::FlagHeadsAndTails` were deprecated as of version 2.12.0 of hipCUB, and will be removed from the rocPRIM backend in a future release for the next ROCm major version (ROCm 7.0.0).
 
 ## hipCUB-3.4.0 for ROCm 6.4.0
 
