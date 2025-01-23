@@ -13,17 +13,15 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
   * `ReduceByKeyScanTileState`
   * `TilePrefixCallbackOp`
 * Added gfx950 support.
-* Added overload of `BlockScan::InclusiveScan` accepting an initial value that seeds the scan.
-* Added overload of `WarpScan::InclusiveScan` accepting an initial value that seeds the scan.
-* Added `UnrolledThreadLoad` and `UnrolledCopy` for CUB parity which do a multiple thread loads or a copy instructions.
-* Added `ThreadLoadVolatilePointer` for CUB parity.
-* Added `IterateThreadStore` struct to execute multiple stores for cuda parity.
-* Added `ThreadStoreVolatilePtr` for cuda parity.
+* Added an overload of `BlockScan::InclusiveScan` that accepts an initial value to seed the scan.
+* Added an overload of `WarpScan::InclusiveScan` that accepts an initial value to seed the scan.
+* `UnrolledThreadLoad`, `UnrolledCopy`, and `ThreadLoadVolatilePointer` were added to align hipCUB with CUB.
+* `ThreadStoreVolatilePtr` and the `IterateThreadStore` struct were added to align hipCUB with CUB.
 
 ### Changed
 
-* The NVIDIA backend now requires CUB, Thrust and libcu++ 2.6.0. If it is not found it will be downloaded from the NVIDIA CCCL repository.
-* Updated `thread_load` and `thread_store` API for cuda parity.
+* The NVIDIA backend now requires CUB, Thrust, and libcu++ 2.6.0. If they aren't found, they will be downloaded from the NVIDIA CCCL repository.
+* Updated `thread_load` and `thread_store` to align hipCUB with CUB.
 * Changed symbol visibility: all kernels now have hidden visibility, inline namespace with the library version is added, e.g. `hipcub::HIPCUB_300400_NS::...`. This allows to link multiple libraries built with different versions of hipCUB.
 
 ### Known issues
