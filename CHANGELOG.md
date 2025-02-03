@@ -24,8 +24,9 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * The AMD GPU targets `gfx803` and `gfx900` are no longer built by default. If you would like to build for these architectures, please specify them explicitly in the `AMDGPU_TARGETS` cmake option.
 * Deprecated `hipcub::AsmThreadLoad` is removed, use `hipcub::ThreadLoad` instead.
 * Deprecated `hipcub::AsmThreadStore` is removed, use `hipcub::ThreadStore` instead.
-* Deprecated `BlockAdjacentDifference::FlagHeads`, `BlockAdjacentDifference::FlagTails` and `BlockAdjacentDifference::FlagHeadsAndTails` have been removed
+* Deprecated `BlockAdjacentDifference::FlagHeads`, `BlockAdjacentDifference::FlagTails` and `BlockAdjacentDifference::FlagHeadsAndTails` have been removed.
 * This release removes support for custom builds on gfx940 and gfx941.
+* Removed C++14 support, only C++17 is supported.
 
 ### Changed
 
