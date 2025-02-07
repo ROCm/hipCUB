@@ -32,6 +32,7 @@
 
 #include "../../../config.hpp"
 
+#include "../util_macro.hpp"
 #include "../util_type.hpp"
 
 #include <rocprim/type_traits.hpp>
@@ -104,7 +105,7 @@ struct Max
     HIPCUB_HOST_DEVICE inline constexpr typename std::common_type<T, U>::type
         operator()(T&& t, U&& u) const
     {
-        return t < u ? u : t;
+        return HIPCUB_MAX(t, u);
     }
 };
 
@@ -114,7 +115,7 @@ struct Min
     HIPCUB_HOST_DEVICE inline constexpr typename std::common_type<T, U>::type
         operator()(T&& t, U&& u) const
     {
-        return t < u ? t : u;
+        return HIPCUB_MIN(t, u);
     }
 };
 
