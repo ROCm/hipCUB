@@ -32,6 +32,15 @@
 #include "test_utils_bfloat16.hpp"
 #include "test_utils_data_generation.hpp"
 
+#ifdef __HIP_PLATFORM_AMD__
+template<typename scan_op, typename input_t, typename init_t>
+using accum_t = ::rocprim::invoke_result_binary_op_t<init_t, scan_op>;
+#else
+    #include <cub/detail/type_traits.cuh>
+template<typename scan_op, typename input_t, typename init_t>
+using accum_t = ::cub::detail::accumulator_t<scan_op, init_t, input_t>;
+#endif
+
 // Params for tests
 template<class InputType,
          class OutputType = InputType,
@@ -114,6 +123,16 @@ std::vector<T>
     return keys;
 }
 } // namespace
+
+TYPED_TEST(HipcubDeviceScanTests, AccumulatorTypeTest)
+{
+    using T = accum_t<typename TestFixture::scan_op_type,
+                      typename TestFixture::input_type,
+                      typename TestFixture::input_type>;
+    using U = typename TestFixture::input_type;
+    static_assert(std::is_same<T, U>::value, "accumulator type mismatch");
+    ASSERT_TRUE(true);
+}
 
 TYPED_TEST(HipcubDeviceScanTests, InclusiveScan)
 {
