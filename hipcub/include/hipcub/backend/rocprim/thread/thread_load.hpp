@@ -34,19 +34,22 @@
 #include "../util_type.hpp"
 
 #include <rocprim/thread/thread_load.hpp>
+
+#include <iterator>
+#include <stdint.h>
 #include <type_traits>
 
 BEGIN_HIPCUB_NAMESPACE
 
 enum CacheLoadModifier : int32_t
 {
-    LOAD_DEFAULT,   ///< Default (no modifier)
-    LOAD_CA,        ///< Cache at all levels
-    LOAD_CG,        ///< Cache at global level
-    LOAD_CS,        ///< Cache streaming (likely to be accessed once)
-    LOAD_CV,        ///< Cache as volatile (including cached system lines)
-    LOAD_LDG,       ///< Cache as texture
-    LOAD_VOLATILE,  ///< Volatile (any memory space)
+    LOAD_DEFAULT  = 0, ///< Default (no modifier)
+    LOAD_CA       = 1, ///< Cache at all levels
+    LOAD_CG       = 2, ///< Cache at global level
+    LOAD_CS       = 3, ///< Cache streaming (likely to be accessed once)
+    LOAD_CV       = 4, ///< Cache as volatile (including cached system lines)
+    LOAD_LDG      = 5, ///< Cache as texture
+    LOAD_VOLATILE = 6 ///< Volatile (any memory space)
 };
 
 template<CacheLoadModifier MODIFIER = LOAD_DEFAULT, typename T>

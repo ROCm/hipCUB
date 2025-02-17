@@ -35,16 +35,19 @@
 
 #include <rocprim/thread/thread_store.hpp>
 
+#include <stdint.h>
+#include <type_traits>
+
 BEGIN_HIPCUB_NAMESPACE
 
 enum CacheStoreModifier
 {
-    STORE_DEFAULT, ///< Default (no modifier)
-    STORE_WB, ///< Cache write-back all coherent levels
-    STORE_CG, ///< Cache at global level
-    STORE_CS, ///< Cache streaming (likely to be accessed once)
-    STORE_WT, ///< Cache write-through (to system memory)
-    STORE_VOLATILE, ///< Volatile shared (any memory space)
+    STORE_DEFAULT  = 0, ///< Default (no modifier)
+    STORE_WB       = 1, ///< Cache write-back all coherent levels
+    STORE_CG       = 2, ///< Cache at global level
+    STORE_CS       = 3, ///< Cache streaming (likely to be accessed once)
+    STORE_WT       = 4, ///< Cache write-through (to system memory)
+    STORE_VOLATILE = 5 ///< Volatile shared (any memory space)
 };
 
 // TODO add to detail namespace
