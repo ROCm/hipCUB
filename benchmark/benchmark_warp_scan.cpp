@@ -111,15 +111,17 @@ struct broadcast
     {
         (void)init;
 
-        const unsigned int i     = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
-        auto               value = input[i];
+        const unsigned int i        = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
+        const unsigned int warp_id  = i / WarpSize;
+        const unsigned int src_lane = warp_id % WarpSize;
+        auto               value    = input[i];
 
         using wscan_t = hipcub::WarpScan<T, WarpSize>;
         __shared__ typename wscan_t::TempStorage storage;
 #pragma nounroll
         for(unsigned int trial = 0; trial < Trials; trial++)
         {
-            value = wscan_t(storage).Broadcast(value, 0);
+            value = wscan_t(storage).Broadcast(value, src_lane);
         }
 
         output[i] = value;
@@ -190,30 +192,32 @@ void run_benchmark(benchmark::State& state, hipStream_t stream, size_t size)
 #define CREATE_BENCHMARK(T, BS, WS) CREATE_BENCHMARK_IMPL(T, BS, WS, Benchmark)
 
 // clang-format off
-#if HIPCUB_WARP_THREADS_MACRO == 16
+#if HIPCUB_WARP_THREADS_MACRO == 32
     #define BENCHMARK_TYPE(type)         \
         CREATE_BENCHMARK(type, 60, 15),  \
-        CREATE_BENCHMARK(type, 256, 16)
-#elif HIPCUB_WARP_THREADS_MACRO == 32
-    #define BENCHMARK_TYPE(type)         \
+        CREATE_BENCHMARK(type, 256, 16), \
         CREATE_BENCHMARK(type, 62, 31),  \
         CREATE_BENCHMARK(type, 256, 32)
 #else
     #define BENCHMARK_TYPE(type)         \
+        CREATE_BENCHMARK(type, 60, 15),  \
+        CREATE_BENCHMARK(type, 256, 16), \
+        CREATE_BENCHMARK(type, 62, 31),  \
+        CREATE_BENCHMARK(type, 256, 32), \
         CREATE_BENCHMARK(type, 63, 63),  \
         CREATE_BENCHMARK(type, 64, 64),  \
         CREATE_BENCHMARK(type, 128, 64), \
         CREATE_BENCHMARK(type, 256, 64)
 #endif
 
-#if HIPCUB_WARP_THREADS_MACRO == 16
+#if HIPCUB_WARP_THREADS_MACRO == 32
     #define BENCHMARK_TYPE_P2(type)      \
-        CREATE_BENCHMARK(type, 256, 16)
-#elif HIPCUB_WARP_THREADS_MACRO == 32
-    #define BENCHMARK_TYPE_P2(type)      \
+        CREATE_BENCHMARK(type, 256, 16), \
         CREATE_BENCHMARK(type, 256, 32)
 #else
     #define BENCHMARK_TYPE_P2(type)      \
+        CREATE_BENCHMARK(type, 256, 16), \
+        CREATE_BENCHMARK(type, 256, 32), \
         CREATE_BENCHMARK(type, 64, 64),  \
         CREATE_BENCHMARK(type, 128, 64), \
         CREATE_BENCHMARK(type, 256, 64)
