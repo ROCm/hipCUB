@@ -139,13 +139,27 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
             size_t temp_storage_size_bytes;
             void*  d_temp_storage = nullptr;
             // Get size of d_temp_storage
-            DeviceReduceSelector<T, U> reduce_selector;
-            reduce_selector.reduce_sum(d_temp_storage,
-                                       temp_storage_size_bytes,
-                                       d_input,
-                                       d_output,
-                                       input.size(),
-                                       stream);
+            if constexpr(std::is_same<T, test_utils::half>::value
+                         || std::is_same<T, test_utils::bfloat16>::value)
+            {
+                HIP_CHECK(hipcub::DeviceReduce::Reduce(d_temp_storage,
+                                                       temp_storage_size_bytes,
+                                                       d_input,
+                                                       d_output,
+                                                       input.size(),
+                                                       ExtendedFloatBinOp<hipcub::Sum>(),
+                                                       U(0.f),
+                                                       stream));
+            }
+            else
+            {
+                HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage,
+                                                    temp_storage_size_bytes,
+                                                    d_input,
+                                                    d_output,
+                                                    input.size(),
+                                                    stream));
+            }
 
             // temp_storage_size_bytes must be >0
             ASSERT_GT(temp_storage_size_bytes, 0U);
@@ -159,12 +173,27 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
                 gHelper.startStreamCapture(stream);
 
             // Run
-            reduce_selector.reduce_sum(d_temp_storage,
-                                       temp_storage_size_bytes,
-                                       d_input,
-                                       d_output,
-                                       input.size(),
-                                       stream);
+            if constexpr(std::is_same<T, test_utils::half>::value
+                         || std::is_same<T, test_utils::bfloat16>::value)
+            {
+                HIP_CHECK(hipcub::DeviceReduce::Reduce(d_temp_storage,
+                                                       temp_storage_size_bytes,
+                                                       d_input,
+                                                       d_output,
+                                                       input.size(),
+                                                       ExtendedFloatBinOp<hipcub::Sum>(),
+                                                       U(0.f),
+                                                       stream));
+            }
+            else
+            {
+                HIP_CHECK(hipcub::DeviceReduce::Sum(d_temp_storage,
+                                                    temp_storage_size_bytes,
+                                                    d_input,
+                                                    d_output,
+                                                    input.size(),
+                                                    stream));
+            }
 
             if (TestFixture::use_graphs)
                 gHelper.createAndLaunchGraph(stream);
