@@ -33,7 +33,7 @@
 #ifdef __HIP_PLATFORM_AMD__
     #include "../backend/rocprim/device/device_merge_sort.hpp" // IWYU pragma: export
 #elif defined(__HIP_PLATFORM_NVIDIA__)
-    #include "../backend/cub/device/device_merge_sort.hpp" // IWYU pragma: export // IWYU pragma: export
+    #include "../backend/cub/device/device_merge_sort.hpp" // IWYU pragma: export
 #endif
 
 #endif // HIPCUB_DEVICE_DEVICE_MERGE_SORT_HPP_
