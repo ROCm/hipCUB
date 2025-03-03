@@ -701,10 +701,10 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Max)
             HIP_CHECK(
                 test_common_utils::hipMallocHelper(&d_temporary_storage, temporary_storage_bytes));
 
-            hipGraph_t graph;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::params::use_graphs)
             {
-                graph = test_utils::createGraphHelper(stream);
+                gHelper.startStreamCapture(stream);
             }
 
             HIP_CHECK(hipcub::DeviceSegmentedReduce::Max(d_temporary_storage,
@@ -716,10 +716,9 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Max)
                                                          d_offsets + 1,
                                                          stream));
 
-            hipGraphExec_t graph_instance;
             if(TestFixture::params::use_graphs)
             {
-                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                gHelper.createAndLaunchGraph(stream);
             }
 
             HIP_CHECK(hipFree(d_temporary_storage));
@@ -739,7 +738,7 @@ TYPED_TEST(HipcubDeviceSegmentedReduce, Max)
 
             if(TestFixture::params::use_graphs)
             {
-                test_utils::cleanupGraphHelper(graph, graph_instance);
+                gHelper.cleanupGraphHelper();
             }
         }
     }

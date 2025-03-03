@@ -307,7 +307,9 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
             HIP_CHECK(hipcub::DeviceFor::ForEachN(d_input, n, plus<T>(), stream));
 
             if (TestFixture::use_graphs)
+            {
                 gHelper.createAndLaunchGraph(stream);
+            } 
 
             HIP_CHECK(hipGetLastError());
             HIP_CHECK(hipDeviceSynchronize());
@@ -323,7 +325,7 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
 
             if(TestFixture::use_graphs)
             {
-                test_utils::cleanupGraphHelper(graph, graph_instance);
+                gHelper.cleanupGraphHelper();
             }
 
             HIP_CHECK(hipFree(d_input));
@@ -457,21 +459,20 @@ TYPED_TEST(HipcubDeviceForTests, ForEachCopy)
             // Calculate expected results on host
             std::for_each(input.begin(), input.end(), host_op);
 
-            hipGraph_t graph;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::use_graphs)
             {
                 // Make sure previous ops on default stream (mem transfers) are done
                 HIP_CHECK(hipStreamSynchronize(0));
-                graph = test_utils::createGraphHelper(stream);
+                gHelper.startStreamCapture(stream);
             }
 
             // Run
             HIP_CHECK(hipcub::DeviceFor::ForEachCopy(d_input, d_input + size, device_op, stream));
 
-            hipGraphExec_t graph_instance;
             if(TestFixture::use_graphs)
             {
-                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                gHelper.createAndLaunchGraph(stream);
             }
 
             HIP_CHECK(hipGetLastError());
@@ -486,7 +487,7 @@ TYPED_TEST(HipcubDeviceForTests, ForEachCopy)
 
             if(TestFixture::use_graphs)
             {
-                test_utils::cleanupGraphHelper(graph, graph_instance);
+                gHelper.cleanupGraphHelper();
             }
 
             HIP_CHECK(hipFree(d_input));
@@ -620,21 +621,20 @@ TYPED_TEST(HipcubDeviceForTests, ForEachCopyN)
             // Calculate expected results on host
             std::for_each(input.begin(), input.end(), host_op);
 
-            hipGraph_t graph;
+            test_utils::GraphHelper gHelper;
             if(TestFixture::use_graphs)
             {
                 // Make sure previous ops on default stream (mem transfers) are done
                 HIP_CHECK(hipStreamSynchronize(0));
-                graph = test_utils::createGraphHelper(stream);
+                gHelper.startStreamCapture(stream);
             }
 
             // Run
             HIP_CHECK(hipcub::DeviceFor::ForEachCopyN(d_input, size, device_op, stream));
 
-            hipGraphExec_t graph_instance;
             if(TestFixture::use_graphs)
             {
-                graph_instance = test_utils::endCaptureGraphHelper(graph, stream, true, true);
+                gHelper.createAndLaunchGraph(stream);
             }
 
             HIP_CHECK(hipGetLastError());
@@ -648,7 +648,9 @@ TYPED_TEST(HipcubDeviceForTests, ForEachCopyN)
             ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(h_count, expected));
 
             if(TestFixture::use_graphs)
+            {
                 gHelper.cleanupGraphHelper();
+            }
 
             HIP_CHECK(hipFree(d_input));
         }
