@@ -37,9 +37,9 @@
 #include "../thread/thread_operators.hpp"
 #include "../util_sync.hpp"
 #include "device_reduce.hpp"
-#include "rocprim/type_traits.hpp"
 
-#include <rocprim/device/device_segmented_reduce.hpp>
+#include <rocprim/device/device_segmented_reduce.hpp> // IWYU pragma: export
+#include <rocprim/type_traits.hpp> // IWYU pragma: export
 
 #include <chrono>
 #include <iterator>

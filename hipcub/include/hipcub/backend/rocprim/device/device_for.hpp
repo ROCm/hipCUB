@@ -33,8 +33,9 @@
 
 #include "../iterator/counting_input_iterator.hpp"
 #include "../iterator/discard_output_iterator.hpp"
+#include "../thread/thread_operators.hpp"
 
-#include <rocprim/device/device_transform.hpp>
+#include <rocprim/device/device_transform.hpp> // IWYU pragma: export
 
 #include <type_traits>
 
@@ -66,8 +67,38 @@ struct DeviceFor
 {
     template<class RandomAccessIteratorT, class OffsetT, class OpT>
     HIPCUB_RUNTIME_FUNCTION
-    static hipError_t
+    static auto ForEachN(RandomAccessIteratorT first,
+                         OffsetT               num_items,
+                         OpT                   op,
+                         hipStream_t           stream = 0)
+        -> std::enable_if_t<!std::is_assignable<decltype(*std::declval<RandomAccessIteratorT>()),
+                                                typename std::iterator_traits<
+                                                    RandomAccessIteratorT>::value_type>::value,
+                            hipError_t>
+    {
+        using T              = typename std::iterator_traits<RandomAccessIteratorT>::value_type;
+        using OutputIterator = typename hipcub::DiscardOutputIterator<OffsetT>;
+
+        detail::bulk::OpWrapper<T, OpT> wrapper_op = {op};
+
+        OutputIterator output;
+
+        return rocprim::transform(first,
+                                  output,
+                                  num_items,
+                                  wrapper_op,
+                                  stream,
+                                  HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
+    template<class RandomAccessIteratorT, class OffsetT, class OpT>
+    HIPCUB_RUNTIME_FUNCTION
+    static auto
         ForEachN(RandomAccessIteratorT first, OffsetT num_items, OpT op, hipStream_t stream = 0)
+            -> std::enable_if_t<std::is_assignable<decltype(*std::declval<RandomAccessIteratorT>()),
+                                                   typename std::iterator_traits<
+                                                       RandomAccessIteratorT>::value_type>::value,
+                                hipError_t>
     {
         using T = typename std::iterator_traits<RandomAccessIteratorT>::value_type;
 

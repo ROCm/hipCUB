@@ -32,10 +32,10 @@
 
 #include "../../config.hpp"
 
-#include <rocprim/detail/various.hpp>
-#include <rocprim/thread/radix_key_codec.hpp>
-#include <rocprim/type_traits.hpp>
-#include <rocprim/types/future_value.hpp>
+#include <rocprim/detail/various.hpp> // IWYU pragma: export
+#include <rocprim/thread/radix_key_codec.hpp> // IWYU pragma: export
+#include <rocprim/type_traits.hpp> // IWYU pragma: export
+#include <rocprim/types/future_value.hpp> // IWYU pragma: export
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_fp16.h>

@@ -30,7 +30,7 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 
 ### Changed
 
-* The NVIDIA backend now requires CUB, Thrust, and libcu++ 2.6.0. If they aren't found, they will be downloaded from the NVIDIA CCCL repository.
+* The NVIDIA backend now requires CUB, Thrust, and libcu++ 2.7.0. If they aren't found, they will be downloaded from the NVIDIA CCCL repository.
 * Updated `thread_load` and `thread_store` to align hipCUB with CUB.
 * All kernels now have hidden symbol visibility. All symbols now have inline namespaces that include the library version, (for example, hipcub::HIPCUB_300400_NS::symbol instead of hipcub::symbol), letting the user link multiple libraries built with different versions of hipCUB.
 * Modified the broadcast kernel in warp scan benchmarks. The reported performance may be different to previous versions.

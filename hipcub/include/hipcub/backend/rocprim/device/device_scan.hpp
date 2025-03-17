@@ -1,7 +1,7 @@
 /******************************************************************************
  * Copyright (c) 2010-2011, Duane Merrill.  All rights reserved.
  * Copyright (c) 2011-2018, NVIDIA CORPORATION.  All rights reserved.
- * Modifications Copyright (c) 2017-2024, Advanced Micro Devices, Inc.  All rights reserved.
+ * Modifications Copyright (c) 2017-2025, Advanced Micro Devices, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -34,11 +34,11 @@
 #include "../../../util_deprecated.hpp"
 #include "../thread/thread_operators.hpp"
 
-#include <rocprim/device/config_types.hpp>
-#include <rocprim/device/device_scan.hpp>
-#include <rocprim/device/device_scan_by_key.hpp>
-#include <rocprim/type_traits.hpp>
-#include <rocprim/types/future_value.hpp>
+#include <rocprim/device/config_types.hpp> // IWYU pragma: export
+#include <rocprim/device/device_scan.hpp> // IWYU pragma: export
+#include <rocprim/device/device_scan_by_key.hpp> // IWYU pragma: export
+#include <rocprim/type_traits.hpp> // IWYU pragma: export
+#include <rocprim/types/future_value.hpp> // IWYU pragma: export
 
 BEGIN_HIPCUB_NAMESPACE
 

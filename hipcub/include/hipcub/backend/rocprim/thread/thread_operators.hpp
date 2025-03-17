@@ -35,7 +35,7 @@
 #include "../util_macro.hpp"
 #include "../util_type.hpp"
 
-#include <rocprim/type_traits.hpp>
+#include <rocprim/type_traits.hpp> // IWYU pragma: export
 
 BEGIN_HIPCUB_NAMESPACE
 

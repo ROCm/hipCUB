@@ -36,9 +36,9 @@
 template<typename scan_op, typename input_t, typename init_t>
 using accum_t = ::rocprim::invoke_result_binary_op_t<init_t, scan_op>;
 #else
-    #include <cub/detail/type_traits.cuh>
+    #include <cuda/std/__functional/invoke.h>
 template<typename scan_op, typename input_t, typename init_t>
-using accum_t = ::cub::detail::accumulator_t<scan_op, init_t, input_t>;
+using accum_t = ::cuda::std::__accumulator_t<scan_op, input_t, init_t>;
 #endif
 
 // Params for tests
@@ -920,9 +920,6 @@ TYPED_TEST(HipcubDeviceScanTests, ExclusiveScanByKey)
         HIP_CHECK(hipStreamDestroy(stream));
 }
 
-// CUB does not support large indices in inclusive and exclusive scans
-#ifndef __HIP_PLATFORM_NVIDIA__
-
 TEST(HipcubDeviceScanTests, LargeIndicesInclusiveScan)
 {
     using T              = unsigned int;
@@ -1069,8 +1066,6 @@ TEST(HipcubDeviceScanTests, LargeIndicesExclusiveScan)
     HIP_CHECK(hipFree(d_output));
     HIP_CHECK(hipFree(d_temp_storage));
 }
-
-#endif
 
 template<typename T>
 static __global__

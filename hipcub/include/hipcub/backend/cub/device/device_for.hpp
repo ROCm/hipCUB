@@ -31,7 +31,7 @@
 
 #include "../../../config.hpp"
 
-#include <cub/device/device_for.cuh>
+#include <cub/device/device_for.cuh> // IWYU pragma: export
 
 BEGIN_HIPCUB_NAMESPACE
 

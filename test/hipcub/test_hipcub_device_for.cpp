@@ -24,6 +24,7 @@
 
 // required hipcub headers
 #include <hipcub/device/device_for.hpp>
+#include <hipcub/iterator/counting_input_iterator.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -658,6 +659,110 @@ TYPED_TEST(HipcubDeviceForTests, ForEachCopyN)
 
     if(TestFixture::use_graphs)
         HIP_CHECK(hipStreamDestroy(stream));
+}
+
+TEST(HipcubDeviceForTests, ForCountingIterator)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id = " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T = int;
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        for(size_t size : test_utils::get_sizes(seed_value))
+        {
+            hipStream_t stream = 0; // default
+
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            // Generate data
+            unsigned int expected = 0;
+            count_host_t host_op{&expected};
+
+            // Device pointers
+            unsigned int* d_count;
+            const auto    it = hipcub::CountingInputIterator<T>{0};
+
+            // Allocate memory
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_count, sizeof(unsigned int)));
+
+            HIP_CHECK(hipMemset(d_count, 0, sizeof(unsigned int)));
+            count_device_t device_op{d_count};
+
+            // Calculate expected results on host
+            std::for_each(it, it + size, host_op);
+
+            HIP_CHECK(hipcub::DeviceFor::ForEach(it, it + size, device_op, stream));
+
+            HIP_CHECK(hipGetLastError());
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Copy output to host
+            unsigned int h_count;
+            HIP_CHECK(hipMemcpy(&h_count, d_count, sizeof(unsigned int), hipMemcpyDeviceToHost));
+
+            // Check if have same number of odd numbers
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(h_count, expected));
+        }
+    }
+}
+
+TEST(HipcubDeviceForTests, ForCopyCountingIterator)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id = " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T = int;
+
+    for(size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value
+            = seed_index < random_seeds_count ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed = " << seed_value);
+
+        for(size_t size : test_utils::get_sizes(seed_value))
+        {
+            hipStream_t stream = 0; // default
+
+            SCOPED_TRACE(testing::Message() << "with size = " << size);
+
+            // Generate data
+            unsigned int expected = 0;
+            count_host_t host_op{&expected};
+
+            // Device pointers
+            unsigned int* d_count;
+            const auto    it = hipcub::CountingInputIterator<T>{0};
+
+            // Allocate memory
+            HIP_CHECK(test_common_utils::hipMallocHelper(&d_count, sizeof(unsigned int)));
+
+            HIP_CHECK(hipMemset(d_count, 0, sizeof(unsigned int)));
+            count_device_t device_op{d_count};
+
+            // Calculate expected results on host
+            std::for_each(it, it + size, host_op);
+
+            HIP_CHECK(hipcub::DeviceFor::ForEachCopy(it, it + size, device_op, stream));
+
+            HIP_CHECK(hipGetLastError());
+            HIP_CHECK(hipDeviceSynchronize());
+
+            // Copy output to host
+            unsigned int h_count;
+            HIP_CHECK(hipMemcpy(&h_count, d_count, sizeof(unsigned int), hipMemcpyDeviceToHost));
+
+            // Check if have same number of odd numbers
+            ASSERT_NO_FATAL_FAILURE(test_utils::assert_eq(h_count, expected));
+        }
+    }
 }
 
 TEST(HipcubDeviceForTests, ForEachCopyNTempStore)

@@ -32,7 +32,7 @@
 
 #include "../../../config.hpp"
 
-#include <rocprim/block/block_adjacent_difference.hpp>
+#include <rocprim/block/block_adjacent_difference.hpp> // IWYU pragma: export
 
 BEGIN_HIPCUB_NAMESPACE
 

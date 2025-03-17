@@ -33,7 +33,7 @@
 #include "../../../config.hpp"
 #include "../util_type.hpp"
 
-#include <rocprim/thread/thread_store.hpp>
+#include <rocprim/thread/thread_store.hpp> // IWYU pragma: export
 
 #include <stdint.h>
 #include <type_traits>
