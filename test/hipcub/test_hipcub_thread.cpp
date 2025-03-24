@@ -64,13 +64,9 @@ using ThreadOperationTestParams = ::testing::Types<params<int8_t>,
                                                    params<float>,
                                                    params<double>,
                                                    params<test_utils::bfloat16>,
-                                                   params<test_utils::half>
-#ifdef __HIP_PLATFORM_AMD__
-                                                   ,
+                                                   params<test_utils::half>,
                                                    params<test_utils::custom_test_type<uint64_t>>,
-                                                   params<test_utils::custom_test_type<double>>
-#endif
-                                                   >;
+                                                   params<test_utils::custom_test_type<double>>>;
 
 TYPED_TEST_SUITE(HipcubThreadOperationTests, ThreadOperationTestParams);
 
@@ -192,7 +188,6 @@ void thread_unroll_kernel(Type* volatile const device_input, Type* device_output
     size_t id    = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
     size_t index = id * ItemsPerThread;
 
-#ifdef __HIP_PLATFORM_AMD__
     if(id % 2 == 0)
     {
         hipcub::UnrolledThreadLoad<ItemsPerThread, hipcub::LOAD_VOLATILE>(device_input + index,
@@ -202,9 +197,6 @@ void thread_unroll_kernel(Type* volatile const device_input, Type* device_output
     {
         hipcub::UnrolledCopy<ItemsPerThread>(device_input + index, device_output + index);
     }
-#else
-    hipcub::UnrolledCopy<ItemsPerThread>(device_input + index, device_output + index);
-#endif
 }
 
 TYPED_TEST(HipcubThreadOperationTests, Unrolled)
