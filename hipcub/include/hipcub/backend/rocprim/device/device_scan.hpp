@@ -191,6 +191,40 @@ public:
                                                  stream);
     }
 
+    template<typename InputIteratorT,
+             typename OutputIteratorT,
+             typename ScanOpT,
+             typename InitValueT>
+    HIPCUB_RUNTIME_FUNCTION
+    static hipError_t InclusiveScanInit(void*           d_temp_storage,
+                                        size_t&         temp_storage_bytes,
+                                        InputIteratorT  d_in,
+                                        OutputIteratorT d_out,
+                                        ScanOpT         scan_op,
+                                        InitValueT      init_value,
+                                        int             num_items,
+                                        hipStream_t     stream = 0)
+    {
+        using acc_t = ::rocprim::invoke_result_binary_op_t<
+            typename std::iterator_traits<InputIteratorT>::value_type,
+            ScanOpT>;
+
+        return ::rocprim::inclusive_scan<::rocprim::default_config,
+                                         InputIteratorT,
+                                         OutputIteratorT,
+                                         InitValueT,
+                                         ScanOpT,
+                                         acc_t>(d_temp_storage,
+                                                temp_storage_bytes,
+                                                d_in,
+                                                d_out,
+                                                init_value,
+                                                num_items,
+                                                scan_op,
+                                                stream,
+                                                HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
+    }
+
     template<typename InputIteratorT, typename OutputIteratorT>
     HIPCUB_RUNTIME_FUNCTION
     static hipError_t ExclusiveSum(void*           d_temp_storage,
