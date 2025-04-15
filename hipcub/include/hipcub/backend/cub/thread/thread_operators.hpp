@@ -32,7 +32,7 @@ BEGIN_HIPCUB_NAMESPACE
 namespace detail
 {
 
-template<typename Invokable, typename InitT, typename InputT>
+template<typename Invokable, typename InputT, typename InitT = InputT>
 using accumulator_t = ::cuda::std::__accumulator_t<Invokable, InputT, InitT>;
 
 } // namespace detail

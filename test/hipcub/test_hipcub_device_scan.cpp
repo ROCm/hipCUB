@@ -27,19 +27,11 @@
 #include "hipcub/iterator/constant_input_iterator.hpp"
 #include "hipcub/iterator/counting_input_iterator.hpp"
 #include "hipcub/iterator/transform_input_iterator.hpp"
+#include "hipcub/thread/thread_operators.hpp"
 
 #include "single_index_iterator.hpp"
 #include "test_utils_bfloat16.hpp"
 #include "test_utils_data_generation.hpp"
-
-#ifdef __HIP_PLATFORM_AMD__
-template<typename scan_op, typename input_t, typename init_t>
-using accum_t = ::rocprim::invoke_result_binary_op_t<init_t, scan_op>;
-#else
-    #include <cuda/std/__functional/invoke.h>
-template<typename scan_op, typename input_t, typename init_t>
-using accum_t = ::cuda::std::__accumulator_t<scan_op, input_t, init_t>;
-#endif
 
 // Params for tests
 template<class InputType,
@@ -126,9 +118,8 @@ std::vector<T>
 
 TYPED_TEST(HipcubDeviceScanTests, AccumulatorTypeTest)
 {
-    using T = accum_t<typename TestFixture::scan_op_type,
-                      typename TestFixture::input_type,
-                      typename TestFixture::input_type>;
+    using T = hipcub::detail::accumulator_t<typename TestFixture::scan_op_type,
+                                            typename TestFixture::input_type>;
     using U = typename TestFixture::input_type;
     static_assert(std::is_same<T, U>::value, "accumulator type mismatch");
     ASSERT_TRUE(true);

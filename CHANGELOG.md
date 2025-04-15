@@ -35,6 +35,8 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * Updated `thread_load` and `thread_store` to align hipCUB with CUB.
 * All kernels now have hidden symbol visibility. All symbols now have inline namespaces that include the library version, (for example, hipcub::HIPCUB_300400_NS::symbol instead of hipcub::symbol), letting the user link multiple libraries built with different versions of hipCUB.
 * Modified the broadcast kernel in warp scan benchmarks. The reported performance may be different to previous versions.
+* The `hipcub::detail::accumulator_t` in rocPRIM backend has been changed to utilise `rocprim::accumulator_t`.
+* The usage of `rocprim::invoke_result_binary_op_t` has been replaced with `rocprim::accumulator_t`.
 
 ### Known issues
 

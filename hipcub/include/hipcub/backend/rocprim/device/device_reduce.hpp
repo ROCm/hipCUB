@@ -186,8 +186,7 @@ public:
             d_out,
             init,
             num_items,
-            ::hipcub::detail::convert_binary_result_type<T, InputIteratorT, OutputIteratorT>(
-                reduction_op),
+            ::hipcub::detail::convert_binary_result_type<InputIteratorT, T>(reduction_op),
             stream,
             HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
     }
@@ -446,9 +445,7 @@ public:
             d_out,
             init,
             num_items,
-            ::hipcub::detail::convert_binary_result_type<T,
-                                                         TransformInputIteratorT,
-                                                         OutputIteratorT>(reduction_op),
+            ::hipcub::detail::convert_binary_result_type<TransformInputIteratorT, T>(reduction_op),
             stream,
             HIPCUB_DETAIL_DEBUG_SYNC_VALUE);
     }

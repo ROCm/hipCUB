@@ -126,7 +126,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceSum)
             // Calculate expected results on host using the same accumulator type than on device
             using Sum =
                 typename AlgebraicSelector<hipcub::Sum, T, U>::type; // For custom_type_test tests
-            using AccumT = hipcub::detail::accumulator_t<Sum, U, T>;
+            using AccumT = hipcub::detail::accumulator_t<Sum, T, U>;
             Sum    sum_op;
             AccumT tmp_result = AccumT(0.0f); // hipcub::Sum uses as initial type the output type
             for(unsigned int i = 0; i < input.size(); i++)
@@ -267,7 +267,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
 
             // Calculate expected results on host using the same accumulator type than on device
             using Min    = typename MinSelector<T, U>::type; // For custom_type_test tests
-            using AccumT = hipcub::detail::accumulator_t<hipcub::Min, U, T>;
+            using AccumT = hipcub::detail::accumulator_t<hipcub::Min, T, U>;
             Min    min_op;
             AccumT tmp_result = test_utils::numeric_limits<
                 AccumT>::max(); // hipcub::Min uses as initial type the input type
@@ -381,7 +381,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMaximum)
 
             // Calculate expected results on host using the same accumulator type than on device
             using Max    = typename MaxSelector<T, U>::type; // For custom_type_test tests
-            using AccumT = hipcub::detail::accumulator_t<hipcub::Max, U, T>;
+            using AccumT = hipcub::detail::accumulator_t<hipcub::Max, T, U>;
             Max    max_op;
             AccumT tmp_result = test_utils::numeric_limits<AccumT>::min();
             for(unsigned int i = 0; i < input.size(); i++)
@@ -776,7 +776,7 @@ TYPED_TEST(HipcubDeviceReduceTests, TransformReduce)
             // Calculate expected results on host using the same accumulator type than on device
             using Sum =
                 typename AlgebraicSelector<hipcub::Sum, T, U>::type; // For custom_type_test tests
-            using AccumT = hipcub::detail::accumulator_t<Sum, U, T>;
+            using AccumT = hipcub::detail::accumulator_t<Sum, T, U>;
 
             Sum             reduction_op;
             TestTransformOp transform_op;

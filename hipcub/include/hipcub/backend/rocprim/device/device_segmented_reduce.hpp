@@ -119,8 +119,7 @@ inline hipError_t segmented_arg_minmax(void*          temporary_storage,
                                        hipStream_t    stream)
 {
     using input_type = typename std::iterator_traits<InputIterator>::value_type;
-    using result_type =
-        typename ::rocprim::invoke_result_binary_op<input_type, BinaryFunction>::type;
+    using result_type = ::rocprim::accumulator_t<BinaryFunction, input_type>;
 
     using config = ::rocprim::detail::wrapped_reduce_config<Config, result_type>;
 
