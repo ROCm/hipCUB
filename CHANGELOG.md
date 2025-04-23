@@ -2,7 +2,7 @@
 
 Full documentation for hipCUB is available at [https://rocm.docs.amd.com/projects/hipCUB/en/latest/](https://rocm.docs.amd.com/projects/hipCUB/en/latest/).
 
-## (Unreleased) hipCUB-3.5.0 for ROCm 6.5.0
+## hipCUB-3.5.0 for ROCm 6.5.0
 
 ### Added
 
