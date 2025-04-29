@@ -1522,3 +1522,127 @@ TYPED_TEST(HipcubBlockExchangeTests, ScatterToBlockedNoOutputParam)
     HIP_CHECK(hipFree(device_input));
     HIP_CHECK(hipFree(device_ranks));
 }
+
+template<
+    class Type,
+    unsigned int ItemsPerBlock,
+    unsigned int ItemsPerThread
+>
+__global__
+__launch_bounds__(512)
+void scatter_to_striped_no_output_param_kernel(Type* device_input, unsigned int* device_ranks)
+{
+    constexpr unsigned int block_size = (ItemsPerBlock / ItemsPerThread);
+    const unsigned int lid = hipThreadIdx_x;
+    const unsigned int block_offset = hipBlockIdx_x * ItemsPerBlock;
+
+    Type input[ItemsPerThread];
+    unsigned int ranks[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, device_input + block_offset, input);
+    hipcub::LoadDirectBlocked(lid, device_ranks + block_offset, ranks);
+
+    hipcub::BlockExchange<Type, block_size, ItemsPerThread> exchange;
+    exchange.ScatterToStriped(input, ranks);
+
+    hipcub::StoreDirectBlocked(lid, device_input + block_offset, input);
+}
+
+TYPED_TEST(HipcubBlockExchangeTests, ScatterToStripedNoOutputParam)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using type             = typename TestFixture::params::type;
+
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size = items_per_block * 113;
+    // Generate data
+    std::vector<type> input(size);
+    std::vector<type> expected(size);
+    std::vector<unsigned int> ranks(size);
+
+    // Calculate input and expected results on host
+    for(size_t bi = 0; bi < size / items_per_block; bi++)
+    {
+        auto block_ranks = ranks.begin() + bi * items_per_block;
+        std::iota(block_ranks, block_ranks + items_per_block, 0);
+        std::shuffle(block_ranks, block_ranks + items_per_block, std::mt19937{std::random_device{}()});
+    }
+    std::vector<type> values(size);
+    std::iota(values.begin(), values.end(), 0);
+    for(size_t bi = 0; bi < size / items_per_block; bi++)
+    {
+        for(size_t ti = 0; ti < block_size; ti++)
+        {
+            for(size_t ii = 0; ii < items_per_thread; ii++)
+            {
+                const size_t offset = bi * items_per_block;
+                const size_t i0 = offset + ti * items_per_thread + ii;
+                const size_t i1 = offset
+                    + ranks[i0] % block_size * items_per_thread
+                    + ranks[i0] / block_size;
+                input[i0]    = test_utils::convert_to_device<type>(values[i0]);
+                expected[i1] = test_utils::convert_to_device<type>(values[i0]);
+            }
+        }
+    }
+
+    // Preparing device
+    type* device_input;
+    HIP_CHECK(test_common_utils::hipMallocHelper(&device_input, input.size() * sizeof(typename decltype(input)::value_type)));
+    unsigned int* device_ranks;
+    HIP_CHECK(test_common_utils::hipMallocHelper(&device_ranks, ranks.size() * sizeof(typename decltype(ranks)::value_type)));
+
+    HIP_CHECK(
+        hipMemcpy(
+            device_input, input.data(),
+            input.size() * sizeof(type),
+            hipMemcpyHostToDevice
+        )
+    );
+
+    HIP_CHECK(
+        hipMemcpy(
+            device_ranks, ranks.data(),
+            ranks.size() * sizeof(unsigned int),
+            hipMemcpyHostToDevice
+        )
+    );
+
+    // Running kernel
+    constexpr unsigned int grid_size = (size / items_per_block);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(scatter_to_striped_no_output_param_kernel<type, items_per_block, items_per_thread>),
+        dim3(grid_size), dim3(block_size), 0, 0,
+        device_input, device_ranks
+    );
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Reading results
+    HIP_CHECK(
+        hipMemcpy(
+            input.data(), device_input,
+            input.size() * sizeof(typename decltype(input)::value_type),
+            hipMemcpyDeviceToHost
+        )
+    );
+
+    for(size_t i = 0; i < size; i++)
+    {
+        ASSERT_EQ(test_utils::convert_to_native(input[i]),
+                  test_utils::convert_to_native(expected[i]));
+    }
+
+    HIP_CHECK(hipFree(device_input));
+    HIP_CHECK(hipFree(device_ranks));
+}
