@@ -858,6 +858,106 @@ TYPED_TEST(HipcubBlockExchangeTests, ScatterToStriped)
     HIP_CHECK(hipFree(device_ranks));
 }
 
+template<typename T, size_t items_per_thread, size_t block_size>
+__global__ void scatter_to_stripped_guarded_kernel(T * device_input, T * device_output, int * device_ranks){
+    const size_t items_per_block = items_per_thread * block_size;
+    const size_t offset = (blockIdx.x * items_per_block) + threadIdx.x * items_per_thread;
+
+    T input[items_per_thread];
+    T output[items_per_thread];
+    int ranks[items_per_thread];
+
+    for(size_t i = 0; i < items_per_thread; i++){
+        input[i] = device_input[offset + i];
+        ranks[i] = device_ranks[offset + i];
+    }
+    hipcub::BlockExchange<T, block_size, items_per_thread> exchange;
+    exchange.ScatterToStripedGuarded(input, output, ranks);
+
+    for(size_t i = 0; i < items_per_thread; i++){
+        device_output[offset + i] = (i == items_per_thread - 1) && (threadIdx.x == block_size - 1) ? static_cast<T>(0) : output[i];
+    }
+
+}
+
+TYPED_TEST(HipcubBlockExchangeTests, ScatterToStripedGuarded){
+    using type             = typename TestFixture::params::type;
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t grid_size = 113;
+
+    const size_t items_per_block = block_size * items_per_thread;
+    const size_t size = grid_size * items_per_block;
+
+    type * host_input = new type[size];
+    type * host_expected = new type[size];
+    int  * host_ranks = new int[size];
+
+    std::iota(host_input, host_input + size, 0);
+    for(size_t i = 0; i < grid_size; i++){
+        size_t offset = i * items_per_block;
+        std::iota(host_ranks + offset, host_ranks + offset + items_per_block - 1, 0);
+        std::shuffle(host_ranks + offset, host_ranks + offset + items_per_block - 1, std::mt19937{std::random_device{}()});
+    }
+    for(size_t i = items_per_block - 1; i < size; i += items_per_block){
+        host_ranks[i] = -1;
+        host_expected[i] = static_cast<type>(0);
+    }
+
+    for(size_t bi = 0; bi < size / items_per_block; bi++)
+    {
+        for(size_t ti = 0; ti < block_size; ti++)
+        {
+            for(size_t ii = 0; ii < items_per_thread; ii++)
+            {
+                const size_t offset = bi * items_per_block;
+                const size_t i0 = offset + ti * items_per_thread + ii;
+                const size_t i1 = offset
+                    + host_ranks[i0] % block_size * items_per_thread
+                    + host_ranks[i0] / block_size;
+                if(i1 >= 0 && i1 < size)
+                    host_expected[i1] = host_input[i0];
+
+
+            }
+        }
+    }
+
+    type * device_input;
+    type * device_output;
+    int  * device_ranks;
+    
+    HIP_CHECK(hipMalloc(&device_input, sizeof(type) * size));
+    HIP_CHECK(hipMalloc(&device_output, sizeof(type) * size));
+    HIP_CHECK(hipMalloc(&device_ranks, sizeof(int) * size));
+
+    HIP_CHECK(hipMemcpy(device_input, host_input, sizeof(type) * size, hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(device_ranks, host_ranks, sizeof(int) * size, hipMemcpyHostToDevice));
+
+
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(scatter_to_stripped_guarded_kernel<type, items_per_thread, block_size>),
+        dim3(grid_size), dim3(block_size), 0, 0,
+        device_input, device_output, device_ranks
+    );
+
+    type * host_output = new type[size];
+    HIP_CHECK(hipMemcpy(host_output, device_output, sizeof(type) * size, hipMemcpyDeviceToHost));
+
+    for(size_t i = 0; i < size; i++)
+        ASSERT_EQ(host_output[i], host_expected[i]);
+
+    delete [] host_input;
+    delete [] host_expected;
+    delete [] host_ranks;
+    delete [] host_output;
+
+    HIP_CHECK(hipFree(device_input));
+    HIP_CHECK(hipFree(device_output));
+    HIP_CHECK(hipFree(device_ranks));
+
+}
+
 template<
     class Type,
     unsigned int ItemsPerBlock,
