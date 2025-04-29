@@ -856,5 +856,314 @@ TYPED_TEST(HipcubBlockExchangeTests, ScatterToStriped)
     HIP_CHECK(hipFree(device_input));
     HIP_CHECK(hipFree(device_output));
     HIP_CHECK(hipFree(device_ranks));
+}
 
+template<
+    class Type,
+    unsigned int ItemsPerBlock,
+    unsigned int ItemsPerThread
+>
+__global__
+__launch_bounds__(512)
+void striped_to_blocked_one_param_kernel(Type* device_input)
+{
+    constexpr unsigned int block_size = (ItemsPerBlock / ItemsPerThread);
+    const unsigned int lid = hipThreadIdx_x;
+    const unsigned int block_offset = hipBlockIdx_x * ItemsPerBlock;
+
+    Type input[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, device_input + block_offset, input);
+
+    hipcub::BlockExchange<Type, block_size, ItemsPerThread> exchange;
+    exchange.StripedToBlocked(input);
+
+    hipcub::StoreDirectBlocked(lid, device_input + block_offset, input);
+}
+
+TYPED_TEST(HipcubBlockExchangeTests, StripedToBlockedOneParam)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using type             = typename TestFixture::params::type;
+    using output_type      = typename TestFixture::params::output_type;
+
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size = items_per_block * 113;
+    // Generate data
+    type * input = new type[size];
+    type * expected = new type[size];
+
+    // Calculate input and expected results on host
+    type * values = new type[size];
+    std::iota(values, values + size, 0);
+
+    for(size_t bi = 0; bi < size / items_per_block; bi++)
+    {
+        for(size_t ti = 0; ti < block_size; ti++)
+        {
+            for(size_t ii = 0; ii < items_per_thread; ii++)
+            {
+                const size_t offset = bi * items_per_block;
+                const size_t i0     = offset + ti * items_per_thread + ii;
+                const size_t i1     = offset + ii * block_size + ti;
+                input[i0]           = values[i1];
+                expected[i1]        = values[i1];
+            }
+        }
+    }
+
+    // Preparing device
+    type * device_input;
+    HIP_CHECK(hipMalloc(&device_input, sizeof(type) * size));
+
+    HIP_CHECK(hipMemcpy(device_input, input, sizeof(type) * size, hipMemcpyHostToDevice));
+
+    // Running kernel
+    constexpr unsigned int grid_size = (size / items_per_block);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(striped_to_blocked_one_param_kernel<type, items_per_block, items_per_thread>),
+        dim3(grid_size), dim3(block_size), 0, 0,
+        device_input);
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+
+
+
+    // Reading results
+    HIP_CHECK(hipMemcpy(input, device_input,sizeof(type) * size, hipMemcpyDeviceToHost));
+
+    for(size_t i = 0; i < size; i++)
+    {
+        ASSERT_EQ(input[i], expected[i]);
+    }
+
+    HIP_CHECK(hipFree(device_input));
+    delete [] input;
+    delete [] expected;
+    delete [] values;
+}
+
+template<
+    class Type,
+    unsigned int ItemsPerBlock,
+    unsigned int ItemsPerThread
+>
+__global__
+__launch_bounds__(512)
+void blocked_to_striped_one_param_kernel(Type* device_input)
+{
+    constexpr unsigned int block_size = (ItemsPerBlock / ItemsPerThread);
+    const unsigned int lid = hipThreadIdx_x;
+    const unsigned int block_offset = hipBlockIdx_x * ItemsPerBlock;
+
+    Type input[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, device_input + block_offset, input);
+
+    hipcub::BlockExchange<Type, block_size, ItemsPerThread> exchange;
+    exchange.BlockedToStriped(input);
+
+    hipcub::StoreDirectBlocked(lid, device_input + block_offset, input);
+}
+
+TYPED_TEST(HipcubBlockExchangeTests, BlockedToStripedOneParam)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using type             = typename TestFixture::params::type;
+    using output_type      = typename TestFixture::params::output_type;
+
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size = items_per_block * 113;
+    // Generate data
+    type * input = new type[size];
+    type * expected = new type[size];
+
+    // Calculate input and expected results on host
+    type * values = new type[size];
+    std::iota(values, values + size, 0);
+
+    for(size_t bi = 0; bi < size / items_per_block; bi++)
+    {
+        for(size_t ti = 0; ti < block_size; ti++)
+        {
+            for(size_t ii = 0; ii < items_per_thread; ii++)
+            {
+                const size_t offset = bi * items_per_block;
+                const size_t i0     = offset + ti * items_per_thread + ii;
+                const size_t i1     = offset + ii * block_size + ti;
+                input[i1]           = values[i1];
+                expected[i0]        = values[i1];
+            }
+        }
+    }
+
+    // Preparing device
+    type * device_input;
+    HIP_CHECK(hipMalloc(&device_input, sizeof(type) * size));
+
+    HIP_CHECK(hipMemcpy(device_input, input, sizeof(type) * size, hipMemcpyHostToDevice));
+
+    // Running kernel
+    constexpr unsigned int grid_size = (size / items_per_block);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(blocked_to_striped_one_param_kernel<type, items_per_block, items_per_thread>),
+        dim3(grid_size), dim3(block_size), 0, 0,
+        device_input);
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+
+
+
+    // Reading results
+    HIP_CHECK(hipMemcpy(input, device_input,sizeof(type) * size, hipMemcpyDeviceToHost));
+
+    for(size_t i = 0; i < size; i++)
+    {
+        ASSERT_EQ(input[i], expected[i]);
+    }
+
+    HIP_CHECK(hipFree(device_input));
+    delete [] input;
+    delete [] expected;
+    delete [] values;
+}
+
+template<
+    class Type,
+    unsigned int ItemsPerBlock,
+    unsigned int ItemsPerThread
+>
+__global__
+__launch_bounds__(512)
+void warp_striped_to_blocked_one_param_kernel(Type* device_input)
+{
+    constexpr unsigned int block_size = (ItemsPerBlock / ItemsPerThread);
+    const unsigned int lid = hipThreadIdx_x;
+    const unsigned int block_offset = hipBlockIdx_x * ItemsPerBlock;
+
+    Type input[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, device_input + block_offset, input);
+
+    hipcub::BlockExchange<Type, block_size, ItemsPerThread> exchange;
+    exchange.WarpStripedToBlocked(input);
+
+    hipcub::StoreDirectBlocked(lid, device_input + block_offset, input);
+}
+
+TYPED_TEST(HipcubBlockExchangeTests, WarpStripedToBlockedOneParam)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using type             = typename TestFixture::params::type;
+
+    constexpr size_t block_size       = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr size_t items_per_block  = block_size * items_per_thread;
+
+    const unsigned int current_device_warp_size = HIPCUB_HOST_WARP_THREADS;
+    // Given block size not supported
+    bool is_block_size_unsupported = block_size > test_utils::get_max_block_size();
+#ifdef HIPCUB_CUB_API
+    // CUB does not support exchanges to/from warp-striped arrangements
+    // for incomplete blocks (not divisible by warp size)
+    // Workaround for nvcc warning: "dynamic initialization in unreachable code"
+    // (not a simple if with compile-time expression)
+    is_block_size_unsupported |= block_size % current_device_warp_size != 0;
+#endif
+    if(is_block_size_unsupported)
+    {
+        printf("Unsupported test block size: %zu.     Skipping test\n", block_size);
+        GTEST_SKIP();
+    }
+
+    const size_t size = items_per_block * 113;
+    // Generate data
+    type * input = new type[size];    
+    type * expected = new type[size];
+
+    constexpr size_t warp_size_32 = test_utils::get_min_warp_size(block_size, size_t(HIPCUB_WARP_SIZE_32));
+    constexpr size_t warp_size_64 = test_utils::get_min_warp_size(block_size, size_t(HIPCUB_WARP_SIZE_64));
+    constexpr size_t warps_no_32 = (block_size + warp_size_32 - 1) / warp_size_32;
+    constexpr size_t warps_no_64 = (block_size + warp_size_64 - 1) / warp_size_64;
+    constexpr size_t items_per_warp_32 = warp_size_32 * items_per_thread;
+    constexpr size_t items_per_warp_64 = warp_size_64 * items_per_thread;
+
+    // Calculate input and expected results on host
+    type * values = new type[size];
+    std::iota(values, values + size, 0);
+
+    const size_t warps_no = current_device_warp_size == HIPCUB_WARP_SIZE_32 ? warps_no_32 : warps_no_64;
+    const size_t warp_size = current_device_warp_size == HIPCUB_WARP_SIZE_32 ? warp_size_32 : warp_size_64;
+    const size_t items_per_warp = current_device_warp_size == HIPCUB_WARP_SIZE_32 ? items_per_warp_32 : items_per_warp_64;
+
+    for(size_t bi = 0; bi < size / items_per_block; bi++)
+    {
+        for(size_t wi = 0; wi < warps_no; wi++)
+        {
+            const size_t current_warp_size = wi == warps_no - 1
+                ? (block_size % warp_size != 0 ? block_size % warp_size : warp_size)
+                : warp_size;
+            for(size_t li = 0; li < current_warp_size; li++)
+            {
+                for(size_t ii = 0; ii < items_per_thread; ii++)
+                {
+                    const size_t offset = bi * items_per_block + wi * items_per_warp;
+                    const size_t i0     = offset + li * items_per_thread + ii;
+                    const size_t i1     = offset + ii * current_warp_size + li;
+                    input[i0]           = values[i1];
+                    expected[i1]        = values[i1];
+                }
+            }
+        }
+    }
+
+    // Preparing device
+    type* device_input;
+    HIP_CHECK(hipMalloc(&device_input, sizeof(type) * size));
+
+    HIP_CHECK(hipMemcpy(device_input, input, sizeof(type) * size, hipMemcpyHostToDevice));
+
+    // Running kernel
+    constexpr unsigned int grid_size = (size / items_per_block);
+    hipLaunchKernelGGL(
+        HIP_KERNEL_NAME(warp_striped_to_blocked_one_param_kernel<type, items_per_block, items_per_thread>),
+        dim3(grid_size), dim3(block_size), 0, 0,
+        device_input
+    );
+    HIP_CHECK(hipPeekAtLastError());
+    HIP_CHECK(hipDeviceSynchronize());
+
+    // Reading results
+    HIP_CHECK(hipMemcpy(input, device_input, sizeof(type) * size,hipMemcpyDeviceToHost));
+
+    for(size_t i = 0; i < size; i++)
+        ASSERT_EQ(input[i], expected[i]);
+    
+
+    HIP_CHECK(hipFree(device_input));
+    delete [] input;
+    delete [] expected;
+    delete [] values;
 }
