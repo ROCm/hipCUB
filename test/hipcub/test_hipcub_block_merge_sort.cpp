@@ -510,3 +510,151 @@ TYPED_TEST(HipcubBlockMergeSort, StableSort){
 
     HIP_CHECK(hipFree(device_input));
 }
+
+template<
+    unsigned int BlockSize,
+    unsigned int ItemsPerThread,
+    class key_type,
+    class value_type,
+    class CompareOp
+    >
+__global__
+    __launch_bounds__(BlockSize)
+        void stable_sort_key_value_kernel(
+            key_type* device_keys_output,
+            value_type* device_values_output,
+            CompareOp compare_op)
+{
+    constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
+    const unsigned int lid = hipThreadIdx_x;
+    const unsigned int block_offset = hipBlockIdx_x * items_per_block;
+
+    key_type keys[ItemsPerThread];
+    value_type values[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, device_keys_output + block_offset, keys);
+    hipcub::LoadDirectBlocked(lid, device_values_output + block_offset, values);
+
+    hipcub::BlockMergeSort<key_type, BlockSize, ItemsPerThread, value_type> bsort;
+    bsort.StableSort(keys, values, compare_op);
+
+    hipcub::StoreDirectBlocked(lid, device_keys_output + block_offset, keys);
+    hipcub::StoreDirectBlocked(lid, device_values_output + block_offset, values);
+}
+
+TYPED_TEST(HipcubBlockMergeSort, StableSortKeysValues)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using key_type = typename TestFixture::params::key_type;
+    using value_type = typename TestFixture::params::value_type;
+    constexpr size_t block_size = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    using compare_function = typename TestFixture::params::compare_function;
+    constexpr size_t items_per_block = block_size * items_per_thread;
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size = items_per_block * 1134;
+    const size_t grid_size = size / items_per_block;
+
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        // Generate data
+        std::vector<key_type> keys_output;
+        keys_output = test_utils::get_random_data<key_type>(size,
+                                                            std::numeric_limits<key_type>::min(),
+                                                            std::numeric_limits<key_type>::max(),
+                                                            seed_value);
+
+        std::vector<value_type> values_output;
+        values_output =
+            test_utils::get_random_data<value_type>(size,
+                                                    std::numeric_limits<value_type>::min(),
+                                                    std::numeric_limits<value_type>::max(),
+                                                    seed_value + seed_value_addition);
+
+        using key_value = std::pair<key_type, value_type>;
+
+        // Calculate expected results on host
+        std::vector<key_value> expected(size);
+        for(size_t i = 0; i < size; i++)
+        {
+            expected[i] = key_value(keys_output[i], values_output[i]);
+        }
+
+        compare_function compare_op;
+        for(size_t i = 0; i < size / items_per_block; i++)
+        {
+            std::stable_sort(expected.begin() + (i * items_per_block),
+                             expected.begin() + ((i + 1) * items_per_block),
+                             [compare_op](const key_value & a, const key_value & b)
+                             {
+                                 return compare_op(a.first, b.first);
+                             });
+        }
+
+        key_type* device_keys_output;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_keys_output, keys_output.size() * sizeof(key_type)));
+        value_type* device_values_output;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_values_output, values_output.size() * sizeof(value_type)));
+
+        HIP_CHECK(
+            hipMemcpy(
+                device_keys_output, keys_output.data(),
+                keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
+                hipMemcpyHostToDevice
+            )
+        );
+
+        HIP_CHECK(
+            hipMemcpy(
+                device_values_output, values_output.data(),
+                values_output.size() * sizeof(typename decltype(values_output)::value_type),
+                hipMemcpyHostToDevice
+            )
+        );
+
+        // Running kernel
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(stable_sort_key_value_kernel<block_size, items_per_thread, key_type, value_type>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_keys_output, device_values_output, compare_op
+        );
+
+        // Getting results to host
+        HIP_CHECK(
+            hipMemcpy(
+                keys_output.data(), device_keys_output,
+                keys_output.size() * sizeof(typename decltype(keys_output)::value_type),
+                hipMemcpyDeviceToHost
+            )
+        );
+
+        HIP_CHECK(
+            hipMemcpy(
+                values_output.data(), device_values_output,
+                values_output.size() * sizeof(typename decltype(values_output)::value_type),
+                hipMemcpyDeviceToHost
+            )
+        );
+
+        for(size_t i = 0; i < size; i++)
+        {
+            ASSERT_EQ(test_utils::convert_to_native(keys_output[i]),
+                      test_utils::convert_to_native(expected[i].first));
+            ASSERT_EQ(test_utils::convert_to_native(values_output[i]),
+                      test_utils::convert_to_native(expected[i].second));
+        }
+
+        HIP_CHECK(hipFree(device_keys_output));
+        HIP_CHECK(hipFree(device_values_output));
+    }
+}
