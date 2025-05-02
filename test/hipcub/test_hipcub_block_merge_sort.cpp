@@ -658,3 +658,120 @@ TYPED_TEST(HipcubBlockMergeSort, StableSortKeysValues)
         HIP_CHECK(hipFree(device_values_output));
     }
 }
+
+template<typename T, size_t items_per_thread, size_t block_size, class CompareOp>
+__global__ void stable_sort_key_with_valid_items_kernel(T * device_input, CompareOp compare_op, int valid_items, T default_val){
+    constexpr size_t items_per_block = items_per_thread * block_size;
+    const size_t offset = (blockIdx.x * items_per_block) + (threadIdx.x * items_per_thread);
+
+    T input[items_per_thread];
+
+    for(size_t i = 0; i < items_per_thread; i++)
+        input[i] = device_input[offset + i];
+
+    hipcub::BlockMergeSort<T, block_size, items_per_thread> bsort;
+
+    bsort.StableSort(input, 
+        [&](const T & lhs, const T & rhs){
+            return compare_op(lhs.elem, rhs.elem);
+        }, 
+        valid_items, 
+        default_val
+    );
+
+    for(size_t i = 0; i < items_per_thread; i++)
+        device_input[offset + i] = input[i];
+}
+
+TYPED_TEST(HipcubBlockMergeSort, StableSortKeysWithValidItems){
+
+    constexpr size_t block_size = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    using compare_function = typename TestFixture::params::compare_function;
+    using T = typename TestFixture::params::key_type;
+    constexpr int items_per_block = items_per_thread * block_size;
+    constexpr int grid_size = 113; 
+
+    auto compare_op = compare_function();
+
+    if(block_size > test_utils::get_max_block_size())
+    {
+        GTEST_SKIP();
+    }
+
+    struct custom_type{
+        T elem;
+        size_t id;
+    };
+
+    constexpr int size = grid_size * items_per_block;
+    
+    const double mini = static_cast<double>(std::numeric_limits<T>::min());
+    const double maxi = static_cast<double>(std::numeric_limits<T>::max());
+
+    const custom_type default_val = {static_cast<T>(compare_op(mini, maxi) ? maxi : mini), 0};
+    const int valid_items_arr[8] = {
+        items_per_block / 2, items_per_block / 3, 
+        items_per_block / 4, items_per_block / 5, 
+        items_per_block -10, items_per_block - 5, 
+        items_per_block - 2, items_per_block - 1
+    };
+    
+    custom_type * host_keys_input = new custom_type[size];
+    custom_type * host_keys_output = new custom_type[size];
+    custom_type * host_keys_expected = new custom_type[size];
+    
+    custom_type * device_keys_input;
+    HIP_CHECK(hipMalloc(&device_keys_input, sizeof(custom_type) * size));
+
+    for(size_t it = 0; it < 8; it++){
+        int valid_items = valid_items_arr[it];
+
+        double elem = (mini + 1);
+        for(size_t i = 0; i < size; i++){
+            if(elem == maxi)
+                --elem;
+            
+            host_keys_input[i] = host_keys_expected[i] = {static_cast<T>(elem++), i};
+        }
+        
+        // filling in the default_val
+        for(size_t bI = 0; bI < grid_size; bI++){
+            size_t offset = (bI * items_per_block);
+            for(size_t i = valid_items; i < items_per_block; i++){
+                host_keys_expected[offset + i] = default_val;
+            }
+        }
+
+        // sorting the values
+        for(size_t bI = 0; bI < grid_size; bI++){
+            size_t offset = (bI * items_per_block);
+            std::stable_sort(host_keys_expected + offset, host_keys_expected + offset + items_per_block, 
+                [&](const custom_type & lhs, const custom_type & rhs){
+                    return compare_op(lhs.elem, rhs.elem);
+                }
+            );
+        }
+
+        HIP_CHECK(hipMemcpy(device_keys_input, host_keys_input, sizeof(custom_type) * size, hipMemcpyHostToDevice));
+
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(stable_sort_key_with_valid_items_kernel<custom_type, items_per_thread, block_size>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_keys_input, compare_op, valid_items, default_val
+        );
+
+        HIP_CHECK(hipMemcpy(host_keys_output, device_keys_input, sizeof(custom_type) * size, hipMemcpyDeviceToHost));
+
+        for (size_t i = 0; i < size; i++) {
+            ASSERT_EQ(host_keys_expected[i].elem, host_keys_output[i].elem);
+            ASSERT_EQ(host_keys_expected[i].id, host_keys_output[i].id);
+        }
+    }
+
+    delete [] host_keys_input;
+    delete [] host_keys_output;
+    delete [] host_keys_expected;
+
+    HIP_CHECK(hipFree(device_keys_input));
+}
