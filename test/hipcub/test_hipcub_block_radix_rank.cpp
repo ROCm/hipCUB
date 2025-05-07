@@ -37,6 +37,8 @@
 #include "hipcub/block/block_store.hpp"
 #include "hipcub/util_type.hpp"
 
+#include <bitset>
+
 template<class Key,
          unsigned int BlockSize,
          unsigned int ItemsPerThread,
@@ -333,4 +335,288 @@ TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMatch)
 #endif
 
     test_radix_rank<TestFixture, RadixRankAlgorithm::RADIX_RANK_MATCH>();
+}
+
+template<unsigned int       BlockSize,
+         unsigned int       ItemsPerThread,
+         unsigned int       RadixBits,
+         bool               Descending,
+         RadixRankAlgorithm Algorithm,
+         typename KeyType>
+__global__ __launch_bounds__(BlockSize) void rank_with_prefix_sum_kernel(const KeyType* keys_input,
+                                                         int*           ranks_output,
+                                                         int*           prefix_sum_output,
+                                                         unsigned int   start_bit)
+{
+    constexpr bool warp_striped = Algorithm == RadixRankAlgorithm::RADIX_RANK_MATCH;
+
+    using KeyTraits      = hipcub::Traits<KeyType>;
+    using UnsignedBits   = typename KeyTraits::UnsignedBits;
+    using DigitExtractor = hipcub::BFEDigitExtractor<KeyType>;
+    using RankType       = std::conditional_t<
+        Algorithm == RadixRankAlgorithm::RADIX_RANK_MATCH,
+        hipcub::BlockRadixRankMatch<BlockSize, RadixBits, Descending>,
+        hipcub::BlockRadixRank<BlockSize,
+                               RadixBits,
+                               Descending,
+                               Algorithm == RadixRankAlgorithm::RADIX_RANK_MEMOIZE>>;
+
+    using KeyExchangeType  = hipcub::BlockExchange<KeyType, BlockSize, ItemsPerThread>;
+    using RankExchangeType = hipcub::BlockExchange<int, BlockSize, ItemsPerThread>;
+
+    constexpr unsigned int items_per_block = BlockSize * ItemsPerThread;
+    const unsigned int     lid             = hipThreadIdx_x;
+    const unsigned int     block_offset    = hipBlockIdx_x * items_per_block;
+    
+    __shared__ union
+    {
+        typename KeyExchangeType::TempStorage  key_exchange;
+        typename RankType::TempStorage         rank;
+        typename RankExchangeType::TempStorage rank_exchange;
+    } storage;
+    
+    KeyType keys[ItemsPerThread];
+    hipcub::LoadDirectBlocked(lid, keys_input + block_offset, keys);
+    
+    if(warp_striped)
+    {
+        KeyExchangeType exchange(storage.key_exchange);
+        exchange.BlockedToWarpStriped(keys, keys);
+        __syncthreads();
+    }
+    
+    UnsignedBits(&unsigned_keys)[ItemsPerThread]
+    = reinterpret_cast<UnsignedBits(&)[ItemsPerThread]>(keys);
+    
+    #pragma unroll
+    for(unsigned int key = 0; key < ItemsPerThread; key++)
+    {
+        unsigned_keys[key] = KeyTraits::TwiddleIn(unsigned_keys[key]);
+    }
+    
+    RankType             rank(storage.rank);
+    const auto             bins_tracked_per_thread = rank.BINS_TRACKED_PER_THREAD;
+    const DigitExtractor digit_extractor(start_bit, RadixBits);
+    int                  ranks[ItemsPerThread];
+
+    int prefix_sum_storage[bins_tracked_per_thread];
+
+    rank.RankKeys(unsigned_keys, ranks, digit_extractor, prefix_sum_storage);
+
+    if(warp_striped)
+    {
+        __syncthreads();
+        RankExchangeType exchange(storage.rank_exchange);
+        exchange.WarpStripedToBlocked(ranks, ranks);
+    }
+
+    hipcub::StoreDirectBlocked(lid, ranks_output + block_offset, ranks);
+
+    const size_t pfs_size = (1 << RadixBits);
+    const size_t pfs_offset = (blockIdx.x * pfs_size) + (threadIdx.x * bins_tracked_per_thread);
+    const size_t pfs_total_size = pfs_size * blockDim.x;
+
+    for(size_t i = 0; i < bins_tracked_per_thread; i++){
+        if((threadIdx.x * bins_tracked_per_thread) + i < pfs_size)
+            prefix_sum_output[pfs_offset + i] = prefix_sum_storage[i];
+        
+    }
+}
+
+template<typename TestFixture, RadixRankAlgorithm Algorithm>
+void test_radix_rank_with_prefix_sum_output()
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using key_type = typename TestFixture::params::key_type;
+    constexpr size_t block_size = TestFixture::params::block_size;
+    constexpr size_t items_per_thread = TestFixture::params::items_per_thread;
+    constexpr bool descending = TestFixture::params::descending;
+    constexpr unsigned int start_bit = TestFixture::params::start_bit;
+    constexpr unsigned int radix_bits       = TestFixture::params::max_radix_bits;
+    constexpr unsigned     end_bit          = start_bit + radix_bits;
+    constexpr size_t items_per_block = block_size * items_per_thread;
+
+    if constexpr(std::is_same_v<key_type, unsigned long long>){
+
+        // Given block size not supported
+        if(block_size > test_utils::get_max_block_size())
+        {
+            return;
+        }
+
+        const size_t grid_size = 42;
+        const size_t pfs_items_per_block = (1 << radix_bits);
+        const size_t pfs_size = pfs_items_per_block * grid_size;
+        const size_t size = items_per_block * grid_size;
+
+        SCOPED_TRACE(testing::Message() << "with items_per_block= " << items_per_block << " size=" << size);
+
+        for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+        {
+            unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+            SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+            // Generate data
+            std::vector<key_type> keys_input;
+            if(test_utils::is_floating_point<key_type>::value)
+            {
+                keys_input = test_utils::get_random_data<key_type>(
+                    size,
+                    test_utils::convert_to_device<key_type>(-1000),
+                    test_utils::convert_to_device<key_type>(+1000),
+                    seed_value);
+            }
+            else
+            {
+                keys_input
+                    = test_utils::get_random_data<key_type>(size,
+                                                            test_utils::numeric_limits<key_type>::min(),
+                                                            test_utils::numeric_limits<key_type>::max(),
+                                                            seed_value);
+            }
+
+            test_utils::add_special_values(keys_input, seed_value);
+
+            // Calculate expected results on host
+            union converter{
+                key_type in;
+                uint64_t out;
+            }c;
+            std::vector<int> expected(keys_input.size());
+            std::vector<int> pfs_expected(pfs_size, 0);
+            for(size_t i = 0; i < grid_size; i++)
+            {
+                size_t     block_offset = i * items_per_block;
+                const auto key_cmp
+                    = test_utils::key_comparator<key_type, descending, start_bit, end_bit>();
+
+                // Perform an 'argsort', which gives a sorted sequence of indices into `keys_input`.
+                std::vector<int> indices(items_per_block);
+                std::iota(indices.begin(), indices.end(), 0);
+                std::stable_sort(
+                    indices.begin(),
+                    indices.end(),
+                    [&](const int& i, const int& j)
+                    { return key_cmp(keys_input[block_offset + i], keys_input[block_offset + j]); });
+
+                // Invert the sorted indices sequence to obtain the ranks.
+                for(size_t j = 0; j < indices.size(); ++j)
+                {
+                    expected[block_offset + indices[j]] = static_cast<int>(j);
+                }
+
+                /* Calculating the prefix sun on host */
+                size_t pfs_offset = i * pfs_items_per_block;
+
+                std::vector<int> histogram(pfs_items_per_block, 0);
+
+                for(size_t ii = 0; ii < items_per_block; ii++){
+                    c.in = keys_input[block_offset + ii];
+                    uint64_t bit_rep = c.out;
+
+                    bit_rep >>= start_bit;
+                    bit_rep &= ((1 << radix_bits) - 1);
+
+                    if(descending)
+                        bit_rep = (1 << radix_bits) - (1 + bit_rep); //flip it
+
+                    ++histogram[bit_rep];
+                }
+                std::exclusive_scan(histogram.begin(), histogram.end(), pfs_expected.begin() + pfs_offset, 0);
+
+
+                //     std::cout << std::endl;
+                // }
+            }
+
+            if constexpr (std::is_same_v<key_type, int>){
+                for(const auto & x : pfs_expected) std::cout << x << " ";
+                std::cout << std::endl;
+            }
+
+            // Preparing device
+            key_type* d_keys_input;
+            int*      d_ranks_output;
+            int*      d_prefix_sum_output;
+            HIP_CHECK(hipMalloc(&d_keys_input, keys_input.size() * sizeof(key_type)));
+            HIP_CHECK(hipMalloc(&d_ranks_output, expected.size() * sizeof(int)));
+            HIP_CHECK(hipMalloc(&d_prefix_sum_output, pfs_size * sizeof(int)));
+
+            HIP_CHECK(hipMemcpy(d_keys_input,
+                                keys_input.data(),
+                                keys_input.size() * sizeof(key_type),
+                                hipMemcpyHostToDevice));
+
+            // Running kernel
+            hipLaunchKernelGGL(HIP_KERNEL_NAME(rank_with_prefix_sum_kernel<block_size,
+                                                        items_per_thread,
+                                                        radix_bits,
+                                                        descending,
+                                                        Algorithm,
+                                                        key_type>),
+                            dim3(grid_size),
+                            dim3(block_size),
+                            0,
+                            0,
+                            d_keys_input,
+                            d_ranks_output,
+                            d_prefix_sum_output,
+                            start_bit);
+
+            // Getting results to host
+            std::vector<int> ranks_output(expected.size());
+            std::vector<int> prefix_sum_output(pfs_size);
+            HIP_CHECK(hipMemcpy(ranks_output.data(),
+                                d_ranks_output,
+                                ranks_output.size() * sizeof(int),
+                                hipMemcpyDeviceToHost));
+
+            HIP_CHECK(hipMemcpy(prefix_sum_output.data(),
+                                d_prefix_sum_output,
+                                prefix_sum_output.size() * sizeof(int),
+                                hipMemcpyDeviceToHost));
+
+            // Verifying results
+            for(size_t i = 0; i < size; i++)
+            {
+                SCOPED_TRACE(testing::Message() << "with index= " << i);
+                ASSERT_EQ(ranks_output[i], expected[i]);
+
+                if(i < pfs_size)
+                    ASSERT_EQ(prefix_sum_output[i], pfs_expected[i]);
+            }
+
+            HIP_CHECK(hipFree(d_keys_input));
+            HIP_CHECK(hipFree(d_ranks_output));
+        }
+    }
+}
+
+TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankBasicWithPrefixSumOutput)
+{
+    test_radix_rank_with_prefix_sum_output<TestFixture, RadixRankAlgorithm::RADIX_RANK_BASIC>();
+}
+
+TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMemoizeWithPrefixSumOutput)
+{
+    test_radix_rank_with_prefix_sum_output<TestFixture, RadixRankAlgorithm::RADIX_RANK_MEMOIZE>();
+}
+
+TYPED_TEST(HipcubBlockRadixRank, BlockRadixRankMatchWithPrefixSumOutput)
+{
+#ifdef __HIP_PLATFORM_NVIDIA__
+    constexpr unsigned int block_size = TestFixture::params::block_size;
+    if(block_size % HIPCUB_DEVICE_WARP_THREADS != 0)
+    {
+        // The CUB implementation of BlockRadixRankMatch is currently broken when
+        // the warp size does not divide the block size exactly, see
+        // https://github.com/NVIDIA/cub/issues/552.
+        GTEST_SKIP();
+    }
+#endif
+
+    test_radix_rank_with_prefix_sum_output<TestFixture, RadixRankAlgorithm::RADIX_RANK_MATCH>();
 }
