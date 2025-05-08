@@ -229,6 +229,113 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, Reduce)
     }
 }
 
+template<
+    unsigned int BlockSize,
+    hipcub::BlockReduceAlgorithm Algorithm,
+    class T
+>
+__global__
+__launch_bounds__(BlockSize)
+void sum_kernel(T* device_output, T* device_output_reductions)
+{
+    const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
+    T value = device_output[index];
+    using breduce_t = hipcub::BlockReduce<T, BlockSize, Algorithm>;
+    __shared__ typename breduce_t::TempStorage temp_storage;
+    value = breduce_t(temp_storage).Sum(value);
+    if(hipThreadIdx_x == 0)
+    {
+        device_output_reductions[hipBlockIdx_x] = value;
+    }
+}
+
+TYPED_TEST(HipcubBlockReduceSingleValueTests, Sum)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
+
+    constexpr auto algorithm = TestFixture::algorithm;
+    constexpr size_t block_size = TestFixture::block_size;
+
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t size = block_size * 113;
+    const size_t grid_size = size / block_size;
+
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        // Generate data
+        std::vector<T> output = test_utils::get_random_data<T>(size, 2, 200, seed_value);
+        std::vector<T> output_reductions(size / block_size);
+
+        // Calculate expected results on host
+        std::vector<T> expected_reductions(output_reductions.size(),
+                                           test_utils::convert_to_device<T>(0));
+        for(size_t i = 0; i < output.size() / block_size; i++)
+        {
+            acc_type value(0);
+            for(size_t j = 0; j < block_size; j++)
+            {
+                auto idx = i * block_size + j;
+                value    = binary_op_host(value, output[idx]);
+            }
+            expected_reductions[i] = static_cast<T>(value);
+        }
+
+        // Preparing device
+        T* device_output;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(T)));
+        T* device_output_reductions;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output_reductions, output_reductions.size() * sizeof(T)));
+
+        HIP_CHECK(
+            hipMemcpy(
+                device_output, output.data(),
+                output.size() * sizeof(T),
+                hipMemcpyHostToDevice
+            )
+        );
+
+        // Running kernel
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(sum_kernel<block_size, algorithm, T>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_output, device_output_reductions
+        );
+
+        // Reading results back
+        HIP_CHECK(
+            hipMemcpy(
+                output_reductions.data(), device_output_reductions,
+                output_reductions.size() * sizeof(T),
+                hipMemcpyDeviceToHost
+            )
+        );
+
+        // Verifying results
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T>::value * block_size);
+
+        HIP_CHECK(hipFree(device_output));
+        HIP_CHECK(hipFree(device_output_reductions));
+    }
+}
+
 TYPED_TEST_SUITE(HipcubBlockReduceSingleValueTests, SingleValueTestParams);
 
 template<
@@ -326,6 +433,124 @@ TYPED_TEST(HipcubBlockReduceSingleValueTests, ReduceValid)
         // Running kernel
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(reduce_valid_kernel<block_size, algorithm, T>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_output, device_output_reductions, valid_items
+        );
+
+        // Reading results back
+        HIP_CHECK(
+            hipMemcpy(
+                output_reductions.data(), device_output_reductions,
+                output_reductions.size() * sizeof(T),
+                hipMemcpyDeviceToHost
+            )
+        );
+
+        // Verifying results
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T>::value * block_size);
+
+        HIP_CHECK(hipFree(device_output));
+        HIP_CHECK(hipFree(device_output_reductions));
+    }
+}
+
+template<
+    unsigned int BlockSize,
+    hipcub::BlockReduceAlgorithm Algorithm,
+    class T
+>
+__global__
+__launch_bounds__(BlockSize)
+void sum_valid_kernel(T* device_output, T* device_output_reductions, const unsigned int valid_items)
+{
+    const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
+    T value = device_output[index];
+    using breduce_t = hipcub::BlockReduce<T, BlockSize, Algorithm>;
+    __shared__ typename breduce_t::TempStorage temp_storage;
+    value = breduce_t(temp_storage).Sum(value, valid_items);
+    if(hipThreadIdx_x == 0)
+    {
+        device_output_reductions[hipBlockIdx_x] = value;
+    }
+}
+
+TYPED_TEST(HipcubBlockReduceSingleValueTests, SumValid)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
+
+    constexpr auto algorithm = TestFixture::algorithm;
+
+    constexpr size_t block_size = TestFixture::block_size;
+    const size_t size = block_size * 113;
+    const size_t grid_size = size / block_size;
+
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        const unsigned int valid_items = test_utils::get_random_value(
+            block_size - 10,
+            block_size,
+            seed_value
+        );
+
+        // Generate data
+        std::vector<T> output = test_utils::get_random_data<T>(
+            size,
+            2,
+            200,
+            seed_value + seed_value_addition
+        );
+        std::vector<T> output_reductions(size / block_size);
+
+        // Calculate expected results on host
+        std::vector<T> expected_reductions(output_reductions.size(),
+                                           test_utils::convert_to_device<T>(0));
+        for(size_t i = 0; i < output.size() / block_size; i++)
+        {
+            acc_type value(0);
+            for(size_t j = 0; j < valid_items; j++)
+            {
+                auto idx = i * block_size + j;
+                value    = binary_op_host(output[idx], value);
+            }
+            expected_reductions[i] = static_cast<T>(value);
+        }
+
+        // Preparing device
+        T* device_output;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(T)));
+        T* device_output_reductions;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output_reductions, output_reductions.size() * sizeof(T)));
+
+        HIP_CHECK(
+            hipMemcpy(
+                device_output, output.data(),
+                output.size() * sizeof(T),
+                hipMemcpyHostToDevice
+            )
+        );
+
+        // Running kernel
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(sum_valid_kernel<block_size, algorithm, T>),
             dim3(grid_size), dim3(block_size), 0, 0,
             device_output, device_output_reductions, valid_items
         );
@@ -504,6 +729,139 @@ TYPED_TEST(HipcubBlockReduceInputArrayTests, Reduce)
         // Running kernel
         hipLaunchKernelGGL(
             HIP_KERNEL_NAME(reduce_array_kernel<block_size, items_per_thread, algorithm, T>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_output, device_output_reductions
+        );
+
+        // Reading results back
+        HIP_CHECK(
+            hipMemcpy(
+                output_reductions.data(), device_output_reductions,
+                output_reductions.size() * sizeof(T),
+                hipMemcpyDeviceToHost
+            )
+        );
+
+        // Verifying results
+        test_utils::assert_near(output_reductions,
+                                expected_reductions,
+                                test_utils::precision<T>::value * items_per_block);
+
+        HIP_CHECK(hipFree(device_output));
+        HIP_CHECK(hipFree(device_output_reductions));
+    }
+}
+
+template<
+    unsigned int BlockSize,
+    unsigned int ItemsPerThread,
+    hipcub::BlockReduceAlgorithm Algorithm,
+    class T
+>
+__global__
+__launch_bounds__(BlockSize)
+void sum_array_kernel(T* device_output, T* device_output_reductions)
+{
+    const unsigned int index = ((hipBlockIdx_x * BlockSize) + hipThreadIdx_x) * ItemsPerThread;
+    // load
+    T in_out[ItemsPerThread];
+    for(unsigned int j = 0; j < ItemsPerThread; j++)
+    {
+        in_out[j] = device_output[index + j];
+    }
+
+    T reduction;
+    using breduce_t = hipcub::BlockReduce<T, BlockSize, Algorithm>;
+    __shared__ typename breduce_t::TempStorage temp_storage;
+    reduction = breduce_t(temp_storage).Sum(in_out);
+
+    if(hipThreadIdx_x == 0)
+    {
+        device_output_reductions[hipBlockIdx_x] = reduction;
+    }
+}
+
+
+TYPED_TEST(HipcubBlockReduceInputArrayTests, Sum)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using T = typename TestFixture::type;
+    // for bfloat16 and half we use double for host-side accumulation
+    using binary_op_type_host = typename test_utils::select_plus_operator_host<T>::type;
+    binary_op_type_host binary_op_host;
+    using acc_type = typename test_utils::select_plus_operator_host<T>::acc_type;
+
+    constexpr auto algorithm = TestFixture::algorithm;
+    constexpr size_t block_size = TestFixture::block_size;
+    constexpr size_t items_per_thread = TestFixture::items_per_thread;
+
+    // Given block size not supported
+    if(block_size > test_utils::get_max_block_size())
+    {
+        return;
+    }
+
+    const size_t items_per_block = block_size * items_per_thread;
+    const size_t size = items_per_block * 37;
+    const size_t grid_size = size / items_per_block;
+
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+
+        // Generate data
+        std::vector<T> output
+            = test_utils::get_random_data<T>(size,
+                                             test_utils::convert_to_device<T>(2),
+                                             test_utils::convert_to_device<T>(200),
+                                             seed_value);
+
+        // Output reduce results
+        std::vector<T> output_reductions(size / block_size, test_utils::convert_to_device<T>(0));
+
+        // Calculate expected results on host
+        std::vector<T> expected_reductions(output_reductions.size(),
+                                           test_utils::convert_to_device<T>(0));
+        for(size_t i = 0; i < output.size() / items_per_block; i++)
+        {
+            acc_type value(0);
+            for(size_t j = 0; j < items_per_block; j++)
+            {
+                auto idx = i * items_per_block + j;
+                value    = binary_op_host(static_cast<acc_type>(output[idx]), value);
+            }
+            expected_reductions[i] = static_cast<T>(value);
+        }
+
+        // Preparing device
+        T* device_output;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output, output.size() * sizeof(T)));
+        T* device_output_reductions;
+        HIP_CHECK(test_common_utils::hipMallocHelper(&device_output_reductions, output_reductions.size() * sizeof(T)));
+
+        HIP_CHECK(
+            hipMemcpy(
+                device_output, output.data(),
+                output.size() * sizeof(T),
+                hipMemcpyHostToDevice
+            )
+        );
+
+        HIP_CHECK(
+            hipMemcpy(
+                device_output_reductions, output_reductions.data(),
+                output_reductions.size() * sizeof(T),
+                hipMemcpyHostToDevice
+            )
+        );
+
+        // Running kernel
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(sum_array_kernel<block_size, items_per_thread, algorithm, T>),
             dim3(grid_size), dim3(block_size), 0, 0,
             device_output, device_output_reductions
         );
