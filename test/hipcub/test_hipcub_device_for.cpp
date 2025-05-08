@@ -307,10 +307,10 @@ TYPED_TEST(HipcubDeviceForTests, ForEachN)
             // Run
             HIP_CHECK(hipcub::DeviceFor::ForEachN(d_input, n, plus<T>(), stream));
 
-            if (TestFixture::use_graphs)
+            if(TestFixture::use_graphs)
             {
                 gHelper.createAndLaunchGraph(stream);
-            } 
+            }
 
             HIP_CHECK(hipGetLastError());
             HIP_CHECK(hipDeviceSynchronize());

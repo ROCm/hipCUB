@@ -327,7 +327,7 @@ TYPED_TEST(HipcubDeviceReduceTests, ReduceMinimum)
             if(TestFixture::use_graphs)
             {
                 gHelper.cleanupGraphHelper();
-            }       
+            }
 
             HIP_CHECK(hipFree(d_input));
             HIP_CHECK(hipFree(d_output));
