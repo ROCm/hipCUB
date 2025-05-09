@@ -23,6 +23,7 @@ Full documentation for hipCUB is available at [https://rocm.docs.amd.com/project
 * Additional unit tests for functions in `BlockRadixRank` class located in `test/hipcub/test_hipcub_block_radix_rank.cpp`.
 * Additional unit tests for functions in `BlockRadixSort` class located in `test/hipcub/test_hipcub_block_radix_sort.cpp`.
 * Additional unit tests for functions in `BlockReduce` class located in `test/hipcub/test_hipcub_block_reduce.cpp`.
+* Additional unit tests for functions in `BlockShuffle` class located in `test/hipcub/test_hipcub_block_shufflel.cpp`.
 
 ### Changed
 
