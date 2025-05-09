@@ -364,6 +364,106 @@ template<
 >
 __global__
 __launch_bounds__(BlockSize)
+void shuffle_up_with_suffix_kernel(T *device_input, T *device_output, T * device_suffix)
+{
+    const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
+    hipcub::BlockShuffle<T,BlockSize> b_shuffle;
+    b_shuffle.template Up<ItemsPerThread>(
+        reinterpret_cast<T(&)[ItemsPerThread]>(device_input[index*ItemsPerThread]),
+        reinterpret_cast<T(&)[ItemsPerThread]>(device_output[index*ItemsPerThread]),
+        device_suffix[blockIdx.x]);
+}
+
+TYPED_TEST(HipcubBlockShuffleTests, BlockUpWithSuffix)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using type = typename TestFixture::type;
+    constexpr size_t block_size = TestFixture::block_size;
+    constexpr size_t items_per_thread = 128;
+    constexpr size_t items_per_block = block_size * items_per_thread;
+    constexpr size_t grid_size = 114;
+
+    const size_t size = items_per_block * grid_size;
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+        // Generate data
+        const double min_value = static_cast<double>(std::is_unsigned<type>::value ? 0 : -100);
+        const double max_value = static_cast<double>(std::is_unsigned<type>::value ? 200 : 100);
+
+        std::mt19937 gen(seed_value);
+        std::uniform_real_distribution<double> dis(min_value, max_value);
+
+       
+        type * host_input =  new type[size];
+        type * host_output = new type[size];
+
+        for(size_t i = 0; i < size; i++)
+            host_input[i] = static_cast<type>(dis(gen));
+
+        std::iota(host_input, host_input + size, static_cast<type>(0));
+
+        
+        // Preparing device
+        type * device_input;
+        type * device_output;
+        type * device_suffix;
+
+        HIP_CHECK(hipMalloc(&device_input, size * sizeof(type)));
+        HIP_CHECK(hipMalloc(&device_output, size * sizeof(type)));
+        HIP_CHECK(hipMalloc(&device_suffix, grid_size * sizeof(type)));
+
+        HIP_CHECK(hipMemcpy(device_input, host_input, size * sizeof(type), hipMemcpyHostToDevice));
+
+        // Running kernel
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(shuffle_up_with_suffix_kernel<block_size, items_per_thread, type>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_input, device_output, device_suffix
+        );
+
+        // Reading results back
+        HIP_CHECK(hipMemcpy(host_output, device_output, size * sizeof(type), hipMemcpyDeviceToHost));
+
+        type * host_block_suffix = new type[grid_size];
+
+        HIP_CHECK(hipMemcpy(host_block_suffix, device_suffix, sizeof(type) * grid_size, hipMemcpyDeviceToHost));
+
+        // Calculate expected results on host
+        for(size_t block_index = 0; block_index < grid_size; block_index++)
+        {
+            size_t suffix_index = (block_index * items_per_block) + (items_per_block - 1);
+            ASSERT_EQ(host_block_suffix[block_index], host_input[suffix_index]);
+            for(size_t thread_index = 0; thread_index < block_size; thread_index++)
+            {
+                size_t start_offset = (block_index * block_size + thread_index) * items_per_thread;
+                for(size_t item_index = 0; item_index < items_per_thread; item_index++)
+                {
+                    if(thread_index + item_index > 0)
+                        ASSERT_EQ(host_input[start_offset + item_index - 1], host_output[start_offset + item_index]);
+                }
+            }
+        }
+
+        delete [] host_input;
+        delete [] host_output;
+        delete [] host_block_suffix;
+        HIP_CHECK(hipFree(device_input));
+        HIP_CHECK(hipFree(device_output));
+    }
+}
+
+template<
+    unsigned int BlockSize,
+    unsigned int ItemsPerThread,
+    class T
+>
+__global__
+__launch_bounds__(BlockSize)
 void shuffle_down_kernel(T (*device_input), T (*device_output))
 {
     const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
@@ -455,4 +555,105 @@ TYPED_TEST(HipcubBlockShuffleTests, BlockDown)
 
     }
 
+}
+
+template<
+    unsigned int BlockSize,
+    unsigned int ItemsPerThread,
+    class T
+>
+__global__
+__launch_bounds__(BlockSize)
+void shuffle_down_with_prefix_kernel(T *device_input, T *device_output, T * device_prefix)
+{
+    const unsigned int index = (hipBlockIdx_x * BlockSize) + hipThreadIdx_x;
+    hipcub::BlockShuffle<T,BlockSize> b_shuffle;
+    b_shuffle.template Down<ItemsPerThread>(
+        reinterpret_cast<T(&)[ItemsPerThread]>(device_input[index*ItemsPerThread]),
+        reinterpret_cast<T(&)[ItemsPerThread]>(device_output[index*ItemsPerThread]),
+        device_prefix[blockIdx.x]
+    );
+}
+
+TYPED_TEST(HipcubBlockShuffleTests, BlockDownWithSuffix)
+{
+    int device_id = test_common_utils::obtain_device_from_ctest();
+    SCOPED_TRACE(testing::Message() << "with device_id= " << device_id);
+    HIP_CHECK(hipSetDevice(device_id));
+
+    using type = typename TestFixture::type;
+    constexpr size_t block_size = TestFixture::block_size;
+    constexpr size_t items_per_thread = 128;
+    constexpr size_t items_per_block = block_size * items_per_thread;
+    constexpr size_t grid_size = 114;
+
+    const size_t size = items_per_block * grid_size;
+    for (size_t seed_index = 0; seed_index < random_seeds_count + seed_size; seed_index++)
+    {
+        unsigned int seed_value = seed_index < random_seeds_count  ? rand() : seeds[seed_index - random_seeds_count];
+        SCOPED_TRACE(testing::Message() << "with seed= " << seed_value);
+        // Generate data
+        const double min_value = static_cast<double>(std::is_unsigned<type>::value ? 0 : -100);
+        const double max_value = static_cast<double>(std::is_unsigned<type>::value ? 200 : 100);
+
+        std::mt19937 gen(seed_value);
+        std::uniform_real_distribution<double> dis(min_value, max_value);
+
+       
+        type * host_input =  new type[size];
+        type * host_output = new type[size];
+
+        for(size_t i = 0; i < size; i++)
+            host_input[i] = static_cast<type>(dis(gen));
+
+        std::iota(host_input, host_input + size, static_cast<type>(0));
+
+        
+        // Preparing device
+        type * device_input;
+        type * device_output;
+        type * device_prefix;
+
+        HIP_CHECK(hipMalloc(&device_input, size * sizeof(type)));
+        HIP_CHECK(hipMalloc(&device_output, size * sizeof(type)));
+        HIP_CHECK(hipMalloc(&device_prefix, grid_size * sizeof(type)));
+
+        HIP_CHECK(hipMemcpy(device_input, host_input, size * sizeof(type), hipMemcpyHostToDevice));
+
+        // Running kernel
+        hipLaunchKernelGGL(
+            HIP_KERNEL_NAME(shuffle_down_with_prefix_kernel<block_size, items_per_thread, type>),
+            dim3(grid_size), dim3(block_size), 0, 0,
+            device_input, device_output, device_prefix
+        );
+
+        // Reading results back
+        HIP_CHECK(hipMemcpy(host_output, device_output, size * sizeof(type), hipMemcpyDeviceToHost));
+
+        type * host_block_prefix = new type[grid_size];
+
+        HIP_CHECK(hipMemcpy(host_block_prefix, device_prefix, sizeof(type) * grid_size, hipMemcpyDeviceToHost));
+
+        // Calculate expected results on host
+        for(size_t block_index = 0; block_index < grid_size; block_index++)
+        {
+            size_t prefix_index = (block_index * items_per_block);
+            ASSERT_EQ(host_block_prefix[block_index], host_input[prefix_index]);
+            for(size_t thread_index = 0; thread_index < block_size; thread_index++)
+            {
+                size_t start_offset = (block_index * block_size + thread_index) * items_per_thread;
+                for(size_t item_index = 0; item_index < items_per_thread; item_index++)
+                {
+                    if((thread_index != block_size - 1) && (item_index != items_per_thread - 1))
+                        ASSERT_EQ(host_input[start_offset + item_index + 1], host_output[start_offset + item_index]);
+                }
+            }
+        }
+
+        delete [] host_input;
+        delete [] host_output;
+        delete [] host_block_prefix;
+        HIP_CHECK(hipFree(device_input));
+        HIP_CHECK(hipFree(device_output));
+    }
 }
