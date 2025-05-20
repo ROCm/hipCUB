@@ -143,7 +143,7 @@ if(BUILD_OFFLOAD_COMPRESS)
 endif()
 
 # Setup VERSION
-set(VERSION_STRING "3.5.0")
+set(VERSION_STRING "4.0.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
 math(EXPR hipcub_VERSION_NUMBER "${hipcub_VERSION_MAJOR} * 100000 + ${hipcub_VERSION_MINOR} * 100 + ${hipcub_VERSION_PATCH}")
 
