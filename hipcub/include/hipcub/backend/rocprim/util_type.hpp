@@ -541,7 +541,7 @@ struct BaseTraits<UNSIGNED_INTEGER, true, false, _UnsignedBits, T>
         nullptr_TYPE = false,
     };
 
-    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec());
+    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec<false>());
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
@@ -590,7 +590,7 @@ struct BaseTraits<SIGNED_INTEGER, true, false, _UnsignedBits, T>
         nullptr_TYPE = false,
     };
 
-    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec());
+    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec<false>());
 
     static HIPCUB_HOST_DEVICE __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
@@ -683,7 +683,7 @@ struct BaseTraits<FLOATING_POINT, true, false, _UnsignedBits, T>
     static const UnsignedBits   LOWEST_KEY  = UnsignedBits(-1);
     static const UnsignedBits   MAX_KEY     = UnsignedBits(-1) ^ HIGH_BIT;
 
-    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec());
+    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec<false>());
 
     enum
     {
@@ -747,7 +747,7 @@ struct NumericTraits<__uint128_t>
     static constexpr bool PRIMITIVE = false;
     static constexpr bool nullptr_TYPE = false;
 
-    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec());
+    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec<false>());
 
     static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
@@ -784,7 +784,7 @@ struct NumericTraits<__int128_t>
     static constexpr bool PRIMITIVE = false;
     static constexpr bool nullptr_TYPE = false;
 
-    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec());
+    using key_codec = decltype(::rocprim::traits::get<T>().template radix_key_codec<false>());
 
     static __host__ __device__ __forceinline__ UnsignedBits TwiddleIn(UnsignedBits key)
     {
