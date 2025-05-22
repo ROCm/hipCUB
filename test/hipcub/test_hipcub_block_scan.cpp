@@ -486,18 +486,23 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduceInitialValue)
         SCOPED_TRACE(testing::Message() << "with initial_value = " << initial_value);
 
         // Calculate expected results on host
-        std::vector<T> expected(output.size(), 0);
-        std::vector<T> expected_reductions(output_reductions.size(), 0);
+        std::vector<T> expected(output.size(), T(0));
+        std::vector<T> expected_reductions(output_reductions.size(), T(0));
         for(size_t i = 0; i < output.size() / block_size; i++)
         {
             acc_type accumulator(initial_value);
+            acc_type reduction = output[i * block_size];
             for(size_t j = 0; j < block_size; j++)
             {
-                auto idx      = i * block_size + j;
-                accumulator   = binary_op_host(static_cast<acc_type>(output[idx]), accumulator);
+                size_t idx    = i * block_size + j;
+                accumulator   = binary_op_host(output[idx], accumulator);
                 expected[idx] = static_cast<T>(accumulator);
+                if(j > 0)
+                {
+                    reduction = binary_op_host(output[idx], reduction);
+                }
             }
-            expected_reductions[i] = expected[(i + 1) * block_size - 1];
+            expected_reductions[i] = reduction;
         }
 
         // Writing to device memory
