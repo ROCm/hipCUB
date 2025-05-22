@@ -446,9 +446,6 @@ void block_inclusive_scan_reduce_initial_value_kernel(T* device_output,
     }
 }
 
-// CUB fails to compute the block aggregate correctly when using the API for initial value support.
-#ifndef __HIP_PLATFORM_NVIDIA__
-
 TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduceInitialValue)
 {
     int device_id = test_common_utils::obtain_device_from_ctest();
@@ -558,7 +555,6 @@ TYPED_TEST(HipcubBlockScanSingleValueTests, InclusiveScanReduceInitialValue)
         HIP_CHECK(hipFree(device_output_reductions));
     }
 }
-#endif // __HIP_PLATFORM_NVIDIA__
 
 template<unsigned int BlockSize, hipcub::BlockScanAlgorithm Algorithm, class T>
 __global__ __launch_bounds__(BlockSize)
